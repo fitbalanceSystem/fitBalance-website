@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>פרופיל אישי | FitBalance</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; }
+    /* קיבוע הסרגל צד */
+    aside {
+      position: fixed;
+      top: 60px; /* מתחת ל-header-container אם הוא בגובה 60px */
+      right: 0;
+      width: 16rem; /* 64 Tailwind = 16rem */
+      height: calc(100vh - 60px); /* גובה מלא פחות הגובה של ה-header-container */
+      background: white;
+      border-left: 1px solid #e5e7eb; /* Tailwind border-gray-200 */
+      box-shadow: 0 0 10px rgb(0 0 0 / 0.1);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 1000;
+      overflow-y: auto;
+    }
+    /* קיבוע ה-header-container */
+    #header-container {
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      height: 60px;
+      background: white;
+      box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
+      z-index: 1100;
+    }
+    /* התאמת תצוגת תוכן ראשי - נותנים מרווח משמאל למקום של הסרגל */
+    main {
+  margin-right: 16rem; /* מרווח לסרגל הצד */
+  margin-top: 60px;     /* מרווח לכותרת העליונה */
+  padding: 1.5rem;
+  min-height: 100vh;
+  background-color: #f3f4f6;
+}
+    /* כדי שה-flex container לא ישפיע על הסרגל הצד הקבוע */
+    .flex.min-h-screen {
+      display: block;
+      min-height: auto;
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+    <div id="header-container"></div>
+<!-- הסרגל צד -->
+<aside class="w-64 fixed top-16 bottom-0 right-0 bg-white shadow-md border-l z-40 flex flex-col justify-between px-4 py-6">
+    <!-- ניווט עיקרי -->
+    <div>
+      <!-- ריווח נוסף למעלה -->
+      <div class="mb-8"></div>
+  
+      <nav class="space-y-4">
+        <a href="dashboard.html" class="flex items-center text-gray-700 hover:text-pink-600">
+          <i class="fas fa-home ml-2"></i> דף הבית
+        </a>
+        <a href="profile.html" class="flex items-center text-gray-700 hover:text-pink-600">
+          <i class="fas fa-user ml-2"></i> פרופיל אישי
+        </a>
+        <a href="schedule.html" class="flex items-center text-gray-700 hover:text-pink-600">
+          <i class="fas fa-calendar-alt ml-2"></i> מערכת שעות
+        </a>
+        <a href="classes.html" class="flex items-center text-gray-700 hover:text-pink-600">
+          <i class="fas fa-dumbbell ml-2"></i> תוכניות ונוכחות
+        </a>
+        <a href="products.html" class="flex items-center text-gray-700 hover:text-pink-600">
+          <i class="fas fa-th-list ml-2"></i> קטלוג מוצרים
+        </a>
+        <a href="catalog.html" class="flex items-center text-gray-700 hover:text-pink-600">
+          <i class="fas fa-heart ml-2"></i> תוכניות ואירועים
+        </a>
+        <a href="about.html" class="flex items-center text-gray-700 hover:text-pink-600">
+          <i class="fas fa-info-circle ml-2"></i> אודות
+        </a>
+      </nav>
+    </div>
+  
+    <!-- לוגו ותיאור בתחתית -->
+    <div class="text-center text-sm text-gray-400 mt-8">
+      <img src="images/logo.png" alt="Logo" class="w-20 h-20 mx-auto mb-2" />
+      <h1 class="text-pink-600 text-2xl font-bold leading-tight">FitBalance</h1>
+      <span class="text-xs text-gray-500">חוגי ספורט מתקדמים</span>
+    </div>
+  </aside>
+
+
+    <!-- Main Content -->
+    <main class="flex-1 mr-64 bg-gray-50">
+        <!-- כותרת משנית קבועה -->
+        <div id="sub-header" class="fixed top-16 right-64 left-0 bg-white border-b border-gray-300 z-30 p-4 flex items-center shadow-sm">
+          <h2 class="text-2xl font-semibold text-gray-800 tracking-tight flex items-center gap-2">
+            <i class="fas fa-user-circle text-pink-600 text-2xl"></i>
+            פרופיל אישי
+          </h2>
+        </div>
+      
+        <!-- כאן מתחיל התוכן שמתחת לכותרת -->
+        <div class="pt-20 px-6">
+
+      <div class="bg-white rounded-xl shadow p-6 max-w-2xl mx-auto">
+        <div class="flex items-center gap-4 mb-6">
+          <img id="profile-image" src="https://via.placeholder.com/100" alt="User Image" class="rounded-full w-24 h-24 border object-cover" />
+          <div>
+            <h3 id="full-name" class="text-xl font-semibold text-gray-700">טוען...</h3>
+            <p id="member-since" class="text-gray-500 text-sm">...</p>
+          </div>
+        </div>
+  <!-- כותרת פרטים אישיים -->
+<h4 class="text-xl font-semibold text-gray-800 mt-6 mb-4 border-b pb-2">פרטים אישיים</h4>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div><span class="text-gray-500">ת.ז:</span> <span id="idValue" class="text-gray-800 font-medium"></span></div>
+  <div><span class="text-gray-500">טלפון נייד:</span> <span id="mobile" class="text-gray-800 font-medium"></span></div>
+  <div><span class="text-gray-500">אימייל:</span> <span id="email" class="text-gray-800 font-medium"></span></div>
+  <div><span class="text-gray-500">תאריך לידה:</span> <span id="birthDate" class="text-gray-800 font-medium"></span></div>
+  <div><span class="text-gray-500">עיר:</span> <span id="city" class="text-gray-800 font-medium"></span></div>
+  <div><span class="text-gray-500">רחוב:</span> <span id="street" class="text-gray-800 font-medium"></span></div>
+  <div><span class="text-gray-500">מספר בית:</span> <span id="houseNo" class="text-gray-800 font-medium"></span></div>
+</div>
+
+<!-- כותרת פרטי משלם -->
+<h4 class="text-xl font-semibold text-gray-800 mt-8 mb-4 border-b pb-2">פרטי משלם ארנונה</h4>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div><span class="text-gray-500">תעודת זהות:</span> <span id="payerIdValue" class="text-gray-800 font-medium"></span></div>
+  <div><span class="text-gray-500">שם פרטי:</span> <span id="payerFirstName" class="text-gray-800 font-medium"></span></div>
+  <div><span class="text-gray-500">שם משפחה:</span> <span id="payerLastName" class="text-gray-800 font-medium"></span></div>
+  <div><span class="text-gray-500">נייד:</span> <span id="payerEmail" class="text-gray-800 font-medium"></span></div>
+  <div><span class="text-gray-500">אימייל:</span> <span id="payerMobile" class="text-gray-800 font-medium"></span></div>
+</div>
+
+<!-- כותרת קבוצות וטפסים -->
+<h4 class="text-xl font-semibold text-gray-800 mt-8 mb-4 border-b pb-2">טפסים וקבוצות</h4>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700">
+  <div class="flex items-center gap-2">
+    <span class="font-medium">טופס הצהרת בריאות:</span>
+    <span id="isSignedHealthForm" class="text-green-600"></span>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="font-medium">טופס נהלי רישום:</span>
+    <span id="issignedRegisTrationPolicy" class="text-green-600"></span>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="font-medium">קבוצת ווצאפ:</span>
+    <span id="inWhatsAppList" class="text-red-500"></span>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="font-medium">קבוצת מייל:</span>
+    <span id="inEmailList" class="text-green-600"></span>
+  </div>
+</div>
+
+      
+  
+    <!-- העלאת תמונה -->
+    <div class="mt-6">
+      <label for="upload-photo" class="block text-sm font-medium text-gray-700 mb-1 cursor-pointer text-pink-600 hover:text-pink-800">
+        <i class="fas fa-upload ml-2"></i>העלה תמונת פרופיל חדשה
+      </label>
+      <input type="file" id="upload-photo" accept="image/*" class="hidden" />
+      <button id="save-photo-btn" disabled
+        class="mt-2 bg-pink-600 text-white px-4 py-2 rounded shadow hover:bg-pink-700 disabled:bg-pink-300">
+        שמור תמונה
+      </button>
+      <p id="status-message" class="mt-2 text-center text-sm text-red-600"></p>
+    </div>
+  
+
+        <p id="status-message" class="mt-4 text-center text-sm text-red-600"></p>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="js/profile.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

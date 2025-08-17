@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>סל הקניות שלי</title>
+
+  <!-- Tailwind CDN (אם את לא משתמשת בבנייה מותאמת) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome לאייקונים -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- קבצי JS -->
+  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/cart.js"></script>
+</head>
+
+<body class="bg-gray-50 font-sans">
+
+  <!-- כותרת נטענת דינמית -->
+  <div id="header-container"></div>
+
+  <!-- תוכן ראשי -->
+  <main class="max-w-2xl mx-auto mt-10 bg-white shadow-xl rounded-2xl p-8 space-y-6">
+
+    <h1 class="text-3xl font-extrabold text-gray-800 text-center border-b pb-4">🛒 סל הקניות שלך</h1>
+
+    <!-- רשימת פריטים -->
+    <div id="cart-items" class="divide-y divide-gray-200 space-y-4">
+      <!-- פריטים יוזנו כאן -->
+    </div>
+
+    <!-- סיכום -->
+    <div class="flex justify-between items-center pt-4 border-t">
+      <span class="text-lg font-semibold text-gray-700">סכום כולל:</span>
+      <span id="total-price" class="text-2xl font-bold text-pink-600">₪0</span>
+    </div>
+
+    <!-- כפתור סיום רכישה -->
+    <button id="checkout-btn"
+            class="w-full bg-pink-600 hover:bg-pink-700 text-white text-lg py-3 rounded-xl shadow-md transition duration-200">
+      בצע הזמנה
+    </button>
+    <a href="products.html"
+   class="mt-4 flex items-center justify-center gap-2 text-pink-600 hover:underline text-sm transition duration-150">
+  <i class="fas fa-arrow-right"></i>
+  חזרה לעמוד המוצרים
+</a>
+
+    <!-- טקסט עזר -->
+    <p class="text-sm text-gray-500 text-center">לשאלות ניתן לפנות לאפרת 052-7173841</p>
+
+  </main>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>תוכניות ונוכחות | FitBalance</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-l shadow-md p-4 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-6">
+          <img src="https://cdn-icons-png.flaticon.com/512/833/833472.png" alt="Logo" class="w-10 h-10" />
+          <div>
+            <h1 class="text-pink-600 text-xl font-bold">FitBalance</h1>
+            <span class="text-xs text-gray-500">חוגי ספורט מתקדמים</span>
+          </div>
+        </div>
+        <nav class="space-y-4">
+          <a href="dashboard.html" class="flex items-center text-gray-700 hover:text-pink-600"><i class="fas fa-home ml-2"></i>דף הבית</a>
+          <a href="profile.html" class="flex items-center text-gray-700 hover:text-pink-600"><i class="fas fa-user ml-2"></i>פרופיל אישי</a>
+          <a href="schedule.html" class="flex items-center text-gray-700 hover:text-pink-600"><i class="fas fa-calendar-alt ml-2"></i>מערכת שעות</a>
+          <a href="classes.html" class="flex items-center text-gray-700 hover:text-pink-600"><i class="fas fa-dumbbell ml-2"></i>חוגים</a>
+          <a href="attendance.html" class="flex items-center text-pink-600 font-bold"><i class="fas fa-clipboard-check ml-2"></i>נוכחות</a>
+          <a href="products.html" class="flex items-center text-gray-700 hover:text-pink-600"><i class="fas fa-th-list ml-2"></i>קטלוג מוצרים</a>
+          <a href="catalog.html" class="flex items-center text-gray-700 hover:text-pink-600"><i class="fas fa-heart ml-2"></i>קטלוג חוגים</a>
+          <a href="about.html" class="flex items-center text-gray-700 hover:text-pink-600"><i class="fas fa-info-circle ml-2"></i>אודות</a>
+        </nav>
+      </div>
+      <div class="text-center text-sm text-gray-400">
+        <div class="bg-gray-200 w-10 h-10 rounded-full mx-auto text-center leading-10 font-bold">מ</div>
+        משתמש | חברה פרטית
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6">
+      <header class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">נוכחות</h2>
+        <p class="text-sm text-gray-500 mt-1">מעקב וסימון נוכחות של משתתפות לפי שיעור ותאריך</p>
+      </header>
+
+      <div class="bg-white rounded-xl shadow p-6">
+        <form class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">בחרי חוג:</label>
+            <select class="w-full border rounded p-2">
+              <option>פילאטיס</option>
+              <option>יוגה</option>
+              <option>זומבה</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">תאריך:</label>
+            <input type="date" class="w-full border rounded p-2">
+          </div>
+          <div class="flex items-end">
+            <button type="submit" class="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded w-full">
+              הצג רשימה
+            </button>
+          </div>
+        </form>
+
+        <table class="w-full text-right border-collapse">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="p-3 border-b">#</th>
+              <th class="p-3 border-b">שם משתתפת</th>
+              <th class="p-3 border-b">נוכחות</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="hover:bg-pink-50">
+              <td class="p-3 border-b">1</td>
+              <td class="p-3 border-b">רות לוי</td>
+              <td class="p-3 border-b text-center"><input type="checkbox" class="w-5 h-5 text-pink-600"></td>
+            </tr>
+            <tr class="hover:bg-pink-50">
+              <td class="p-3 border-b">2</td>
+              <td class="p-3 border-b">דנה כהן</td>
+              <td class="p-3 border-b text-center"><input type="checkbox" class="w-5 h-5 text-pink-600"></td>
+            </tr>
+            <tr class="hover:bg-pink-50">
+              <td class="p-3 border-b">3</td>
+              <td class="p-3 border-b">שירה ישראלי</td>
+              <td class="p-3 border-b text-center"><input type="checkbox" class="w-5 h-5 text-pink-600"></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="text-left mt-6">
+          <button class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded">
+            שמור נוכחות
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

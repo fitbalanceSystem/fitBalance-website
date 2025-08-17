@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>דף הבית | FitBalance</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* סרגל צד */
+    aside {
+      position: fixed;
+      top: 60px;
+      right: 0;
+      width: 16rem;
+      height: calc(100vh - 60px);
+      background: white;
+      border-left: 1px solid #e5e7eb;
+      box-shadow: 0 0 10px rgb(0 0 0 / 0.1);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    /* header קבוע */
+    #header-container {
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      height: 60px;
+      background: white;
+      box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
+      z-index: 1100;
+    }
+
+    /* תוכן ראשי */
+    main {
+      margin-right: 16rem;
+      margin-top: 60px;
+      padding: 1.5rem;
+      min-height: 100vh;
+      background-color: #f3f4f6;
+    }
+
+    .slider-container {
+      position: relative;
+      width: 1000px;
+      height: 500px;
+      overflow: hidden;
+      border-radius: 0.75rem;
+      margin: 0 auto;
+      /* למרכז את הסליידר בדף */
+    }
+
+
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+
+    .slider-button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 9999px;
+      padding: 0.5rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      z-index: 10;
+    }
+
+    .slider-button:hover {
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    #prev {
+      right: 1rem;
+    }
+
+    #next {
+      left: 1rem;
+    }
+
+    .dot {
+      transition: all 0.3s ease;
+      width: 0.75rem;
+      height: 0.75rem;
+      background-color: #9ca3af;
+      border-radius: 9999px;
+      cursor: pointer;
+    }
+
+    .dot.active {
+      transform: scale(1.3);
+      background-color: #ec4899;
+    }
+  </style>
+  <!-- סרגל צד -->
+</head>
+
+<body class="bg-gray-100">
+  <div id="header-container"></div>
+  <aside>
+    <div>
+      <div class="mb-8"></div>
+      <nav class="space-y-4">
+        <a href="dashboard.html" class="flex items-center text-gray-700 hover:text-pink-600"><i
+            class="fas fa-home ml-2"></i> דף הבית</a>
+        <a href="profile.html" class="flex items-center text-gray-700 hover:text-pink-600"><i
+            class="fas fa-user ml-2"></i> פרופיל אישי</a>
+        <a href="schedule.html" class="flex items-center text-gray-700 hover:text-pink-600"><i
+            class="fas fa-calendar-alt ml-2"></i> מערכת שעות</a>
+        <a href="classes.html" class="flex items-center text-gray-700 hover:text-pink-600"><i
+            class="fas fa-dumbbell ml-2"></i> תוכניות ונוכחות</a>
+        <a href="products.html" class="flex items-center text-gray-700 hover:text-pink-600"><i
+            class="fas fa-th-list ml-2"></i> קטלוג מוצרים</a>
+        <a href="catalog.html" class="flex items-center text-gray-700 hover:text-pink-600"><i
+            class="fas fa-heart ml-2"></i> תוכניות ואירועים</a>
+        <a href="about.html" class="flex items-center text-gray-700 hover:text-pink-600"><i
+            class="fas fa-clipboard-check ml-2"></i> אודות</a>
+      </nav>
+    </div>
+    <div class="text-center text-sm text-gray-400 mt-8">
+      <img src="images/logo.png" alt="Logo" class="w-20 h-20 mx-auto mb-2" />
+      <h1 class="text-pink-600 text-2xl font-bold leading-tight">FitBalance</h1>
+      <span class="text-xs text-gray-500">חוגי ספורט מתקדמים</span>
+    </div>
+  </aside>
+
+  <!-- תוכן ראשי -->
+  <main>
+    <!-- כרטיסי סטטיסטיקה -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <!-- שיעורים שנותרו להשלמה -->
+      <div class="bg-green-50 p-4 rounded-xl shadow flex items-center justify-between">
+        <div>
+          <div class="text-xl font-bold" id="remaining-lessons">4</div>
+          <div class="text-sm text-gray-500">שיעורים שנותרו להשלמה</div>
+        </div>
+        <i class="fas fa-book-open text-green-600 text-2xl"></i>
+      </div>
+    
+      <!-- אחוז נוכחות כולל -->
+      <div class="bg-blue-50 p-4 rounded-xl shadow flex items-center justify-between">
+        <div>
+          <div class="text-xl font-bold" id="attendance-percentage">87%</div>
+          <div class="text-sm text-gray-500">אחוז נוכחות כולל</div>
+        </div>
+        <i class="fas fa-user-check text-blue-600 text-2xl"></i>
+      </div>
+    
+      <!-- מספר חוגים פעילים -->
+      <div class="bg-purple-50 p-4 rounded-xl shadow flex items-center justify-between">
+        <div>
+          <div class="text-xl font-bold" id="active-classes">3</div>
+          <div class="text-sm text-gray-500">מספר חוגים פעילים</div>
+        </div>
+        <i class="fas fa-dumbbell text-purple-600 text-2xl"></i>
+      </div>
+    
+      <!-- מטרת החוג הבא -->
+      <div class="bg-pink-50 p-4 rounded-xl shadow flex items-center justify-between">
+        <div>
+          <div class="text-xl font-bold" id="next-class-goal">שיפור סיבולת לב-ריאה</div>
+          <div class="text-sm text-gray-500">המטרה הבאה שלך</div>
+        </div>
+        <i class="fas fa-bullseye text-pink-600 text-2xl"></i>
+      </div>
+    </div>
+    
+
+    <div class="flex flex-col lg:flex-row gap-6 justify-center">
+      <!-- סליידר -->
+      <div class="slider-container flex-shrink-0" style="width:1000px; height:500px;">
+        <div class="slide"><img src="images/Gold.png"></div>
+        <div class="slide"><img src="images/Purple.png"></div>
+
+        <div id="prev" class="slider-button"><i class="fas fa-chevron-left text-gray-700"></i></div>
+        <div id="next" class="slider-button"><i class="fas fa-chevron-right text-gray-700"></i></div>
+
+      
+      </div>
+
+      <!-- הודעות -->
+      <div class="w-80 bg-white p-4 rounded-xl shadow self-start">
+        <h3 class="text-lg font-bold mb-4 flex items-center">
+          <i class="ml-2 text-pink-600"></i> הודעות כלליות
+        </h3>
+        <ul class="space-y-4">
+          <li class="border-b pb-2">
+            <p class="font-bold text-pink-700">שינוי מועד חוג יוגה</p>
+            <p class="text-sm text-gray-500">היוגה של יום חמישי עברה לשעה 18:30</p>
+          </li>
+          <li>
+            <p class="font-bold text-green-600">חוג חדש: HIIT</p>
+            <p class="text-sm text-gray-500">שיעור אינטנסיבי בימי שני 20:00</p>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+  </main>
+
+  <script type="module" src="js/dashboard.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+
+</html>

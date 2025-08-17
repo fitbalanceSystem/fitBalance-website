@@ -1,0 +1,102 @@
+/* סרגל צד */
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 260px;
+    height: 100vh;
+    background-color: #111; /* שחור כהה */
+    padding-top: 50px;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Assistant', sans-serif;
+    z-index: 1000;
+  }
+  
+  /* לחצן כללי */
+  .sidebar button {
+    position: relative;
+    background-color: #fff; /* לבן */
+    color: #9c27b0; /* ורוד-סגול כהה */
+    border: 2.5px solid #9c27b0; /* מסגרת ורודה */
+    font-weight: 700;
+    font-size: 20px;
+    padding: 16px 32px 16px 90px; /* רווח שמאלי גדול יותר לתמונה */
+    margin: 12px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 6px 10px rgba(156, 39, 176, 0.25);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+    text-align: right;
+    overflow: visible;
+    width: calc(100% - 30px); /* רוחב אחיד עם מרג'ין */
+    box-sizing: border-box;
+  }
+  
+  /* אפקט בהאובר */
+  .sidebar button:hover {
+    background-color: #9c27b0;
+    color: white;
+    transform: translateX(-8px);
+    box-shadow: 0 12px 25px rgba(156, 39, 176, 0.6);
+  }
+  
+  /* תמונה קטנה שמצד שמאל, עולה קצת יותר ימינה מחוץ לכפתור */
+  .sidebar button img {
+    position: absolute;
+    top: 50%;
+    left: -28px; /* עוד יותר ימינה */
+    transform: translateY(-50%);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 6px 15px rgba(156, 39, 176, 0.5);
+    background: white;
+    object-fit: cover;
+    transition: box-shadow 0.3s ease;
+    z-index: 10;
+  }
+  
+  /* אפקט תמונה בהאובר על הכפתור */
+  .sidebar button:hover img {
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.9);
+  }
+  
+  /* טקסט בכפתור */
+  .sidebar button span {
+    pointer-events: none;
+    user-select: none;
+    display: block;
+    line-height: 1.2;
+  }
+  
+  /* מניעת גלילה מתחת לסרגל */
+  body {
+    margin-right: 260px; /* מתיישב עם רוחב הסרגל */
+    background-color: #f9f4fb;
+    font-family: 'Assistant', sans-serif;
+    color: #222;
+  }
+  
+  /* אפשרות לממש תגובות קטנות יותר במסכים קטנים */
+  @media (max-width: 400px) {
+    .sidebar {
+      width: 220px;
+    }
+    body {
+      margin-right: 220px;
+    }
+    .sidebar button {
+      padding-left: 70px;
+      font-size: 18px;
+      margin: 10px 10px;
+      width: calc(100% - 20px);
+    }
+    .sidebar button img {
+      left: -22px;
+      width: 48px;
+      height: 48px;
+    }
+  }
+  

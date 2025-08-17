@@ -1,0 +1,8 @@
+:root {
+    --color-primary: #e91e63; /* ורוד פוקסיה */
+    --color-dark: #1c1c1c;    /* שחור */
+    --color-light: #ffffff;   /* לבן */
+    --color-gray: #f5f5f5;    /* רקע עדין */
+    --font-main: 'Segoe UI', sans-serif;
+  }
+  

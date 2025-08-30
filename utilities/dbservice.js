@@ -45,6 +45,68 @@ export async function selectFromTable(table, filters = {}) {
 }
 
 
+/**
+ * שליפה מטבלה ראשית עם אפשרות join לטבלאות נוספות
+ * @param {string} mainTable - שם הטבלה הראשית
+ * @param {object} filters - פילטרים על הטבלה הראשית או המשניות, לדוגמה { 'main.customer_id': { eq: 1 } }
+ * @param {Array} joins - מערך טבלאות נוספות (view או nested tables), לדוגמה:
+ * [
+ *   { table: 'program_sessions', alias: 'ps', columns: ['id','name','date'] },
+ *   { table: 'instructors', alias: 'i', columns: ['firstName','lastName'] }
+ * ]
+ * @param {Array} mainColumns - עמודות מהטבלה הראשית, ברירת מחדל ['*']
+ * @returns {Promise<any[]>} - מערך רשומות
+ */
+export async function selectFromTables(mainTable, filters = {}, joins = [], mainColumns = ['*']) {
+  try {
+    // בונים select
+    let selectParts = mainColumns.map(col => col === '*' ? '*' : `${mainTable}.${col}`);
+
+    joins.forEach(join => {
+      if (join.columns && join.columns.length > 0) {
+        join.columns.forEach(col => selectParts.push(`${join.alias}.${col}`));
+      } else {
+        selectParts.push(`${join.alias}.*`);
+      }
+    });
+
+    // מתחילים את השאילתא
+    let query = supabase.from(mainTable).select(selectParts.join(', '));
+
+    // פילטרים
+    for (const [key, value] of Object.entries(filters)) {
+      if (typeof value === 'object' && value !== null) {
+        for (const [operator, val] of Object.entries(value)) {
+          switch (operator) {
+            case 'eq': query = query.eq(key, val); break;
+            case 'gte': query = query.gte(key, val); break;
+            case 'lte': query = query.lte(key, val); break;
+            case 'lt': query = query.lt(key, val); break;
+            case 'gt': query = query.gt(key, val); break;
+            default: throw new Error(`Unsupported filter operator: ${operator}`);
+          }
+        }
+      } else {
+        query = query.eq(key, value);
+      }
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Supabase error:', JSON.stringify(error, null, 2));
+      throw error;
+    }
+
+    return data;
+  } catch (err) {
+    console.error('selectFromTables failed:', err);
+    throw err;
+  }
+}
+
+
+
 export async function selectFromTableAll(table) {
   let query = supabase.from(table).select('*');
   const { data, error } = await query;

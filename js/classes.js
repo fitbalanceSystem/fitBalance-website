@@ -1,4 +1,4 @@
-import { selectFromTable } from '../utilities/dbservice.js';
+import { selectFromTable, selectFromTables } from '../utilities/dbservice.js';
 import { getCurrentUser, formatTime, showSpinner, hideSpinner } from '../utilities/auth.js';
 
 let currentStartYear = new Date().getMonth() >= 8 ? new Date().getFullYear() : new Date().getFullYear() - 1;
@@ -30,85 +30,137 @@ function setupYearNavigation() {
 }
 
 async function loadProgramsForYear(userId, year) {
-    showSpinner();
-    try{
-  const container = document.querySelector('.grid');
-  const summary = document.querySelector('.bg-gray-50.text-sm');
-  const yearLabel = document.querySelector('.year-label');
-  container.innerHTML = '';
+  showSpinner();
+  try {
+    const container = document.querySelector('.grid');
+    const summary = document.querySelector('.bg-gray-50.text-sm');
+    const yearLabel = document.querySelector('.year-label');
+    container.innerHTML = '';
 
-  const fromDate = `${year}-09-01`;
-  const toDate = `${year + 1}-08-31`;
+    const fromDate = `${year}-09-02`;
+    const toDate = `${year + 1}-08-31`;
 
-  if (yearLabel) yearLabel.textContent = `${year} - ${year + 1}`;
+    if (yearLabel) yearLabel.textContent = `${year} - ${year + 1}`;
 
-  enrollments = await selectFromTable('program_enrollments', {
-    customer_id: userId,
-    start_date: { lte: new Date(toDate).toISOString() },
-    end_date: { gte: new Date(fromDate).toISOString() }
-  });
-
-  let totalSessions = 0;
-  let totalAttendance = 0;
-  let totalMakeups = 0;
-  let program;
-
-  for (const enr of enrollments) {
-    [program] = await selectFromTable('programs', { id: enr.program_id });
-    if (!program) continue;
-
-    const sessions = await selectFromTable('program_sessions', { program_id: program.id });
-    const filteredSessions = sessions.filter(s => s.date >= fromDate && s.date <= toDate);
-    const now = new Date().toISOString().split('T')[0];
-    const pastSessions = filteredSessions.filter(s => s.date <= now);
-
-    const sessionIds = pastSessions.map(s => s.id);
-    if (!sessionIds.length) continue;
-
-    const attendanceRecords = await selectFromTable('session_attendance', {
-      customer_id: userId
+    // שליפת כל ההרשמות של המשתמש
+    const enrollments = await selectFromTable('program_enrollments', {
+      customer_id: userId,
+      start_date: { lte: new Date(toDate).toISOString() },
+      end_date: { gte: new Date(fromDate).toISOString() }
     });
+    console.log("enrollments");
+console.log(enrollments);
+console.log(enrollments.length);
+    // בדיקה אם אין שום תוכניות בשנה
+    if (!enrollments || enrollments.length === 0) {
+      if (summary) {
+        summary.innerHTML = `בשנת ${year}–${year + 1} לא נמצאו תוכניות פעילות עבורך.`;
+      }
+      container.innerHTML = `
+        <div class="col-span-full text-center text-gray-600 py-8">
+          <p>לא נמצאו תוכניות לחוגים עבורך בשנה זו.</p>
+        </div>
+      `;
+      // מסתירים גם את קוביית ההשלמות
+      const makeupsBox = document.getElementById('makeups-box');
+      if (makeupsBox) makeupsBox.style.display = 'none';
+      return;
+    }
 
-    const relevantAttendance = attendanceRecords.filter(a => sessionIds.includes(a.session_id));
-    const attended = relevantAttendance.filter(a => a.is_present && a.status_code === 1).length;
-    const makeups = relevantAttendance.filter(a => a.is_present && a.status_code === 2).length;
+    let totalSessions = 0;
+    let totalAttendance = 0;
+    let totalMakeups = 0;
 
-    totalSessions += pastSessions.length;
-    totalAttendance += attended;
-    totalMakeups += makeups;
+    // שליפת כל הנוכחויות של המשתמש
+    const attendanceRecords = await selectFromTable('attendance_with_session', { customer_id: userId });
 
-    const card = createProgramCard(program, attended, pastSessions.length);
-    container.insertAdjacentHTML('beforeend', card);
-  }
+    for (const enr of enrollments) {
+      // שליפה של פרטי התוכנית
+      const [program] = await selectFromTable('programs', { id: enr.program_id });
+      if (!program) continue;
 
-  if (summary) {
-    summary.innerHTML = `
-      בשנת ${year}–${year + 1} נרשמת ל־${enrollments.length} חוגים.<br>
-      התקיימו ${totalSessions} שיעורים עד כה, הגעת ל־${totalAttendance}, השלמת ${totalMakeups},<br>
-      נותרו לך ${Math.max(0, totalSessions - totalAttendance - totalMakeups)} שיעורים להשלמה.
-    `;
-  }
+      // שליפה של כל המפגשים של התוכנית
+      const sessions = await selectFromTable('program_sessions', {
+        program_id: program.id,
+        date: { gte: enr.start_date, lte: enr.end_date }
+      });
 
-  const makeupsBox = document.getElementById('makeups-box');
-  if (makeupsBox) {
-    makeupsBox.querySelector('p').textContent = `סה"כ השלמות שבוצעו: ${totalMakeups}`;
-  }
+      const filteredSessions = sessions.filter(s => s.date >= fromDate && s.date <= toDate);
+      const now = new Date().toISOString().split('T')[0];
+      const pastSessions = filteredSessions.filter(s => s.date <= now);
 
-  setupAttendanceButtons(fromDate, toDate, userId);
+      console.log("filteredSessions");
+      console.log(filteredSessions);
+      // אם אין שיעורים – דלג על התוכנית
+      // if (!pastSessions.length) continue;
 
-  // הצגת כרטיס השלמות אם קיימות
-  if (totalMakeups > 0) {
-    const makeupCard = createMakeupsCard(totalMakeups);
-    container.insertAdjacentHTML('beforeend', makeupCard);
-  }
-}
-finally{
+      const sessionIds = pastSessions.map(s => s.id);
+
+      // סינון נוכחות רלוונטית למפגשים
+      // const relevantAttendance = attendanceRecords.filter(a => sessionIds.includes(a.session_id));
+
+
+      const relevantAttendance = attendanceRecords.filter(s => s.session_date >= fromDate && s.session_date <= toDate);
+      console.log("relevantAttendance");
+      console.log(relevantAttendance);
+      const attended = relevantAttendance.filter(a => a.is_present && a.status_code === 1 && sessionIds.includes(a.session_id)).length;
+      const makeups = relevantAttendance.filter(a => a.is_present && a.status_code === 2).length;
+  
+      console.log("attended");
+      console.log(attended);
+      
+      console.log("makeups");
+      console.log(makeups);
+      totalSessions += pastSessions.length;
+      totalAttendance += attended;
+      totalMakeups = makeups;
+
+
+      // const attended = relevantAttendance.filter(a => a.is_present && a.status_code === 1).length;
+      // const makeups = relevantAttendance.filter(a => a.is_present && a.status_code === 2).length;
+
+      // אם אין נוכחות וגם אין השלמות – דלג על התוכנית
+      // if (attended === 0 && makeups === 0) continue;
+
+
+      console.log("enr");
+console.log(enr);
+      const card = createProgramCard(program, enr, attended, pastSessions.length, "program");
+      container.insertAdjacentHTML('beforeend', card);
+    }
+
+    // סיכום
+    if (summary) {
+        summary.innerHTML = `
+          בשנת ${year}–${year + 1} נרשמת ל־${enrollments.length} חוגים.<br>
+          התקיימו ${totalSessions} שיעורים עד כה, הגעת ל־${totalAttendance}, השלמת ${totalMakeups},<br>
+          נותרו לך ${Math.max(0, totalSessions - totalAttendance - totalMakeups)} שיעורים להשלמה.
+        `;
+    }
+
+    const makeupsBox = document.getElementById('makeups-box');
+
+    if (makeupsBox) {
+      if (!enrollments || enrollments.length === 0) {
+        // אין תוכניות בכלל → מסתיר
+        makeupsBox.style.display = 'none';
+      } else {
+        // יש תוכניות → מציג הקובייה תמיד, גם אם totalMakeups === 0
+        makeupsBox.style.display = 'block';
+        makeupsBox.querySelector('p').textContent = `סה"כ השלמות שבוצעו: ${totalMakeups}`;
+      }
+    }
+
+    setupAttendanceButtons(fromDate, toDate, userId);
+
+  } finally {
     hideSpinner();
+  }
 }
-}
+
 
 // ✨ קובייה אחת לתוכנית
-function createProgramCard(program, attended, total) {
+function createProgramCard(program, enr, attended, total, type = "program") {
   const isPink = program.name.includes('פילאטיס');
   const bg = isPink ? 'bg-pink-50 border-pink-200 text-pink-600' : 'bg-green-50 border-green-200 text-green-600';
 
@@ -118,10 +170,10 @@ function createProgramCard(program, attended, total) {
         <h2 class="text-lg font-bold">${program.name}</h2>
         <span class="text-sm text-gray-500">${program.instructor || ''}</span>
       </div>
-      <p class="text-sm text-gray-600 mb-1">${program.days || ''} | ${formatTime(program.time) || ''}</p>
-      <p class="text-xs text-gray-500 mb-1">${formatDate(program.start_date)} - ${formatDate(program.end_date)}</p>
+      <p class="text-sm text-gray-600 mb-1">${getHebrewDayName(program.day-1) || ''} | ${formatTime(program.time) || ''}</p>
+      <p class="text-xs text-gray-500 mb-1">${formatDate(enr.start_date)} - ${formatDate(enr.end_date)}</p>
       <p class="text-sm text-gray-700 mt-2">נוכחת ב־${attended} מתוך ${total} מפגשים</p>
-      <button class="mt-3 text-sm underline show-attendance" data-type="program" data-program-id="${program.id}" data-program-name="${program.name}">הצג נוכחות</button>
+      <button class="mt-3 text-sm underline show-attendance" data-type="${type}" data-program-id="${program.id}" data-program-name="${program.name}">הצג נוכחות</button>
     </div>
   `;
 }
@@ -146,18 +198,19 @@ function formatDate(dateStr) {
 function setupAttendanceButtons(fromDate, toDate, userId) {
   document.querySelectorAll('.show-attendance').forEach(button => {
     button.addEventListener('click', async () => {
-        showSpinner();
+      showSpinner();
 
-        // מחכים לרינדור ה-UI להציג את הספינר
-        await new Promise(resolve => setTimeout(resolve, 50));
-      
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       const type = button.dataset.type;
 
       if (type === 'program') {
+        // -----------------------
+        // הצגת נוכחות לפי תוכנית
+        // -----------------------
         const programId = button.dataset.programId;
         const programName = button.dataset.programName;
 
-        // שליפת כל המפגשים של התוכנית
         const sessions = await selectFromTable('program_sessions', {
           program_id: programId
         });
@@ -167,30 +220,37 @@ function setupAttendanceButtons(fromDate, toDate, userId) {
 
         const sessionIds = filteredSessions.map(s => s.id);
 
-        // שליפת רשומות נוכחות רק למפגשים האלה
         const attendance = await selectFromTable('session_attendance', {
           customer_id: userId
         });
 
-        // סינון רק נוכח (is_present === true)
         const attended = attendance.filter(a =>
           sessionIds.includes(a.session_id) && a.is_present
         );
 
-        // יצירת טבלה
-        const tableRows = attended.map(a => {
-          const session = sessions.find(s => s.id === a.session_id);
-          const date = session.date;
-          const day = getHebrewDayName(new Date(date).getDay());
-          const time = session.time;
+// קודם ממיינים את הרשומות לפי התאריך
+const sortedAttended = attended.sort((a, b) => {
+  const sessionA = sessions.find(s => s.id === a.session_id);
+  const sessionB = sessions.find(s => s.id === b.session_id);
+  
+  return new Date(sessionA.date) - new Date(sessionB.date);
+});
 
-          return `<tr>
-            <td class="border px-2 py-1 text-right">${formatDate(date)}</td>
-            <td class="border px-2 py-1 text-right">${day}</td>
-            <td class="border px-2 py-1 text-right">${formatTime(time)}</td>
-            <td class="border px-2 py-1 text-right">${programName}</td>
-          </tr>`;
-        }).join('');
+// ואז מייצרים את השורות
+const tableRows = sortedAttended.map(a => {
+  const session = sessions.find(s => s.id === a.session_id);
+  const date = session.date;
+  const day = getHebrewDayName(new Date(date).getDay());
+  const time = session.time;
+
+  return `<tr>
+    <td class="border px-2 py-1 text-right">${formatDate(date)}</td>
+    <td class="border px-2 py-1 text-right">${day}</td>
+    <td class="border px-2 py-1 text-right">${formatTime(time)}</td>
+    <td class="border px-2 py-1 text-right">${programName}</td>
+  </tr>`;
+}).join('');
+
 
         const modalBody = `
           <div class="bg-white rounded-lg p-4 max-w-xl mx-auto mt-10 shadow-lg">
@@ -214,11 +274,70 @@ function setupAttendanceButtons(fromDate, toDate, userId) {
         openModal(modalBody);
 
       } else if (type === 'makeups') {
-          // כאן ניתן להוסיף לוגיקה להצגת כרטיסיות השלמות אם צריך
+        // -----------------------
+        // הצגת כל ההשלמות בשנה
+        // -----------------------
+        const attendance = await selectFromTable('attendance_with_session', {
+          customer_id: userId
+        });
+
+        console.log("attendance");
+console.log(attendance);
+        // רק השלמות בשנה הנוכחית
+        const makeups = attendance.filter(a =>
+          a.is_present &&
+          a.status_code === 2 &&
+          a.session_date >= fromDate &&
+          a.session_date <= toDate
+        );
+
+        console.log("makeups");
+console.log(makeups);
+        if (!makeups.length) {
+          openModal(`
+            <div class="bg-white rounded-lg p-4 max-w-xl mx-auto mt-10 shadow-lg">
+              <h2 class="text-xl font-bold mb-4">השלמות שבוצעו</h2>
+              <p class="text-gray-600">לא נמצאו השלמות בשנה זו.</p>
+              <div class="text-center mt-4">
+                <button id="closeModal" class="bg-blue-500 text-white px-4 py-1 rounded">סגור</button>
+              </div>
+            </div>
+          `);
+          return;
+        }
+// ממיינים את רשומות ההשלמות לפי תאריך
+const sortedMakeups = makeups.sort((a, b) => new Date(a.session_date) - new Date(b.session_date));
+
+// מייצרים את שורות הטבלה אחרי המיון
+const tableRows = sortedMakeups.map(a => {
+  const date = a.session_date;
+  const day = getHebrewDayName((a.day) - 1);
+  const time = a.time;
+  const programName = a.name || 'לא ידוע';
+
+  return `<tr>
+    <td class="border px-2 py-1 text-right">${formatDate(date)}</td>
+    <td class="border px-2 py-1 text-right">${day}</td>
+    <td class="border px-2 py-1 text-right">${formatTime(time)}</td>
+    <td class="border px-2 py-1 text-right">${programName}</td>
+  </tr>`;
+}).join('');
+
+
         const modalBody = `
           <div class="bg-white rounded-lg p-4 max-w-xl mx-auto mt-10 shadow-lg">
             <h2 class="text-xl font-bold mb-4">השלמות שבוצעו</h2>
-            <p>כאן יוצגו הפרטים על ההשלמות שבוצעו.</p>
+            <table class="w-full border border-gray-300 text-sm">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="border px-2 py-1">תאריך</th>
+                  <th class="border px-2 py-1">יום</th>
+                  <th class="border px-2 py-1">שעה</th>
+                  <th class="border px-2 py-1">שיעור</th>
+                </tr>
+              </thead>
+              <tbody>${tableRows}</tbody>
+            </table>
             <div class="text-center mt-4">
               <button id="closeModal" class="bg-blue-500 text-white px-4 py-1 rounded">סגור</button>
             </div>
@@ -226,9 +345,12 @@ function setupAttendanceButtons(fromDate, toDate, userId) {
         `;
         openModal(modalBody);
       }
+
+      hideSpinner();
     });
   });
 }
+
 
 function openModal(content) {
     showSpinner();

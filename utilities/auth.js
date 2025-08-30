@@ -37,6 +37,26 @@ export function getCurrentUser() {
   }
   
 
+  export function getAcademicYearRange(today = new Date()) {
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1; // חודשים מ־0
+    let startYear, endYear;
+  
+    if (month >= 9) { // ספטמבר או אחרי → שנה נוכחית היא שנת התחלה
+      startYear = year;
+      endYear = year + 1;
+    } else { // ינואר–אוגוסט → שנה קודמת היא שנת התחלה
+      startYear = year - 1;
+      endYear = year;
+    }
+  
+    const fromDate = `${startYear}-09-01`;
+    const toDate = `${endYear}-08-31`;
+  
+    return { fromDate, toDate };
+  }
+  
+
   
   
   

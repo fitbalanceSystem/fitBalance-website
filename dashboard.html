@@ -53,7 +53,7 @@
 
     .slider-container {
       position: relative;
-      width: 1000px;
+      width: 900px;
       height: 500px;
       overflow: hidden;
       border-radius: 0.75rem;
@@ -144,7 +144,7 @@
       </nav>
     </div>
     <div class="text-center text-sm text-gray-400 mt-8">
-      <img src="images/logo.png" alt="Logo" class="w-20 h-20 mx-auto mb-2" />
+      <img src="images/logo.png" alt="Logo" class="w-40 h-40 mx-auto mb-4" />
       <h1 class="text-pink-600 text-2xl font-bold leading-tight">FitBalance</h1>
       <span class="text-xs text-gray-500">חוגי ספורט מתקדמים</span>
     </div>
@@ -154,11 +154,12 @@
   <main>
     <!-- כרטיסי סטטיסטיקה -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
       <!-- שיעורים שנותרו להשלמה -->
       <div class="bg-green-50 p-4 rounded-xl shadow flex items-center justify-between">
         <div>
-          <div class="text-xl font-bold" id="remaining-lessons">4</div>
-          <div class="text-sm text-gray-500">שיעורים שנותרו להשלמה</div>
+          <div class="text-xl font-bold" id="remaining-lessons">0</div>
+          <div class="text-sm text-gray-500">שיעורים שנותרו להשלמה השנה</div>
         </div>
         <i class="fas fa-book-open text-green-600 text-2xl"></i>
       </div>
@@ -166,8 +167,8 @@
       <!-- אחוז נוכחות כולל -->
       <div class="bg-blue-50 p-4 rounded-xl shadow flex items-center justify-between">
         <div>
-          <div class="text-xl font-bold" id="attendance-percentage">87%</div>
-          <div class="text-sm text-gray-500">אחוז נוכחות כולל</div>
+          <div class="text-xl font-bold" id="attendance-percentage">0%</div>
+          <div class="text-sm text-gray-500">השיעור הקרוב שלך</div>
         </div>
         <i class="fas fa-user-check text-blue-600 text-2xl"></i>
       </div>
@@ -175,28 +176,31 @@
       <!-- מספר חוגים פעילים -->
       <div class="bg-purple-50 p-4 rounded-xl shadow flex items-center justify-between">
         <div>
-          <div class="text-xl font-bold" id="active-classes">3</div>
+          <div class="text-xl font-bold" id="active-classes">0</div>
           <div class="text-sm text-gray-500">מספר חוגים פעילים</div>
         </div>
         <i class="fas fa-dumbbell text-purple-600 text-2xl"></i>
       </div>
     
-      <!-- מטרת החוג הבא -->
+      <!-- המטרה הבאה שלך -->
       <div class="bg-pink-50 p-4 rounded-xl shadow flex items-center justify-between">
         <div>
-          <div class="text-xl font-bold" id="next-class-goal">שיפור סיבולת לב-ריאה</div>
+          <div class="text-xl font-bold" id="next-class-goal">—</div>
           <div class="text-sm text-gray-500">המטרה הבאה שלך</div>
         </div>
         <i class="fas fa-bullseye text-pink-600 text-2xl"></i>
       </div>
+    
     </div>
+    
     
 
     <div class="flex flex-col lg:flex-row gap-6 justify-center">
       <!-- סליידר -->
-      <div class="slider-container flex-shrink-0" style="width:1000px; height:500px;">
+      <div class="slider-container flex-shrink-0" style="width:900px; height:500px;">
         <div class="slide"><img src="images/Gold.png"></div>
         <div class="slide"><img src="images/Purple.png"></div>
+        <div class="slide"><img src="images/short.png"></div>
 
         <div id="prev" class="slider-button"><i class="fas fa-chevron-left text-gray-700"></i></div>
         <div id="next" class="slider-button"><i class="fas fa-chevron-right text-gray-700"></i></div>
@@ -211,15 +215,22 @@
         </h3>
         <ul class="space-y-4">
           <li class="border-b pb-2">
-            <p class="font-bold text-pink-700">שינוי מועד חוג יוגה</p>
-            <p class="text-sm text-gray-500">היוגה של יום חמישי עברה לשעה 18:30</p>
+            <p class="font-bold text-pink-700">שיעור חדש - יוגה</p>
+            <p class="text-sm text-gray-500">נשימות ומודעות לגוף, ימי שלישי שעה 18:30</p>
           </li>
-          <li>
-            <p class="font-bold text-green-600">חוג חדש: HIIT</p>
-            <p class="text-sm text-gray-500">שיעור אינטנסיבי בימי שני 20:00</p>
+          <li class="border-b pb-2">
+            <p class="font-bold text-green-600">שיעור חדש: HIT</p>
+            <p class="text-sm text-gray-500">שיעור אינטנסיבי לשריפת שומנים בימי חמישי 19:30</p>
+            <p class="text-sm text-gray-500">יתכן שיעבור לימי ראשון באותה שעה</p>
+          </li>
+          <li class="border-b pb-2">
+            <p class="font-bold text-pink-700">שיעור חדש: ביילה</p>
+            <p class="text-sm text-gray-500">לרקוד בכייף במגוון סגנונות </p>
+            <p class="text-sm text-gray-500">בימי שני 20:30 יתכן שיוקדם</p>
           </li>
         </ul>
       </div>
+      
     </div>
 
   </main>

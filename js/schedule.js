@@ -91,7 +91,7 @@ async function renderSchedule(sessions, mySessionIds, weekDates, programsMap, br
     grid.innerHTML = '';
 
     for (let i = 0; i < 7; i++) {
-        const daySessions = sessions.filter(s => s.date === getDateOnly(weekDates[i]));
+        const daySessions = sessions.filter(s => s.date === getDateOnly(weekDates[i+1]));
         const col = document.createElement('div');
         col.className = 'space-y-3';
 

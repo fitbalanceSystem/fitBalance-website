@@ -32,6 +32,7 @@ async function loadSchedule() {
     try {
         const user = await getCurrentUser();
         const weekDates = getDatesForWeek(currentWeekStart);
+
         document.getElementById('weekRange').textContent = 'טוען...';
         document.getElementById('scheduleGrid').innerHTML = '<div class="col-span-7 text-center text-gray-400">טוען שיעורים...</div>';
 
@@ -52,8 +53,8 @@ async function loadSchedule() {
 
 async function loadSessionsInRange(startDate, endDate) {
     const { data } = await selectFromTabletype('program_sessions', {
-        gte: ['date', startDate.toISOString().slice(0, 10)],
-        lte: ['date', endDate.toISOString().slice(0, 10)]
+        gte: ['date', formatDateForDb(startDate)],
+        lte: ['date', formatDateForDb(endDate)]
     });
     return data || [];
 }
@@ -82,16 +83,29 @@ async function loadInstructors() {
     return Object.fromEntries((data || []).map(row => [row.id, `${row.firstName}`]));
 }
 
-function getDateOnly(date) {
-    return new Date(date).toISOString().slice(0, 10);
+// --- עזרי תאריכים ---
+
+// להחזיר תאריך בפורמט YYYY-MM-DD ל-DB
+function formatDateForDb(date) {
+    return date.toISOString().slice(0, 10);
 }
 
+// מאפס שעות ומחזיר timestamp (כדי להשוות ימים בלי שיבושי timezone)
+function getDateOnly(date) {
+    const d = new Date(date);
+    d.setHours(0,0,0,0);
+    return d.getTime();
+}
+
+// --- ציור מערכת השעות ---
 async function renderSchedule(sessions, mySessionIds, weekDates, programsMap, branchesMap, instructorsMap) {
     const grid = document.getElementById('scheduleGrid');
     grid.innerHTML = '';
 
     for (let i = 0; i < 7; i++) {
-        const daySessions = sessions.filter(s => s.date === getDateOnly(weekDates[i+1]));
+        const currentDate = getDateOnly(weekDates[i]);
+        const daySessions = sessions.filter(s => getDateOnly(s.date) === currentDate);
+
         const col = document.createElement('div');
         col.className = 'space-y-3';
 
@@ -138,9 +152,10 @@ async function renderSchedule(sessions, mySessionIds, weekDates, programsMap, br
     }
 }
 
+// --- עזרי שבוע ---
 function getStartOfWeek(date) {
     const d = new Date(date);
-    const day = d.getDay();
+    const day = d.getDay(); // 0=Sunday ... 6=Saturday
     const diff = d.getDate() - day;
     return new Date(d.setDate(diff));
 }
@@ -167,6 +182,7 @@ function updateWeekDates(startDate) {
     });
 }
 
+// --- מודל ---
 function openModal(name, time, branch, instructor, date, isAssigned, session_id) {
     showSpinner();
     try {
@@ -194,6 +210,7 @@ function closeModal() {
     document.getElementById('lessonModal').classList.add('hidden');
 }
 
+// --- כפתורים במודל ---
 document.getElementById('cancelParticipationBtn').addEventListener('click', async () => {
     if (!currentSession) return;
 

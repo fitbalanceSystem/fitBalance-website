@@ -60,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadDashboard(userId) {
   try {
     const { fromDate, toDate } = getAcademicYearRange();
-
     const [goal, remainingLessons, closest, activeClasses] = await Promise.all([
       getNextGoal(userId),
       getRemainingLessons(userId.id, fromDate, toDate),
@@ -122,19 +121,20 @@ async function getNextGoal(userId) {
 }
 
 async function getRemainingLessons(customerId, fromDate, toDate) {
+  console.log(customerId,fromDate, toDate );
   try {
     const totalLessons = await selectFromTable('attendance_with_session', {
       customer_id: customerId,
       status_code: 1,
       session_date: { gte: fromDate, lte: toDate }
     });
+    console.log("totalLessons");
+console.log(totalLessons);
+const now = new Date().toISOString().split('T')[0];
+    const attendedLessons = totalLessons.filter(s => s.date <= now);
 
-    const attendedLessons = await selectFromTable('attendance_with_session', {
-      customer_id: customerId,
-      is_present: true,
-      session_date: { gte: fromDate, lte: toDate }
-    });
-
+    console.log("attendedLessons");
+console.log(attendedLessons);
     return totalLessons.length - attendedLessons.length;
 
   } catch (err) {

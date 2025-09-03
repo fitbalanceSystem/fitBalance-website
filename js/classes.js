@@ -37,7 +37,7 @@ async function loadProgramsForYear(userId, year) {
     const yearLabel = document.querySelector('.year-label');
     container.innerHTML = '';
 
-    const fromDate = `${year}-09-02`;
+    const fromDate = `${year}-09-01`;
     const toDate = `${year + 1}-08-31`;
 
     if (yearLabel) yearLabel.textContent = `${year} - ${year + 1}`;
@@ -48,10 +48,7 @@ async function loadProgramsForYear(userId, year) {
       start_date: { lte: new Date(toDate).toISOString() },
       end_date: { gte: new Date(fromDate).toISOString() }
     });
-    console.log("enrollments");
-console.log(enrollments);
-console.log(enrollments.length);
-    // בדיקה אם אין שום תוכניות בשנה
+
     if (!enrollments || enrollments.length === 0) {
       if (summary) {
         summary.innerHTML = `בשנת ${year}–${year + 1} לא נמצאו תוכניות פעילות עבורך.`;
@@ -61,7 +58,6 @@ console.log(enrollments.length);
           <p>לא נמצאו תוכניות לחוגים עבורך בשנה זו.</p>
         </div>
       `;
-      // מסתירים גם את קוביית ההשלמות
       const makeupsBox = document.getElementById('makeups-box');
       if (makeupsBox) makeupsBox.style.display = 'none';
       return;
@@ -74,6 +70,8 @@ console.log(enrollments.length);
     // שליפת כל הנוכחויות של המשתמש
     const attendanceRecords = await selectFromTable('attendance_with_session', { customer_id: userId });
 
+    const now = new Date(); // הזמן הנוכחי
+
     for (const enr of enrollments) {
       // שליפה של פרטי התוכנית
       const [program] = await selectFromTable('programs', { id: enr.program_id });
@@ -85,68 +83,50 @@ console.log(enrollments.length);
         date: { gte: enr.start_date, lte: enr.end_date }
       });
 
-      const filteredSessions = sessions.filter(s => s.date >= fromDate && s.date <= toDate);
-      const now = new Date().toISOString().split('T')[0];
-      const pastSessions = filteredSessions.filter(s => s.date <= now);
-
-      console.log("filteredSessions");
-      console.log(filteredSessions);
-      // אם אין שיעורים – דלג על התוכנית
-      // if (!pastSessions.length) continue;
+      // סינון המפגשים שהתקיימו בפועל עד עכשיו
+      const pastSessions = sessions.filter(s => {
+        const sessionDateTime = new Date(`${s.date}T${s.time}`);
+        return sessionDateTime >= new Date(fromDate) && sessionDateTime <= now;
+      });
 
       const sessionIds = pastSessions.map(s => s.id);
 
-      // סינון נוכחות רלוונטית למפגשים
-      // const relevantAttendance = attendanceRecords.filter(a => sessionIds.includes(a.session_id));
+      // סינון נוכחות רלוונטית למפגשים שהתקיימו
+      const relevantAttendance = attendanceRecords.filter(a => {
+        const sessionTime = a.time || "00:00";
+        const sessionDateTime = new Date(`${a.session_date}T${sessionTime}`);
+        return sessionDateTime >= new Date(fromDate) && sessionDateTime <= now;
+      });
 
+      const attended = relevantAttendance.filter(a =>
+        a.is_present && a.status_code === 1 && sessionIds.includes(a.session_id)
+      ).length;
 
-      const relevantAttendance = attendanceRecords.filter(s => s.session_date >= fromDate && s.session_date <= toDate);
-      console.log("relevantAttendance");
-      console.log(relevantAttendance);
-      const attended = relevantAttendance.filter(a => a.is_present && a.status_code === 1 && sessionIds.includes(a.session_id)).length;
-      const makeups = relevantAttendance.filter(a => a.is_present && a.status_code === 2).length;
-  
-      console.log("attended");
-      console.log(attended);
-      
-      console.log("makeups");
-      console.log(makeups);
+      const makeups = relevantAttendance.filter(a =>
+        a.is_present && a.status_code === 2
+      ).length;
+
       totalSessions += pastSessions.length;
       totalAttendance += attended;
       totalMakeups = makeups;
 
-
-      // const attended = relevantAttendance.filter(a => a.is_present && a.status_code === 1).length;
-      // const makeups = relevantAttendance.filter(a => a.is_present && a.status_code === 2).length;
-
-      // אם אין נוכחות וגם אין השלמות – דלג על התוכנית
-      // if (attended === 0 && makeups === 0) continue;
-
-
-      console.log("enr");
-console.log(enr);
       const card = createProgramCard(program, enr, attended, pastSessions.length, "program");
       container.insertAdjacentHTML('beforeend', card);
     }
 
     // סיכום
     if (summary) {
-        summary.innerHTML = `
-          בשנת ${year}–${year + 1} נרשמת ל־${enrollments.length} חוגים.<br>
-          התקיימו ${totalSessions} שיעורים עד כה, הגעת ל־${totalAttendance}, השלמת ${totalMakeups},<br>
-          נותרו לך ${Math.max(0, totalSessions - totalAttendance - totalMakeups)} שיעורים להשלמה.
-        `;
+      summary.innerHTML = `
+        בשנת ${year}–${year + 1} נרשמת ל־${enrollments.length} חוגים.<br>
+        התקיימו ${totalSessions} שיעורים עד כה, הגעת ל־${totalAttendance}, השלמת ${totalMakeups},<br>
+        נותרו לך ${Math.max(0, totalSessions - totalAttendance - totalMakeups)} שיעורים להשלמה.
+      `;
     }
 
     const makeupsBox = document.getElementById('makeups-box');
-
     if (makeupsBox) {
-      if (!enrollments || enrollments.length === 0) {
-        // אין תוכניות בכלל → מסתיר
-        makeupsBox.style.display = 'none';
-      } else {
-        // יש תוכניות → מציג הקובייה תמיד, גם אם totalMakeups === 0
-        makeupsBox.style.display = 'block';
+      makeupsBox.style.display = enrollments.length > 0 ? 'block' : 'none';
+      if (enrollments.length > 0) {
         makeupsBox.querySelector('p').textContent = `סה"כ השלמות שבוצעו: ${totalMakeups}`;
       }
     }
@@ -157,6 +137,7 @@ console.log(enr);
     hideSpinner();
   }
 }
+
 
 
 // ✨ קובייה אחת לתוכנית
@@ -170,7 +151,7 @@ function createProgramCard(program, enr, attended, total, type = "program") {
         <h2 class="text-lg font-bold">${program.name}</h2>
         <span class="text-sm text-gray-500">${program.instructor || ''}</span>
       </div>
-      <p class="text-sm text-gray-600 mb-1">${getHebrewDayName(program.day-1) || ''} | ${formatTime(program.time) || ''}</p>
+      <p class="text-sm text-gray-600 mb-1">${getHebrewDayName(program.day - 1) || ''} | ${formatTime(program.time) || ''}</p>
       <p class="text-xs text-gray-500 mb-1">${formatDate(enr.start_date)} - ${formatDate(enr.end_date)}</p>
       <p class="text-sm text-gray-700 mt-2">נוכחת ב־${attended} מתוך ${total} מפגשים</p>
       <button class="mt-3 text-sm underline show-attendance" data-type="${type}" data-program-id="${program.id}" data-program-name="${program.name}">הצג נוכחות</button>
@@ -203,6 +184,8 @@ function setupAttendanceButtons(fromDate, toDate, userId) {
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const type = button.dataset.type;
+      const fromDateTime = new Date(fromDate);
+      const toDateTime = new Date(toDate);
 
       if (type === 'program') {
         // -----------------------
@@ -215,7 +198,12 @@ function setupAttendanceButtons(fromDate, toDate, userId) {
           program_id: programId
         });
 
-        const filteredSessions = sessions.filter(s => s.date >= fromDate && s.date <= toDate);
+        // סינון לפי תאריך + שעה
+        const filteredSessions = sessions.filter(s => {
+          const sessionDateTime = new Date(`${s.date}T${s.time}`);
+          return sessionDateTime >= fromDateTime && sessionDateTime <= toDateTime;
+        });
+
         if (!filteredSessions.length) return;
 
         const sessionIds = filteredSessions.map(s => s.id);
@@ -228,29 +216,27 @@ function setupAttendanceButtons(fromDate, toDate, userId) {
           sessionIds.includes(a.session_id) && a.is_present
         );
 
-// קודם ממיינים את הרשומות לפי התאריך
-const sortedAttended = attended.sort((a, b) => {
-  const sessionA = sessions.find(s => s.id === a.session_id);
-  const sessionB = sessions.find(s => s.id === b.session_id);
-  
-  return new Date(sessionA.date) - new Date(sessionB.date);
-});
+        // ממיינים את הרשומות לפי התאריך המלא
+        const sortedAttended = attended.sort((a, b) => {
+          const sessionA = sessions.find(s => s.id === a.session_id);
+          const sessionB = sessions.find(s => s.id === b.session_id);
+          return new Date(`${sessionA.date}T${sessionA.time}`) - new Date(`${sessionB.date}T${sessionB.time}`);
+        });
 
-// ואז מייצרים את השורות
-const tableRows = sortedAttended.map(a => {
-  const session = sessions.find(s => s.id === a.session_id);
-  const date = session.date;
-  const day = getHebrewDayName(new Date(date).getDay());
-  const time = session.time;
+        // מייצרים את השורות
+        const tableRows = sortedAttended.map(a => {
+          const session = sessions.find(s => s.id === a.session_id);
+          const date = session.date;
+          const day = getHebrewDayName(new Date(date).getDay());
+          const time = session.time;
 
-  return `<tr>
-    <td class="border px-2 py-1 text-right">${formatDate(date)}</td>
-    <td class="border px-2 py-1 text-right">${day}</td>
-    <td class="border px-2 py-1 text-right">${formatTime(time)}</td>
-    <td class="border px-2 py-1 text-right">${programName}</td>
-  </tr>`;
-}).join('');
-
+          return `<tr>
+            <td class="border px-2 py-1 text-right">${formatDate(date)}</td>
+            <td class="border px-2 py-1 text-right">${day}</td>
+            <td class="border px-2 py-1 text-right">${formatTime(time)}</td>
+            <td class="border px-2 py-1 text-right">${programName}</td>
+          </tr>`;
+        }).join('');
 
         const modalBody = `
           <div class="bg-white rounded-lg p-4 max-w-xl mx-auto mt-10 shadow-lg">
@@ -281,18 +267,17 @@ const tableRows = sortedAttended.map(a => {
           customer_id: userId
         });
 
-        console.log("attendance");
-console.log(attendance);
         // רק השלמות בשנה הנוכחית
-        const makeups = attendance.filter(a =>
-          a.is_present &&
-          a.status_code === 2 &&
-          a.session_date >= fromDate &&
-          a.session_date <= toDate
-        );
+        const makeups = attendance.filter(a => {
+          const sessionDateTime = new Date(`${a.session_date}T${a.time}`);
+          return (
+            a.is_present &&
+            a.status_code === 2 &&
+            sessionDateTime >= fromDateTime &&
+            sessionDateTime <= toDateTime
+          );
+        });
 
-        console.log("makeups");
-console.log(makeups);
         if (!makeups.length) {
           openModal(`
             <div class="bg-white rounded-lg p-4 max-w-xl mx-auto mt-10 shadow-lg">
@@ -303,26 +288,29 @@ console.log(makeups);
               </div>
             </div>
           `);
+          hideSpinner();
           return;
         }
-// ממיינים את רשומות ההשלמות לפי תאריך
-const sortedMakeups = makeups.sort((a, b) => new Date(a.session_date) - new Date(b.session_date));
 
-// מייצרים את שורות הטבלה אחרי המיון
-const tableRows = sortedMakeups.map(a => {
-  const date = a.session_date;
-  const day = getHebrewDayName((a.day) - 1);
-  const time = a.time;
-  const programName = a.name || 'לא ידוע';
+        // מיון ההשלמות לפי תאריך מלא
+        const sortedMakeups = makeups.sort((a, b) =>
+          new Date(`${a.session_date}T${a.time}`) - new Date(`${b.session_date}T${b.time}`)
+        );
 
-  return `<tr>
-    <td class="border px-2 py-1 text-right">${formatDate(date)}</td>
-    <td class="border px-2 py-1 text-right">${day}</td>
-    <td class="border px-2 py-1 text-right">${formatTime(time)}</td>
-    <td class="border px-2 py-1 text-right">${programName}</td>
-  </tr>`;
-}).join('');
+        // יצירת השורות
+        const tableRows = sortedMakeups.map(a => {
+          const date = a.session_date;
+          const day = getHebrewDayName((a.day) - 1);
+          const time = a.time;
+          const programName = a.name || 'לא ידוע';
 
+          return `<tr>
+            <td class="border px-2 py-1 text-right">${formatDate(date)}</td>
+            <td class="border px-2 py-1 text-right">${day}</td>
+            <td class="border px-2 py-1 text-right">${formatTime(time)}</td>
+            <td class="border px-2 py-1 text-right">${programName}</td>
+          </tr>`;
+        }).join('');
 
         const modalBody = `
           <div class="bg-white rounded-lg p-4 max-w-xl mx-auto mt-10 shadow-lg">
@@ -352,37 +340,38 @@ const tableRows = sortedMakeups.map(a => {
 }
 
 
+
 function openModal(content) {
-    showSpinner();
-    try{
-  // מחיקת מודאל קודם אם קיים
-  const existing = document.getElementById('dynamicModal');
-  if (existing) existing.remove();
+  showSpinner();
+  try {
+    // מחיקת מודאל קודם אם קיים
+    const existing = document.getElementById('dynamicModal');
+    if (existing) existing.remove();
 
-  // יצירת שכבת רקע
-  const overlay = document.createElement('div');
-  overlay.id = 'dynamicModal';
-  overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    // יצירת שכבת רקע
+    const overlay = document.createElement('div');
+    overlay.id = 'dynamicModal';
+    overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
 
-  // הכנסת התוכן שקיבלת
-  overlay.innerHTML = `
+    // הכנסת התוכן שקיבלת
+    overlay.innerHTML = `
     <div class="relative bg-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-auto">
       ${content}
       <button id="modalCloseButton" class="absolute top-2 left-2 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
     </div>
   `;
 
-  document.body.appendChild(overlay);
+    document.body.appendChild(overlay);
 
-  // סגירה בלחיצה על הכפתור או מחוץ לחלון
-  overlay.querySelector('#modalCloseButton')?.addEventListener('click', () => overlay.remove());
-  overlay.querySelector('#closeModal')?.addEventListener('click', () => overlay.remove());
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) overlay.remove();
-  });
-} finally{
+    // סגירה בלחיצה על הכפתור או מחוץ לחלון
+    overlay.querySelector('#modalCloseButton')?.addEventListener('click', () => overlay.remove());
+    overlay.querySelector('#closeModal')?.addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+  } finally {
     hideSpinner();
-}
+  }
 }
 
 function getHebrewDayName(dayIndex) {

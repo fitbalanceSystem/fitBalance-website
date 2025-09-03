@@ -37,24 +37,35 @@ export function getCurrentUser() {
   }
   
 
-  export function getAcademicYearRange(today = new Date()) {
-    const year = today.getFullYear();
-    const month = today.getMonth() + 1; // חודשים מ־0
-    let startYear, endYear;
-  
-    if (month >= 9) { // ספטמבר או אחרי → שנה נוכחית היא שנת התחלה
-      startYear = year;
-      endYear = year + 1;
-    } else { // ינואר–אוגוסט → שנה קודמת היא שנת התחלה
-      startYear = year - 1;
-      endYear = year;
-    }
-  
-    const fromDate = `${startYear}-09-01`;
-    const toDate = `${endYear}-08-31`;
-  
-    return { fromDate, toDate };
+/**
+ * מחזיר את טווח השנה האקדמית הנוכחית (מ-1/9 ועד 31/8),
+ * כולל שעות התחלה וסיום, כדי שניתן יהיה להשתמש ב־Date+Time.
+ * @param {Date} today – התאריך הנוכחי (ברירת מחדל: היום)
+ * @returns {{fromDate: string, toDate: string}}
+ */
+export function getAcademicYearRange(today = new Date()) {
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1; // חודשים מ־0 → +1
+
+  let startYear, endYear;
+
+  if (month >= 9) {
+    // ספטמבר–דצמבר → שנה נוכחית היא שנת התחלה
+    startYear = year;
+    endYear = year + 1;
+  } else {
+    // ינואר–אוגוסט → שנה קודמת היא שנת התחלה
+    startYear = year - 1;
+    endYear = year;
   }
+
+  // מה-1 בספטמבר 00:00:00 עד 31 באוגוסט 23:59:59
+  const fromDate = `${startYear}-09-01T00:00:00`;
+  const toDate = `${endYear}-06-30T23:59:59`;
+
+  return { fromDate, toDate };
+}
+
   
 
   

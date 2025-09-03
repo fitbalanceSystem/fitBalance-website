@@ -63,7 +63,7 @@ async function loadDashboard(userId) {
     const [goal, remainingLessons, closest, activeClasses] = await Promise.all([
       getNextGoal(userId),
       getRemainingLessons(userId.id, fromDate, toDate),
-      getClosestSession(userId.id, fromDate, toDate),
+      getClosestUpcomingSession(userId.id),
       getActiveClasses(userId.id)
     ]);
 
@@ -73,12 +73,20 @@ async function loadDashboard(userId) {
 
     const attendanceEl = document.getElementById('attendance-percentage');
     attendanceEl.textContent = '';
-
+    
     if (closest) {
-      attendanceEl.textContent = formatDateSimple(closest.session_date);
+      const sessionDate = new Date(closest.date);
+      const today = new Date();
+      const isToday =
+        sessionDate.getFullYear() === today.getFullYear() &&
+        sessionDate.getMonth() === today.getMonth() &&
+        sessionDate.getDate() === today.getDate();
+    
+      attendanceEl.textContent = isToday ? 'היום' : formatDateSimple(closest.date);
+    
       const infoEl = document.createElement('div');
       infoEl.className = 'text-sm text-gray-500 mt-1';
-      infoEl.textContent = `${getHebrewDayName((closest.day)-1)}, ${formatTimeHHMM(closest.time)}, ${closest.name}`;
+      infoEl.textContent = `${getHebrewDayName(sessionDate.getDay())}, ${formatTimeHHMM(closest.time)}, ${closest.name}`;
       attendanceEl.appendChild(infoEl);
     } else {
       attendanceEl.textContent = 'אין שיעורים קרובים';
@@ -121,21 +129,53 @@ async function getNextGoal(userId) {
 }
 
 async function getRemainingLessons(customerId, fromDate, toDate) {
-  console.log(customerId,fromDate, toDate );
   try {
-    const totalLessons = await selectFromTable('attendance_with_session', {
-      customer_id: customerId,
-      status_code: 1,
-      session_date: { gte: fromDate, lte: toDate }
-    });
-    console.log("totalLessons");
-console.log(totalLessons);
-const now = new Date().toISOString().split('T')[0];
-    const attendedLessons = totalLessons.filter(s => s.date <= now);
+    const now = new Date();
 
-    console.log("attendedLessons");
-console.log(attendedLessons);
-    return totalLessons.length - attendedLessons.length;
+    // 1️⃣ שליפת כל ההרשמות של המשתמש לשנה
+    const enrollments = await selectFromTable('program_enrollments', {
+      customer_id: customerId,
+      start_date: { lte: toDate },
+      end_date: { gte: fromDate }
+    });
+
+    if (!enrollments.length) return 0;
+
+    // 2️⃣ שליפת כל המפגשים של כל התוכניות שהמשתמש רשום אליהן
+    const allSessionsPromises = enrollments.map(enr =>
+      selectFromTable('program_sessions', {
+        program_id: enr.program_id
+      })
+    );
+
+    const sessionsArrays = await Promise.all(allSessionsPromises);
+    const allSessions = sessionsArrays.flat();
+
+    // 3️⃣ סינון רק מפגשים שהתקיימו עד עכשיו (כולל שעה)
+    const pastSessions = allSessions.filter(s => {
+      const sessionDateTime = new Date(`${s.date}T${s.time}`);
+      return sessionDateTime <= now;
+    });
+
+    const sessionIds = pastSessions.map(s => s.id);
+
+    if (sessionIds.length === 0) return 0;
+
+    // 4️⃣ שליפת כל הנוכחויות של המשתמש לשיעורים אלו
+    const attendanceRecordsAll = await selectFromTable('session_attendance', {
+      customer_id: customerId,
+      is_present: true
+    });
+
+    // 5️⃣ סינון ב־JS לפי sessionIds ו־status_code (1 = נוכחות רגילה, 2 = השלמה)
+    const attendedSessions = attendanceRecordsAll.filter(a =>
+      sessionIds.includes(a.session_id) && (a.status_code === 1 || a.status_code === 2)
+    );
+
+    // 6️⃣ חישוב מספר השיעורים שנותרו להשלמה
+    const remainingLessons = pastSessions.length - attendedSessions.length;
+
+    return remainingLessons;
 
   } catch (err) {
     console.error('שגיאה ב־getRemainingLessons:', err.message);
@@ -143,19 +183,59 @@ console.log(attendedLessons);
   }
 }
 
-async function getClosestSession(customerId, fromDate, toDate) {
-  const sessions = await selectFromTable('attendance_with_session', { customer_id: customerId });
-  const today = new Date();
-  if (!sessions || sessions.length === 0) return 0;
+async function getClosestUpcomingSession(customerId) {
+  const now = new Date();
 
-  const futureSessions = sessions
-    .map(s => ({ ...s, dateObj: new Date(s.session_date) }))
-    .filter(s => s.dateObj >= today);
+  // 1️⃣ שנה אקדמית
+  const { fromDate, toDate } = getAcademicYearRange();
 
-  if (futureSessions.length === 0) return 0;
-  futureSessions.sort((a, b) => a.dateObj - b.dateObj);
-  return futureSessions[0];
+  // 2️⃣ שליפת כל ההרשמות של המשתמש
+  const enrollments = await selectFromTable('program_enrollments', {
+    customer_id: customerId,
+    start_date: { lte: toDate },
+    end_date: { gte: fromDate }
+  });
+
+  if (!enrollments || enrollments.length === 0) return null;
+
+  // 3️⃣ שליפת כל המפגשים של כל התוכניות
+  const allSessionsPromises = enrollments.map(async enr => {
+    const sessions = await selectFromTable('program_sessions', { program_id: enr.program_id });
+    // 4️⃣ מצרפים גם את program_id לשיעורים
+    return sessions.map(s => ({ ...s, program_id: enr.program_id }));
+  });
+
+  const sessionsArrays = await Promise.all(allSessionsPromises);
+  const allSessions = sessionsArrays.flat();
+
+  // 5️⃣ סינון שיעורים שהעתידיים לעכשיו
+  const futureSessions = allSessions.filter(s => {
+    const sessionDateTime = new Date(`${s.date}T${s.time}`);
+    return sessionDateTime >= now;
+  });
+
+  if (futureSessions.length === 0) return null;
+
+  // 6️⃣ מיון לפי הקרוב ביותר
+  futureSessions.sort((a, b) => {
+    const aTime = new Date(`${a.date}T${a.time}`);
+    const bTime = new Date(`${b.date}T${b.time}`);
+    return aTime - bTime;
+  });
+
+  // 7️⃣ שליפת שם השיעור מהטבלה programs
+  const closestSession = futureSessions[0];
+  const [program] = await selectFromTable('programs', { id: closestSession.program_id });
+  if (program) {
+    closestSession.name = program.name;
+  } else {
+    closestSession.name = 'לא ידוע';
+  }
+
+  return closestSession;
 }
+
+
 
 async function getActiveClasses(customerId) {
   const today = new Date().toISOString().split('T')[0];

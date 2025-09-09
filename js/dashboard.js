@@ -132,56 +132,69 @@ async function getRemainingLessons(customerId, fromDate, toDate) {
   try {
     const now = new Date();
 
-    // 1️⃣ שליפת כל ההרשמות של המשתמש לשנה
+    // 1️⃣ שליפת ההרשמות של המשתמש
     const enrollments = await selectFromTable('program_enrollments', {
       customer_id: customerId,
       start_date: { lte: toDate },
       end_date: { gte: fromDate }
     });
-
     if (!enrollments.length) return 0;
 
-    // 2️⃣ שליפת כל המפגשים של כל התוכניות שהמשתמש רשום אליהן
+    // 2️⃣ שליפת כל המפגשים של כל התוכניות
     const allSessionsPromises = enrollments.map(enr =>
-      selectFromTable('program_sessions', {
-        program_id: enr.program_id
-      })
+      selectFromTable('program_sessions', { program_id: enr.program_id })
     );
-
     const sessionsArrays = await Promise.all(allSessionsPromises);
     const allSessions = sessionsArrays.flat();
 
-    // 3️⃣ סינון רק מפגשים שהתקיימו עד עכשיו (כולל שעה)
+    // 3️⃣ סינון רק מפגשים שהיו עד עכשיו ובטווח התאריכים
     const pastSessions = allSessions.filter(s => {
       const sessionDateTime = new Date(`${s.date}T${s.time}`);
-      return sessionDateTime <= now;
+      return (
+        sessionDateTime >= new Date(fromDate) &&
+        sessionDateTime <= now &&
+        sessionDateTime <= new Date(toDate)
+      );
     });
 
-    const sessionIds = pastSessions.map(s => s.id);
+    if (!pastSessions.length) return 0;
 
-    if (sessionIds.length === 0) return 0;
+    const pastSessionIds = pastSessions.map(s => s.id);
 
-    // 4️⃣ שליפת כל הנוכחויות של המשתמש לשיעורים אלו
-    const attendanceRecordsAll = await selectFromTable('session_attendance', {
+    // 4️⃣ שליפת כל הנוכחויות של המשתמש
+    const attendanceRecords = await selectFromTable('attendance_with_session', {
       customer_id: customerId,
       is_present: true
     });
-
-    // 5️⃣ סינון ב־JS לפי sessionIds ו־status_code (1 = נוכחות רגילה, 2 = השלמה)
-    const attendedSessions = attendanceRecordsAll.filter(a =>
-      sessionIds.includes(a.session_id) && (a.status_code === 1 || a.status_code === 2)
+    // 5️⃣ נוכחויות רגילות (רק למפגשים שלה)
+    const attendedRegular = attendanceRecords.filter(a =>
+      a.is_present === true &&
+      a.status_code === 1 &&
+      pastSessionIds.includes(a.session_id)
     );
 
-    // 6️⃣ חישוב מספר השיעורים שנותרו להשלמה
-    const remainingLessons = pastSessions.length - attendedSessions.length;
+    // 6️⃣ השלמות (בלי קשר להרשמות, רק לפי תאריכים)
+    // מתוך הטבלה attendance_with_session בלבד
+const makeups = attendanceRecords.filter(a => {
+  return a.is_present === true &&
+         a.status_code === 2 &&
+         new Date(a.session_date) >= new Date(fromDate) &&
+         new Date(a.session_date) <= new Date(toDate);
+});
 
-    return remainingLessons;
+    // 7️⃣ חישוב
+    const totalAttended = attendedRegular.length + makeups.length;
+    const remainingLessons = pastSessions.length - totalAttended;
+
+    return Math.max(0, remainingLessons);
 
   } catch (err) {
     console.error('שגיאה ב־getRemainingLessons:', err.message);
     return 0;
   }
 }
+
+
 
 async function getClosestUpcomingSession(customerId) {
   const now = new Date();

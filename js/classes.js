@@ -83,11 +83,13 @@ async function loadProgramsForYear(userId, year) {
         date: { gte: enr.start_date, lte: enr.end_date }
       });
 
-      // סינון המפגשים שהתקיימו בפועל עד עכשיו
-      const pastSessions = sessions.filter(s => {
-        const sessionDateTime = new Date(`${s.date}T${s.time}`);
-        return sessionDateTime >= new Date(fromDate) && sessionDateTime <= now;
-      });
+// סינון המפגשים שהתקיימו בפועל עד עכשיו וגם שסטטוס שונה מ-2
+const pastSessions = sessions
+  .filter(s => s.status !== 2) // 🔹 סינון סטטוס שונה מ-2
+  .filter(s => {
+    const sessionDateTime = new Date(`${s.date}T${s.time}`);
+    return sessionDateTime >= new Date(fromDate) && sessionDateTime <= now;
+  });
 
       const sessionIds = pastSessions.map(s => s.id);
 

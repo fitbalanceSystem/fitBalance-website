@@ -21,12 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('nextWeek').addEventListener('click', () => changeWeek(7));
 });
 
-function changeWeek(offset) {
-    currentWeekStart.setDate(currentWeekStart.getDate() + offset);
-    loadSchedule();
-    updateWeekDates(currentWeekStart);
-}
-
 async function loadSchedule() {
     showSpinner();
     try {
@@ -83,6 +77,33 @@ async function loadInstructors() {
     return Object.fromEntries((data || []).map(row => [row.id, `${row.firstName}`]));
 }
 
+
+
+
+function updateWeekDates(startDate) {
+    const dateSpans = document.querySelectorAll('#weekDays .date');
+    const current = new Date(startDate);
+    dateSpans.forEach(span => {
+        span.textContent = `${current.getDate()}/${current.getMonth() + 1}`;
+        current.setDate(current.getDate() + 1);
+    });
+}
+
+function closeModal() {
+    document.getElementById('lessonModal').classList.add('hidden');
+}
+
+
+function changeWeek(offset) {
+    currentWeekStart.setDate(currentWeekStart.getDate() + offset);
+    loadSchedule();
+    updateWeekDates(currentWeekStart);
+}
+
+
+
+
+
 // --- עזרי תאריכים ---
 
 // להחזיר תאריך בפורמט YYYY-MM-DD ל-DB
@@ -104,7 +125,14 @@ async function renderSchedule(sessions, mySessionIds, weekDates, programsMap, br
 
     for (let i = 0; i < 7; i++) {
         const currentDate = getDateOnly(weekDates[i]);
-        const daySessions = sessions.filter(s => getDateOnly(s.date) === currentDate);
+        let daySessions = sessions.filter(s => getDateOnly(s.date) === currentDate);
+
+        // 🕒 מיון לפי שעה
+        daySessions.sort((a, b) => {
+            const timeA = a.time ? a.time.toString().padStart(5, '0') : '';
+            const timeB = b.time ? b.time.toString().padStart(5, '0') : '';
+            return timeA.localeCompare(timeB);
+        });
 
         const col = document.createElement('div');
         col.className = 'space-y-3';
@@ -127,9 +155,16 @@ async function renderSchedule(sessions, mySessionIds, weekDates, programsMap, br
 
             const box = document.createElement('div');
             box.classList.add('p-3', 'rounded', 'shadow', 'transition', 'cursor-pointer', 'relative');
-            box.classList.add(isAssigned ? 'session-assigned' : 'bg-pink-50');
 
-            if (isAssigned) {
+            // 🔹 רקע בהתאם לסטטוס
+            if (session.status === 2) {
+                box.classList.add('bg-gray-300'); // מבוטל – רקע אפור
+            } else {
+                box.classList.add(isAssigned ? 'session-assigned' : 'bg-pink-50');
+            }
+
+            // 🔹 תווית "את משובצת כאן" רק אם לא מבוטל
+            if (isAssigned && session.status !== 2) {
                 const tag = document.createElement('div');
                 tag.textContent = 'את משובצת כאן';
                 tag.className = 'absolute -top-2 -left-2 text-green-600 border border-green-400 bg-white rounded px-2 py-0.5 shadow-sm z-10';
@@ -138,19 +173,38 @@ async function renderSchedule(sessions, mySessionIds, weekDates, programsMap, br
                 box.appendChild(tag);
             }
 
+            // 🔹 תוכן הקוביה
             box.innerHTML += `
                 <p class="font-bold text-pink-700 text-lg">${name}</p>
                 <p class="text-sm text-gray-600 mt-1">${formatTime(session.time)} | ${branch}</p>
                 <p class="text-sm text-gray-500">${instructor}</p>
+                ${session.status === 2 ? '<p class="text-red-700 font-bold mt-1">מבוטל</p>' : ''}
+                ${session.note ? `<p class="text-gray-700 italic text-sm mt-1">${session.note}</p>` : ''}
+                ${session.makeup ? `<p class="text-blue-600 font-semibold text-sm mt-1">השלמה: ${session.makeup}</p>` : ''}
             `;
 
-            box.onclick = () => openModal(name, session.time, branch, instructor, session.date, isAssigned, session.id);
+            // 🔹 גם מפגש מבוטל נפתח במודאל
+            box.onclick = () => openModal(
+                name,
+                session.time,
+                branch,
+                instructor,
+                session.date,
+                isAssigned,
+                session.id,
+                session.notes,
+                session.has_makeup,
+                session.status
+            );
+
             col.appendChild(box);
         }
 
         grid.appendChild(col);
     }
 }
+
+
 
 // --- עזרי שבוע ---
 function getStartOfWeek(date) {
@@ -173,17 +227,10 @@ function formatWeekRange(weekDates) {
     return `${weekDates[0].toLocaleDateString('he-IL', options)} - ${weekDates[6].toLocaleDateString('he-IL', options)}`;
 }
 
-function updateWeekDates(startDate) {
-    const dateSpans = document.querySelectorAll('#weekDays .date');
-    const current = new Date(startDate);
-    dateSpans.forEach(span => {
-        span.textContent = `${current.getDate()}/${current.getMonth() + 1}`;
-        current.setDate(current.getDate() + 1);
-    });
-}
 
 // --- מודל ---
-function openModal(name, time, branch, instructor, date, isAssigned, session_id) {
+function openModal(name, time, branch, instructor, date, isAssigned, session_id, note = '', makeup = false, status = 1) {
+    console.log(name,note,makeup,status);
     showSpinner();
     try {
         document.getElementById('modalTitle').textContent = name;
@@ -191,14 +238,45 @@ function openModal(name, time, branch, instructor, date, isAssigned, session_id)
         document.getElementById('modalBranch').textContent = `סניף: ${branch}`;
         document.getElementById('modalInstructor').textContent = `מדריכה: ${instructor}`;
 
+        // הצגת סטטוס מבוטל אם יש
+        const statusEl = document.getElementById('modalStatus');
+        if (status === 2) {
+            statusEl.textContent = 'מבוטל';
+            statusEl.classList.remove('hidden');
+        } else {
+            statusEl.classList.add('hidden');
+        }
+
+        // הצגת הערות
+        const noteEl = document.getElementById('modalNote');
+        if (note) {
+            noteEl.textContent = note;
+            noteEl.classList.remove('hidden');
+        } else {
+            noteEl.classList.add('hidden');
+        }
+        // הצגת הודעת השלמה
+        const makeupEl = document.getElementById('modalMakeup');
+        if (status === 2)
+            if (makeup) {
+                makeupEl.textContent = '🔔 יש השלמה';
+                makeupEl.classList.remove('hidden');
+            } else {
+                makeupEl.textContent = 'אין השלמה';
+                makeupEl.classList.remove('hidden'); // 🟢 לא מוסתרים!
+            }
+        else{
+            makeupEl.classList.add('hidden');}
+
         currentSession = { name, time, date, session_id };
 
         const now = new Date();
         const sessionDateTime = new Date(`${date}T${formatTime(time)}`);
         const isFuture = sessionDateTime > now;
 
-        document.getElementById('cancelParticipationBtn').classList.toggle('hidden', !isAssigned || !isFuture);
-        document.getElementById('registerCompletionBtn').classList.toggle('hidden', isAssigned || !isFuture);
+        // כפתורים לא יוצגו אם מבוטל
+        document.getElementById('cancelParticipationBtn').classList.toggle('hidden', status === 2 || !isAssigned || !isFuture);
+        document.getElementById('registerCompletionBtn').classList.toggle('hidden', status === 2 || isAssigned || !isFuture);
 
         document.getElementById('lessonModal').classList.remove('hidden');
     } finally {
@@ -206,9 +284,7 @@ function openModal(name, time, branch, instructor, date, isAssigned, session_id)
     }
 }
 
-function closeModal() {
-    document.getElementById('lessonModal').classList.add('hidden');
-}
+
 
 // --- כפתורים במודל ---
 document.getElementById('cancelParticipationBtn').addEventListener('click', async () => {

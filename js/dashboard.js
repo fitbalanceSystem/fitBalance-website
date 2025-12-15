@@ -132,57 +132,62 @@ async function getRemainingLessons(customerId, fromDate, toDate) {
   try {
     const now = new Date();
 
+    // המרת תאריכים לפורמט ISO מלא
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    if (isNaN(from) || isNaN(to)) {
+      console.warn('fromDate או toDate אינם תקינים');
+      return 0;
+    }
+
     // 1️⃣ שליפת ההרשמות של המשתמש
     const enrollments = await selectFromTable('program_enrollments', {
       customer_id: customerId,
-      start_date: { lte: toDate },
-      end_date: { gte: fromDate }
+      start_date: { lte: to.toISOString() },
+      end_date: { gte: from.toISOString() }
     });
     if (!enrollments.length) return 0;
 
     // 2️⃣ שליפת כל המפגשים של כל התוכניות
-    const allSessionsPromises = enrollments.map(enr =>
-      selectFromTable('program_sessions', { program_id: enr.program_id })
-    );
+    const allSessionsPromises = enrollments.map(async enr => {
+      const sessions = await selectFromTable('program_sessions', { program_id: enr.program_id });
+      // מסננים מפגשים שהסטטוס שלהם שונה מ-2
+      const filteredSessions = sessions.filter(s => s.status !== 2);
+      return filteredSessions.map(s => ({ ...s, program_id: enr.program_id }));
+    });
+    
     const sessionsArrays = await Promise.all(allSessionsPromises);
     const allSessions = sessionsArrays.flat();
 
-    // 3️⃣ סינון רק מפגשים שהיו עד עכשיו ובטווח התאריכים
+    // 3️⃣ סינון מפגשים שהתקיימו עד עכשיו ובטווח התאריכים
     const pastSessions = allSessions.filter(s => {
       const sessionDateTime = new Date(`${s.date}T${s.time}`);
-      return (
-        sessionDateTime >= new Date(fromDate) &&
-        sessionDateTime <= now &&
-        sessionDateTime <= new Date(toDate)
-      );
+      return sessionDateTime >= from && sessionDateTime <= now && sessionDateTime <= to;
     });
-
     if (!pastSessions.length) return 0;
 
     const pastSessionIds = pastSessions.map(s => s.id);
 
-    // 4️⃣ שליפת כל הנוכחויות של המשתמש
+    // 4️⃣ שליפת נוכחויות של המשתמש
     const attendanceRecords = await selectFromTable('attendance_with_session', {
       customer_id: customerId,
       is_present: true
     });
-    // 5️⃣ נוכחויות רגילות (רק למפגשים שלה)
+
+    // 5️⃣ נוכחויות רגילות למפגשים שלה
     const attendedRegular = attendanceRecords.filter(a =>
       a.is_present === true &&
       a.status_code === 1 &&
       pastSessionIds.includes(a.session_id)
     );
 
-    // 6️⃣ השלמות (בלי קשר להרשמות, רק לפי תאריכים)
-    // מתוך הטבלה attendance_with_session בלבד
-const makeups = attendanceRecords.filter(a => {
-  return a.is_present === true &&
-         a.status_code === 2 &&
-         new Date(a.session_date) >= new Date(fromDate) &&
-         new Date(a.session_date) <= new Date(toDate);
-});
+    // 6️⃣ השלמות לפי תאריכים בלבד
+    const makeups = attendanceRecords.filter(a => {
+      const sessionDateTime = new Date(a.session_date);
+      return a.is_present === true && a.status_code === 2 && sessionDateTime >= from && sessionDateTime <= to;
+    });
 
-    // 7️⃣ חישוב
+    // 7️⃣ חישוב סך המפגשים שנותרו
     const totalAttended = attendedRegular.length + makeups.length;
     const remainingLessons = pastSessions.length - totalAttended;
 
@@ -195,14 +200,27 @@ const makeups = attendanceRecords.filter(a => {
 }
 
 
+// פונקציה לעיבוד מחרוזת תאריך yyyy-mm-dd ל-UTC
+function parseDateOnly(dateStr) {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function formatDateForDB(ts) {
+  const d = new Date(ts);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
 
 async function getClosestUpcomingSession(customerId) {
   const now = new Date();
 
-  // 1️⃣ שנה אקדמית
+  // 1️⃣ קבלת טווח השנה האקדמית
   const { fromDate, toDate } = getAcademicYearRange();
 
-  // 2️⃣ שליפת כל ההרשמות של המשתמש
+  // 2️⃣ שליפת כל ההרשמות של המשתמש בטווח השנה האקדמית
   const enrollments = await selectFromTable('program_enrollments', {
     customer_id: customerId,
     start_date: { lte: toDate },
@@ -211,39 +229,38 @@ async function getClosestUpcomingSession(customerId) {
 
   if (!enrollments || enrollments.length === 0) return null;
 
-  // 3️⃣ שליפת כל המפגשים של כל התוכניות
-  const allSessionsPromises = enrollments.map(async enr => {
+  // 3️⃣ חישוב התאריך המינימלי לפי ההרשמות שלה
+  const minEnrollmentDate = enrollments.reduce((minDate, enr) => {
+    const start = new Date(enr.start_date);
+    return start < minDate ? start : minDate;
+  }, new Date(enrollments[0].start_date));
+
+  // 4️⃣ שליפת כל המפגשים של כל ההרשמות והוספת program_id
+  const allSessionsPromises = enrollments.map(async (enr) => {
     const sessions = await selectFromTable('program_sessions', { program_id: enr.program_id });
-    // 4️⃣ מצרפים גם את program_id לשיעורים
-    return sessions.map(s => ({ ...s, program_id: enr.program_id }));
+    // סינון רק פעילים ומעבר למפגשים שהתחילו אחרי minEnrollmentDate
+    const filtered = sessions
+      .filter(s => s.status !== 2 && new Date(s.date) >= minEnrollmentDate)
+      .map(s => ({ ...s, program_id: enr.program_id }));
+    return filtered;
   });
 
   const sessionsArrays = await Promise.all(allSessionsPromises);
   const allSessions = sessionsArrays.flat();
 
-  // 5️⃣ סינון שיעורים שהעתידיים לעכשיו
-  const futureSessions = allSessions.filter(s => {
-    const sessionDateTime = new Date(`${s.date}T${s.time}`);
-    return sessionDateTime >= now;
-  });
-
+  // 5️⃣ סינון שיעורים עתידיים בלבד
+  const futureSessions = allSessions.filter(s => new Date(`${s.date}T${s.time}`) >= now);
   if (futureSessions.length === 0) return null;
 
   // 6️⃣ מיון לפי הקרוב ביותר
   futureSessions.sort((a, b) => {
-    const aTime = new Date(`${a.date}T${a.time}`);
-    const bTime = new Date(`${b.date}T${b.time}`);
-    return aTime - bTime;
+    return new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`);
   });
 
-  // 7️⃣ שליפת שם השיעור מהטבלה programs
+  // 7️⃣ הוספת שם השיעור מהטבלה programs
   const closestSession = futureSessions[0];
   const [program] = await selectFromTable('programs', { id: closestSession.program_id });
-  if (program) {
-    closestSession.name = program.name;
-  } else {
-    closestSession.name = 'לא ידוע';
-  }
+  closestSession.name = program ? program.name : 'לא ידוע';
 
   return closestSession;
 }

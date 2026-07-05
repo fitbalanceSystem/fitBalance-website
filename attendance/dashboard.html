@@ -3,7 +3,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport"
+      content="width=device-width, initial-scale=1">
   <title>FitBalance Hub - נוכחות</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -24,9 +25,9 @@
     html, body { height: 100%; }
 
     .numpad-btn {
-      font-size: clamp(1.4rem, 3.5vw, 2.8rem);
-      min-height: clamp(3rem, 8vh, 5.5rem);
-    }
+  font-size: clamp(1.2rem, 3vw, 2.2rem);
+  min-height: clamp(2.8rem, 6vh, 4.2rem);
+}
 
     #numberInput {
       font-size: clamp(1.5rem, 4vw, 3rem);
@@ -36,12 +37,27 @@
     .header-text {
       font-size: clamp(0.9rem, 2.2vw, 1.875rem);
     }
+
+    @media (max-height: 800px) {
+
+.numpad-btn {
+  min-height: 3rem;
+}
+
+#numberInput {
+  height: 3rem;
+}
+
+.header-text {
+  font-size: 0.9rem;
+}
+}
   </style>
 </head>
 
-<body class="h-screen overflow-hidden bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-100 select-none touch-manipulation">
+<body class="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-100 select-none touch-manipulation overflow-x-hidden">
 
-  <div class="h-screen flex flex-col gap-2 sm:gap-3 p-2 sm:p-3 md:p-4">
+  <div class="min-h-screen flex flex-col gap-2 sm:gap-3 p-2 sm:p-3 md:p-4">
 
     <!-- HEADER -->
     <div class="bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-lg py-3 sm:py-5 text-center">
@@ -83,7 +99,7 @@
         class="w-full rounded-2xl sm:rounded-3xl border-2 border-pink-200 bg-white text-center font-bold shadow-inner focus:outline-none mb-2 sm:mb-0">
 
       <!-- NUMPAD -->
-      <div class="grid grid-cols-3 gap-2 sm:gap-3 flex-1 mt-2 sm:mt-4" dir="ltr">
+      <div class="grid grid-cols-3 gap-2 sm:gap-3 mt-2 sm:mt-4" dir="ltr">
 
         <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">1</button>
         <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">2</button>

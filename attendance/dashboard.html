@@ -1,61 +1,308 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>FitBalance Hub - נוכחות</title>
-
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#ec4899">
-
   <script src="https://cdn.tailwindcss.com"></script>
-
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontSize: {
+            'numpad': 'clamp(1.5rem, 4vw, 3rem)',
+            'numpad-sm': 'clamp(1rem, 2.5vw, 1.5rem)',
+            'header': 'clamp(1rem, 2.5vw, 1.875rem)',
+            'input-val': 'clamp(1.5rem, 5vw, 3rem)',
+          }
+        }
+      }
+    }
+  </script>
   <style>
     html, body { height: 100%; }
+
+    .numpad-btn {
+      font-size: clamp(1.4rem, 3.5vw, 2.8rem);
+      min-height: clamp(3rem, 8vh, 5.5rem);
+    }
+
+    #numberInput {
+      font-size: clamp(1.5rem, 4vw, 3rem);
+      height: clamp(2.8rem, 7vh, 4.5rem);
+    }
+
+    .header-text {
+      font-size: clamp(0.9rem, 2.2vw, 1.875rem);
+    }
   </style>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-100 select-none touch-manipulation">
+<body class="h-screen overflow-hidden bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-100 select-none touch-manipulation">
 
-<div class="min-h-screen flex flex-col p-3">
+  <div class="h-screen flex flex-col gap-2 sm:gap-3 p-2 sm:p-3 md:p-4">
 
-  <header class="bg-white p-3 rounded-xl shadow text-center font-bold text-pink-600">
-    FitBalance - Attendance
-  </header>
-
-  <main class="flex-1 flex flex-col gap-4 mt-3">
-
-    <input id="numberInput"
-      type="text"
-      inputmode="numeric"
-      pattern="[0-9]*"
-      placeholder="הקלידי מספר"
-      class="w-full p-3 rounded-xl border text-center text-xl">
-
-    <div class="grid grid-cols-3 gap-3">
-      <button class="p-4 bg-white rounded-xl shadow">1</button>
-      <button class="p-4 bg-white rounded-xl shadow">2</button>
-      <button class="p-4 bg-white rounded-xl shadow">3</button>
-      <button class="p-4 bg-white rounded-xl shadow">4</button>
-      <button class="p-4 bg-white rounded-xl shadow">5</button>
-      <button class="p-4 bg-white rounded-xl shadow">6</button>
-      <button class="p-4 bg-white rounded-xl shadow">7</button>
-      <button class="p-4 bg-white rounded-xl shadow">8</button>
-      <button class="p-4 bg-white rounded-xl shadow">9</button>
-      <button class="p-4 bg-red-500 text-white rounded-xl shadow">⌫</button>
-      <button class="p-4 bg-white rounded-xl shadow">0</button>
-      <button class="p-4 bg-pink-500 text-white rounded-xl shadow">אישור</button>
+    <!-- HEADER -->
+    <div class="bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-lg py-3 sm:py-5 text-center">
+      <div class="font-extrabold text-rose-700 header-text flex flex-wrap justify-center items-center gap-1 px-2">
+        <span id="lessonName"></span>
+        <span class="text-pink-300 mx-1 sm:mx-3">|</span>
+        <span id="lessonDay"></span>
+        <span class="text-pink-300 mx-1 sm:mx-3">|</span>
+        <span id="lessonHour"></span>
+        <span id="sessionClosedBadge" class="hidden mr-2 px-3 py-0.5 rounded-full bg-red-100 text-red-600 text-xs font-bold">🔒 נעול</span>
+      </div>
     </div>
 
-  </main>
+    <!-- MAIN -->
+    <div class="flex-1 bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-lg p-3 sm:p-4 flex flex-col min-h-0">
 
-</div>
+      <!-- WELCOME -->
+      <div class="text-center mb-2 sm:mb-4">
+        <h2 class="font-extrabold text-rose-700" style="font-size: clamp(1.6rem, 4vw, 2.5rem)">🌸 ברוכה הבאה</h2>
+        <p class="text-gray-500 font-medium mt-1" style="font-size: clamp(1rem, 2.5vw, 1.4rem)">הזיני מספר נייד או תעודת זהות</p>
+      </div>
 
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js');
-}
-</script>
+      <!-- TYPE SELECT -->
+      <div class="flex justify-center gap-3 sm:gap-6 mb-2 sm:mb-3">
+        <label class="cursor-pointer">
+          <input type="radio" name="idType" value="id" class="peer hidden" checked>
+          <div class="px-4 sm:px-6 py-1.5 sm:py-2 rounded-2xl border border-rose-200 text-rose-700 font-semibold text-sm sm:text-base
+                  peer-checked:bg-rose-500 peer-checked:text-white peer-checked:shadow-lg transition">ת.ז</div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="idType" value="phone" class="peer hidden">
+          <div class="px-4 sm:px-6 py-1.5 sm:py-2 rounded-2xl border border-rose-200 text-rose-700 font-semibold text-sm sm:text-base
+                  peer-checked:bg-rose-500 peer-checked:text-white peer-checked:shadow-lg transition">נייד</div>
+        </label>
+      </div>
+
+      <!-- INPUT -->
+      <input id="numberInput" type="text" maxlength="10" dir="ltr"
+        class="w-full rounded-2xl sm:rounded-3xl border-2 border-pink-200 bg-white text-center font-bold shadow-inner focus:outline-none mb-2 sm:mb-0">
+
+      <!-- NUMPAD -->
+      <div class="grid grid-cols-3 gap-2 sm:gap-3 flex-1 mt-2 sm:mt-4" dir="ltr">
+
+        <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">1</button>
+        <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">2</button>
+        <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">3</button>
+        <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">4</button>
+        <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">5</button>
+        <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">6</button>
+        <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">7</button>
+        <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">8</button>
+        <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">9</button>
+
+        <button id="btndeleteChar"
+          class="numpad-btn rounded-2xl sm:rounded-3xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold shadow-lg active:scale-95 transition"
+          style="font-size: clamp(1.1rem, 2.5vw, 1.875rem)">⌫</button>
+
+        <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">0</button>
+
+        <button id="btnSubmit"
+          class="numpad-btn rounded-2xl sm:rounded-3xl bg-gradient-to-r from-pink-500 to-fuchsia-600 text-white font-bold shadow-lg active:scale-95 transition"
+          style="font-size: clamp(0.9rem, 2vw, 1.5rem)">אישור</button>
+
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="grid grid-cols-3 gap-2">
+      <button id="btninstructorLogin"
+        class="h-11 sm:h-14 rounded-xl sm:rounded-2xl bg-white text-rose-700 border border-rose-200 font-semibold shadow-sm hover:shadow transition"
+        style="font-size: clamp(0.75rem, 1.8vw, 1rem)">🔒 סגור שיעור</button>
+      <button id="btnchangeLesson"
+        class="h-11 sm:h-14 rounded-xl sm:rounded-2xl bg-white text-sky-700 border border-sky-200 font-semibold shadow-sm hover:shadow transition"
+        style="font-size: clamp(0.75rem, 1.8vw, 1rem)">החלף שיעור</button>
+      <button id="btnRefresh"
+        class="h-11 sm:h-14 rounded-xl sm:rounded-2xl bg-white text-gray-500 border border-gray-200 font-semibold shadow-sm hover:shadow transition"
+        style="font-size: clamp(0.75rem, 1.8vw, 1rem)">🔄 רענן</button>
+    </div>
+
+  </div>
+
+  <!-- ATTENDANCE CARD -->
+  <div id="attendanceCard"
+    class="absolute top-3 left-3 sm:top-4 sm:left-4 bg-white/90 backdrop-blur-xl shadow-xl rounded-xl sm:rounded-2xl p-2 sm:p-4 w-24 sm:w-36 md:w-48 text-center border border-gray-100 z-50">
+    <div class="text-gray-500 text-xs mb-1">נוכחות היום</div>
+    <div class="font-bold text-green-600 text-xl sm:text-2xl md:text-3xl" id="attendanceCount"></div>
+    <div class="text-gray-400 text-xs mt-0.5">בנות שסומנו V</div>
+  </div>
+
+  <!-- UNCLOSED BELL -->
+  <button id="unclosedBell"
+    class="hidden absolute top-3 right-3 sm:top-4 sm:right-4 bg-amber-400 hover:bg-amber-500 text-white rounded-2xl shadow-lg px-3 py-2 flex items-center gap-1 z-50 active:scale-95 transition">
+    <span class="text-xl">🔔</span>
+    <span id="unclosedBadge" class="bg-white text-amber-600 rounded-full w-5 h-5 text-xs font-extrabold flex items-center justify-center"></span>
+  </button>
+
+  <!-- UNCLOSED SESSION MODAL -->
+  <div id="unclosedModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white/90 backdrop-blur-xl rounded-[32px] shadow-2xl p-6 sm:p-8 w-[92%] max-w-sm border border-amber-100 text-center">
+      <div class="text-5xl mb-3">⚠️</div>
+      <h2 id="unclosedModalTitle" class="font-extrabold text-amber-700 mb-6" style="font-size: clamp(1rem, 2.5vw, 1.3rem)"></h2>
+      <div class="grid grid-cols-2 gap-3">
+        <button id="btnCloseUnclosedSession"
+          class="h-11 sm:h-12 rounded-2xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold shadow active:scale-95 transition text-sm">🔒 סגור שיעור</button>
+        <button id="btnCancelUnclosedModal"
+          class="h-11 sm:h-12 rounded-2xl bg-white border border-gray-200 text-gray-600 font-bold active:scale-95 transition text-sm">ביטול</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUCCESS MODAL -->
+  <div id="successModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white rounded-3xl shadow-2xl p-6 sm:p-10 text-center w-[90%] max-w-md">
+      <div id="successIcon" class="text-green-500 mb-4" style="font-size: clamp(3rem, 10vw, 5rem)">✓</div>
+      <div id="successTextTitle" class="font-bold text-green-600" style="font-size: clamp(1.2rem, 3vw, 1.875rem)"></div>
+      <div id="successText" class="text-gray-600 mt-3" style="font-size: clamp(0.9rem, 2vw, 1.25rem)">הנוכחות נקלטה בהצלחה</div>
+    </div>
+  </div>
+
+  <!-- NO ACTIVE SESSIONS MODAL -->
+  <div id="noActiveSessionsModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white/90 backdrop-blur-xl rounded-[32px] shadow-2xl p-6 sm:p-10 text-center w-[92%] max-w-lg border border-pink-100">
+      <div class="w-20 h-20 sm:w-28 sm:h-28 mx-auto mb-4 sm:mb-6 rounded-full bg-gradient-to-br from-pink-100 to-fuchsia-100 flex items-center justify-center shadow-inner">
+        <span style="font-size: clamp(2rem, 6vw, 3.75rem)">📅</span>
+      </div>
+      <h2 id="ModalMainTitle" class="font-extrabold text-rose-700 mb-3" style="font-size: clamp(1.3rem, 3.5vw, 2.25rem)"></h2>
+      <p class="text-gray-600 leading-relaxed" style="font-size: clamp(0.85rem, 2vw, 1.25rem)">
+        לא נמצאו שיעורים פעילים להיום.<br>
+        ניתן לבחור שיעור אחר או לפנות למנהלת המערכת.
+      </p>
+      <div class="grid grid-cols-2 gap-3 mt-6 sm:mt-8">
+        <button id="btnChooseLesson"
+          class="h-12 sm:h-14 rounded-2xl bg-gradient-to-r from-sky-500 to-cyan-600 text-white font-bold shadow-lg active:scale-95 transition"
+          style="font-size: clamp(0.85rem, 2vw, 1.125rem)">החלף שיעור</button>
+        <button id="btnCloseNoSessionModal"
+          class="h-12 sm:h-14 rounded-2xl bg-white border border-pink-200 text-rose-700 font-bold shadow-sm active:scale-95 transition"
+          style="font-size: clamp(0.85rem, 2vw, 1.125rem)">סגור</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SESSION ENDING MODAL -->
+  <div id="sessionEndingModal" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white/90 backdrop-blur-xl rounded-[32px] shadow-2xl p-6 sm:p-8 text-center w-[92%] max-w-sm border border-orange-100">
+      <div class="mb-3" style="font-size: clamp(2.5rem, 7vw, 3.75rem)">⏰</div>
+      <h2 id="sessionEndingText" class="font-extrabold text-orange-600 mb-6" style="font-size: clamp(1rem, 2.5vw, 1.5rem)">השיעור מסתיים בקרוב</h2>
+      <div class="flex flex-col gap-3">
+        <button id="btnStopAlert"
+          class="w-full h-11 sm:h-12 rounded-2xl bg-white border border-gray-200 text-gray-600 font-bold active:scale-95 transition"
+          style="font-size: clamp(0.8rem, 1.8vw, 1rem)">🔕 הפסק התראה</button>
+        <button id="btnRemindLater"
+          class="w-full h-11 sm:h-12 rounded-2xl bg-gradient-to-r from-orange-400 to-amber-500 text-white font-bold shadow active:scale-95 transition"
+          style="font-size: clamp(0.8rem, 1.8vw, 1rem)">⏱ הזכר לי מאוחר יותר</button>
+        <button id="btnCloseSessionFromEnding"
+          class="w-full h-11 sm:h-12 rounded-2xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold shadow active:scale-95 transition"
+          style="font-size: clamp(0.8rem, 1.8vw, 1rem)">🔒 סגור שיעור</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSWORD MODAL -->
+  <div id="passwordModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white/90 backdrop-blur-xl rounded-[32px] shadow-2xl p-6 sm:p-8 w-[92%] max-w-sm border border-fuchsia-100 text-center">
+      <div class="text-4xl mb-3">🔐</div>
+      <h2 class="font-extrabold text-fuchsia-700 mb-1" style="font-size: clamp(1.1rem, 2.5vw, 1.5rem)">אימות מדריכה</h2>
+      <p class="text-gray-400 text-sm mb-5">הזיני סיסמא לאישור סגירת השיעור</p>
+      <input id="instructorPasswordInput" type="password" placeholder="סיסמא"
+        class="w-full h-12 rounded-2xl border-2 border-fuchsia-200 bg-white text-center text-xl font-bold shadow-inner focus:outline-none mb-2">
+      <p id="passwordError" class="text-red-500 text-sm min-h-[1.25rem] mb-3"></p>
+      <div class="grid grid-cols-2 gap-3">
+        <button id="btnConfirmPassword"
+          class="h-11 sm:h-12 rounded-2xl bg-gradient-to-r from-fuchsia-500 to-pink-600 text-white font-bold shadow active:scale-95 transition">אישור</button>
+        <button id="btnCancelPassword"
+          class="h-11 sm:h-12 rounded-2xl bg-white border border-gray-200 text-gray-600 font-bold active:scale-95 transition">ביטול</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SESSION ATTENDANCE LIST MODAL -->
+  <div id="sessionAttendanceListModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white/90 backdrop-blur-xl rounded-[32px] shadow-2xl p-4 w-[92%] max-w-md border border-green-100 flex flex-col" style="max-height:90vh">
+
+      <!-- HEADER -->
+      <div class="text-center shrink-0 mb-2">
+        <div class="text-2xl">✅</div>
+        <h2 class="font-extrabold text-green-700 text-sm">בנות שסומנו V</h2>
+        <div class="text-base font-extrabold text-green-600"><span id="attendanceListCount">0</span> משתתפות</div>
+      </div>
+
+      <!-- ADD SECTION -->
+      <div id="attendanceAddSection" class="flex flex-col gap-1.5 shrink-0 mb-1">
+        <div class="flex justify-center gap-2">
+          <label class="cursor-pointer">
+            <input type="radio" name="modalIdType" value="id" class="peer hidden" checked>
+            <div class="px-3 py-0.5 rounded-2xl border border-rose-200 text-rose-700 font-semibold text-xs peer-checked:bg-rose-500 peer-checked:text-white transition">ת.ז</div>
+          </label>
+          <label class="cursor-pointer">
+            <input type="radio" name="modalIdType" value="phone" class="peer hidden">
+            <div class="px-3 py-0.5 rounded-2xl border border-rose-200 text-rose-700 font-semibold text-xs peer-checked:bg-rose-500 peer-checked:text-white transition">נייד</div>
+          </label>
+        </div>
+        <div class="flex gap-1.5">
+          <input id="attendanceAddInput" type="text" placeholder="הקלדי לחיפוש..." dir="ltr" autocomplete="off"
+            class="flex-1 h-8 rounded-xl border-2 border-green-200 bg-white text-center font-semibold text-xs shadow-inner focus:outline-none focus:border-green-400">
+          <button id="btnAddAttendanceFromModal"
+            class="h-8 px-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold shadow active:scale-95 transition text-xs">הוסף</button>
+        </div>
+        <div id="attendanceLiveSearch" class="hidden flex-col gap-0.5 max-h-20 overflow-y-auto rounded-xl border border-green-100 bg-white shadow-sm px-2 py-1"></div>
+        <p id="attendanceAddError" class="text-red-500 text-xs min-h-[0.8rem] leading-none"></p>
+      </div>
+
+      <!-- PENDING NOTE -->
+      <div id="pendingDeletionsSection" class="hidden shrink-0 mb-1">
+        <p class="text-xs text-amber-600 font-semibold text-center">בלחציצה על "שמור" המחיקות יישמרו לצמיתות</p>
+      </div>
+
+      <!-- LIST — grows and scrolls -->
+      <div id="attendanceNamesList" class="flex flex-col gap-1 overflow-y-auto flex-1 min-h-0 mb-2"></div>
+
+      <!-- BUTTONS -->
+      <div class="flex flex-col gap-1.5 shrink-0">
+        <div class="grid gap-1.5" id="attendanceActionBtns" style="grid-template-columns:1fr 1fr">
+          <button id="btnSavePendingChanges" class="hidden h-8 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold shadow active:scale-95 transition text-xs">✔ שמור</button>
+          <button id="btnCancelAttendanceList" class="h-8 col-span-2 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold active:scale-95 transition text-xs">ביטול</button>
+        </div>
+        <button id="btnConfirmCloseFromList"
+          class="w-full h-8 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold shadow active:scale-95 transition text-xs">🔒 סגור שיעור</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CHANGE LESSON MODAL -->
+  <div id="changeLessonModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white/90 backdrop-blur-xl rounded-[32px] shadow-2xl p-6 sm:p-8 w-[92%] max-w-lg border border-sky-100">
+      <h2 class="font-extrabold text-sky-700 mb-5 text-center" style="font-size: clamp(1.1rem, 2.5vw, 1.5rem)">בחרי שיעור</h2>
+      <div id="sessionsList" class="flex flex-col gap-3 max-h-60 sm:max-h-72 overflow-y-auto"></div>
+      <button id="btnCloseChangeLesson"
+        class="mt-4 sm:mt-6 w-full h-11 sm:h-12 rounded-2xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition">סגור</button>
+    </div>
+  </div>
+
+  <!-- CLOSE SESSION MODAL -->
+  <div id="closeSessionModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white/90 backdrop-blur-xl rounded-[32px] shadow-2xl p-6 sm:p-10 text-center w-[92%] max-w-md border border-rose-100">
+      <div class="mb-4" style="font-size: clamp(2.5rem, 7vw, 3.75rem)">🔒</div>
+      <h2 class="font-extrabold text-rose-700 mb-3" style="font-size: clamp(1.1rem, 2.5vw, 1.5rem)">סיום שיעור</h2>
+      <p class="text-gray-600 mb-6 sm:mb-8" style="font-size: clamp(0.85rem, 2vw, 1.125rem)">האם לסגור את השיעור הנוכחי?</p>
+      <div class="grid grid-cols-2 gap-3">
+        <button id="btnConfirmCloseSession"
+          class="h-11 sm:h-12 rounded-2xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold shadow active:scale-95 transition">סגור שיעור</button>
+        <button id="btnCancelCloseSession"
+          class="h-11 sm:h-12 rounded-2xl bg-white border border-pink-200 text-rose-700 font-bold active:scale-95 transition">ביטול</button>
+      </div>
+    </div>
+  </div>
 
 </body>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="js/dashboard.js"></script>
+
 </html>

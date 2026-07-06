@@ -33,7 +33,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
       }));
 
     // הפניה לעמוד הראשי לאחר התחברות מוצלחת
-    window.location.href = 'dashboard.html'
+    window.location.href = '../dashboard.html'
 
   } catch (error) {
     console.error(error)

@@ -25,16 +25,17 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
     const user = users[0]
 
+    console.log("window.location.href");
+    console.log(window.location.href);
     localStorage.setItem('user', JSON.stringify({
         id: user.id,
         idValue: user.idValue,
         full_name: user.firstName + ' ' + user.lastName,
         email: user.email
       }));
-
+      
     // הפניה לעמוד הראשי לאחר התחברות מוצלחת
-    window.location.href = '../dashboard.html'
-
+    window.location.href = 'dashboard.html'
   } catch (error) {
     console.error(error)
     errorMessage.textContent = 'אירעה שגיאה בעת התחברות'

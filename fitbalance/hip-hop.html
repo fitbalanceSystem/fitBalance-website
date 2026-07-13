@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>חוגי היפ הופ נפתחים | FitBalance</title>
+  <meta name="description" content="💃 קבוצות היפ הופ חדשות נפתחות ב-FitBalance! לילדות, נוער ונשים. הרשמה פתוחה – מקומות מוגבלים!" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="FitBalance" />
+  <meta property="og:title" content="🎤 חוגי היפ הופ נפתחים ב-FitBalance!" />
+  <meta property="og:description" content="קבוצות לילדות, נוער וקבוצת נשים חדשה. הרשמה פתוחה – מקומות מוגבלים!" />
+  <meta property="og:image" content="https://bmrtobuvjuycnvvfmgvf.supabase.co/storage/v1/object/public/assets/hip-hop-share.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:url" content="https://fitbalance.co.il/hiphop" />
+  <meta property="og:locale" content="he_IL" />
+
+  <!-- WhatsApp / Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="🎤 חוגי היפ הופ נפתחים ב-FitBalance!" />
+  <meta name="twitter:description" content="קבוצות לילדות, נוער וקבוצת נשים חדשה. הרשמה פתוחה!" />
+  <meta name="twitter:image" content="https://bmrtobuvjuycnvvfmgvf.supabase.co/storage/v1/object/public/assets/hip-hop-share.jpg" />
+
+  <!-- ביצועים -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link rel="dns-prefetch" href="https://bmrtobuvjuycnvvfmgvf.supabase.co" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', sans-serif; }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-bg {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    }
+
+    .card {
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .badge-new {
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      animation: pulse-badge 2s ease-in-out infinite;
+    }
+    .badge-open { background: #10b981; }
+    .badge-advanced { background: #8b5cf6; }
+
+    @keyframes pulse-badge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .floating { animation: float 4s ease-in-out infinite; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+    header.scrolled { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+
+    /* כפתור שיתוף צף במובייל */
+    .fab-share {
+      position: fixed;
+      bottom: 80px;
+      left: 16px;
+      z-index: 90;
+      background: #25d366;
+      color: white;
+      border-radius: 50px;
+      padding: 12px 18px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 16px rgba(37,211,102,0.5);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      animation: fab-pulse 3s ease-in-out infinite;
+    }
+    .fab-register {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 90;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: white;
+      border-radius: 50px;
+      padding: 14px;
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 4px 20px rgba(236,72,153,0.4);
+      text-align: center;
+      text-decoration: none;
+      display: none;
+    }
+    @media (max-width: 768px) {
+      .fab-register { display: block; }
+      .fab-share { bottom: 76px; }
+    }
+    @keyframes fab-pulse {
+      0%, 100% { box-shadow: 0 4px 16px rgba(37,211,102,0.5); }
+      50% { box-shadow: 0 4px 28px rgba(37,211,102,0.8); }
+    }
+
+    #registration-modal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #registration-modal.open { display: flex; }
+  </style>
+</head>
+<body class="bg-white">
+
+  <!-- Header -->
+  <header id="main-header" class="fixed top-0 right-0 left-0 bg-white z-50 h-16 flex items-center px-6 justify-between transition-shadow duration-300">
+    <div class="flex items-center gap-3">
+      <img src="assets/icons/logo.jpg" alt="FitBalance" class="h-14" onerror="this.style.display='none'" />
+      <span class="text-xl font-bold gradient-text">FitBalance</span>
+    </div>
+    <nav class="hidden md:flex items-center gap-6 text-gray-700 font-medium">
+      <a href="home.html" class="hover:text-pink-600">דף הבית</a>
+      <a href="login.html" class="bg-pink-600 text-white px-5 py-2 rounded-full hover:bg-pink-700 transition-colors shadow-md">
+        <i class="fas fa-user ml-1"></i> כניסה לאזור אישי
+      </a>
+    </nav>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero-bg min-h-screen flex items-center justify-center text-center px-6 pt-16">
+    <div class="relative z-10 max-w-3xl">
+      <div class="floating text-7xl mb-6">🎤</div>
+      <h1 class="text-5xl md:text-6xl font-bold text-white mb-4 leading-tight">
+        חוגי היפ הופ נפתחים<br/>
+        ב<span class="gradient-text">FitBalance</span>
+      </h1>
+      <p class="text-xl text-gray-300 mb-10 leading-relaxed">
+        ריקוד, אנרגיה ומוזיקה – לכל הגילאים והרמות!<br/>
+        הצטרפי עכשיו לחוג שמתאים לך
+      </p>
+      <a href="#groups" class="bg-pink-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-pink-700 transition-all shadow-lg">
+        <i class="fas fa-arrow-down ml-2"></i>לקבוצות הפתוחות
+      </a>
+    </div>
+  </section>
+
+  <!-- Groups Section -->
+  <section id="groups" class="py-20 px-6 bg-gray-50">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-12 fade-in">
+        <h2 class="text-4xl font-bold text-gray-800 mb-3">קבוצות פתוחות להרשמה</h2>
+        <p class="text-gray-500 text-lg">בחרי את הקבוצה המתאימה לך</p>
+      </div>
+
+      <!-- Loader -->
+      <div id="groups-loader" class="text-center py-16">
+        <i class="fas fa-spinner fa-spin text-4xl text-pink-500"></i>
+        <p class="text-gray-500 mt-4">טוענת קבוצות...</p>
+      </div>
+
+      <!-- No results -->
+      <div id="no-groups" class="hidden text-center py-16">
+        <div class="text-6xl mb-4">🎵</div>
+        <p class="text-gray-500 text-xl">אין כרגע קבוצות פתוחות להרשמה</p>
+        <p class="text-gray-400 mt-2">השאירי פרטים ונעדכן אותך כשיפתחו קבוצות חדשות</p>
+        <button onclick="openRegistrationModal(null)" class="mt-6 bg-pink-600 text-white px-6 py-3 rounded-full hover:bg-pink-700 transition-all">
+          השאירי פרטים
+        </button>
+      </div>
+
+      <!-- Cards grid -->
+      <div id="groups-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+  </section>
+
+  <!-- Registration Modal -->
+  <div id="registration-modal">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 relative">
+      <button onclick="closeRegistrationModal()" class="absolute top-4 left-4 text-gray-400 hover:text-gray-600 text-xl">
+        <i class="fas fa-times"></i>
+      </button>
+      <h3 class="text-2xl font-bold text-gray-800 mb-2">הרשמה לחוג</h3>
+      <p id="modal-group-name" class="text-pink-600 font-semibold mb-6"></p>
+      <input type="hidden" id="modal-program-id" />
+
+      <form id="registration-form" class="flex flex-col gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">שם מלא *</label>
+          <input type="text" id="reg-name" required placeholder="שם פרטי ושם משפחה"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-400" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">טלפון *</label>
+          <input type="tel" id="reg-phone" required placeholder="050-0000000"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-400" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">אימייל</label>
+          <input type="email" id="reg-email" placeholder="example@email.com"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-400" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">הערות</label>
+          <textarea id="reg-notes" rows="2" placeholder="גיל הילד/ה, שאלות וכו'"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-400"></textarea>
+        </div>
+
+        <div id="reg-error" class="hidden text-red-500 text-sm"></div>
+        <div id="reg-success" class="hidden text-green-600 text-sm font-medium"></div>
+
+        <button type="submit" id="reg-submit-btn"
+          class="bg-pink-600 text-white py-3 rounded-full font-semibold hover:bg-pink-700 transition-all">
+          שלחי הרשמה
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- כפתורים צפים במובייל -->
+  <a id="fab-share" href="#" class="fab-share" target="_blank" rel="noopener">
+    <i class="fab fa-whatsapp text-xl"></i> שתפי עם חברה
+  </a>
+  <a href="#groups" class="fab-register">
+    🎤 הרשמה עכשיו
+  </a>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-gray-400 py-10 px-6 text-center">
+    <div class="flex flex-col gap-2 text-sm">
+      <a href="tel:052-717-3841" class="hover:text-pink-400"><i class="fas fa-phone ml-1"></i>052-717-3841</a>
+      <a href="https://wa.me/972527173841" target="_blank" class="hover:text-pink-400"><i class="fab fa-whatsapp ml-1"></i>WhatsApp</a>
+    </div>
+    <div class="mt-6 text-sm border-t border-gray-700 pt-4">© 2026 FitBalance</div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="assets/js/pages/hip-hop.js"></script>
+  <script>
+    // Header scroll shadow
+    window.addEventListener('scroll', () => {
+      document.getElementById('main-header').classList.toggle('scrolled', window.scrollY > 10);
+    });
+    // Fade in observer
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // כפתור שיתוף WhatsApp עם הקישור הנוכחי (כולל source param)
+    const shareUrl = 'https://fitbalance.co.il/hiphop?source=whatsapp_hiphop';
+    const shareText = encodeURIComponent(
+      '💃 נפתחות קבוצות היפ הופ חדשות ב-FitBalance!\n' +
+      'קבוצות לילדות, נוער וקבוצת נשים חדשה.\n' +
+      'לפרטים והרשמה:\n' + shareUrl
+    );
+    document.getElementById('fab-share').href = `https://wa.me/?text=${shareText}`;
+  </script>
+</body>
+</html>

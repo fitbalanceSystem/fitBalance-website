@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FitBalance | כניסה לאזור האישי</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', sans-serif; }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .page-bg {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #fce7f3 0%, #ede9fe 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.5;
+      animation: pulse-blob 7s ease-in-out infinite;
+    }
+    .blob-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(236,72,153,0.3), transparent 70%);
+      top: -150px; left: -150px;
+    }
+    .blob-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(139,92,246,0.3), transparent 70%);
+      bottom: -100px; right: -100px;
+      animation-delay: 3s;
+    }
+    .blob-3 {
+      width: 250px; height: 250px;
+      background: radial-gradient(circle, rgba(236,72,153,0.2), transparent 70%);
+      top: 50%; left: 60%;
+      animation-delay: 1.5s;
+    }
+    @keyframes pulse-blob {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    .card {
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 2rem;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.12);
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 0.85rem 1rem 0.85rem 3rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.875rem;
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: white;
+      outline: none;
+      direction: rtl;
+    }
+    .input-field:focus {
+      border-color: #ec4899;
+      box-shadow: 0 0 0 4px rgba(236,72,153,0.1);
+    }
+    .input-field.error {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 4px rgba(239,68,68,0.1);
+    }
+
+    .input-icon {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      pointer-events: none;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 0.9rem;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 600;
+      border-radius: 0.875rem;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 8px 24px rgba(236,72,153,0.35);
+    }
+    .btn-primary:hover:not(:disabled) {
+      opacity: 0.92;
+      transform: translateY(-1px);
+      box-shadow: 0 12px 32px rgba(236,72,153,0.45);
+    }
+    .btn-primary:active:not(:disabled) { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    .error-box {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+      border-radius: 0.75rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .shake { animation: shake 0.4s ease; }
+
+    .floating { animation: float 4s ease-in-out infinite; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: #9ca3af;
+      font-size: 0.85rem;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e5e7eb;
+    }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .slide-up {
+      animation: slideUp 0.6s ease both;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .feature-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255,255,255,0.7);
+      border-radius: 999px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.8rem;
+      color: #6b7280;
+      backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body>
+<div class="page-bg flex items-center justify-center px-4 py-10">
+
+  <!-- Background blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="relative z-10 w-full max-w-md slide-up">
+
+    <!-- Logo & brand -->
+    <div class="text-center mb-8">
+      <a href="home.html" class="inline-flex items-center gap-3 mb-4">
+        <img src="assets/icons/logo.jpg" alt="FitBalance" class="h-14 rounded-xl shadow-md" onerror="this.style.display='none'" />
+        <span class="text-3xl font-bold gradient-text">FitBalance</span>
+      </a>
+      <div class="floating text-4xl mt-2">🏃‍♀️</div>
+    </div>
+
+    <!-- Card -->
+    <div class="card p-8">
+
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-gray-800 mb-1">ברוכה הבאה חזרה 👋</h1>
+        <p class="text-gray-500 text-sm">הכנסי פרטים כדי להיכנס לאזור האישי</p>
+      </div>
+
+      <!-- Error message -->
+      <div id="error-msg" class="error-box hidden mb-5">
+        <i class="fas fa-exclamation-circle text-red-400"></i>
+        <span></span>
+      </div>
+
+      <!-- Form -->
+      <form id="login-form" novalidate class="space-y-5">
+
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5" for="email">
+            כתובת אימייל
+          </label>
+          <div class="relative">
+            <span class="input-icon"><i class="fas fa-envelope"></i></span>
+            <input
+              id="email"
+              type="email"
+              class="input-field"
+              placeholder="your@email.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="text-sm font-medium text-gray-700" for="password">סיסמה</label>
+            <a href="#" class="text-xs text-pink-600 hover:underline">שכחתי סיסמה</a>
+          </div>
+          <div class="relative">
+            <span class="input-icon"><i class="fas fa-lock"></i></span>
+            <input
+              id="password"
+              type="password"
+              class="input-field"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              id="toggle-password"
+              class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              tabindex="-1"
+            >
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Remember me -->
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <input type="checkbox" id="remember" class="w-4 h-4 accent-pink-500 rounded" />
+          <span class="text-sm text-gray-600">זכור אותי</span>
+        </label>
+
+        <!-- Submit -->
+        <button type="submit" id="submit-btn" class="btn-primary flex items-center justify-center gap-2">
+          <span id="btn-spinner" class="spinner hidden"></span>
+          <span id="btn-text">כניסה</span>
+          <i class="fas fa-arrow-left text-sm"></i>
+        </button>
+
+      </form>
+
+      <!-- Divider -->
+      <div class="divider my-6">או</div>
+
+      <!-- WhatsApp contact -->
+      <a
+        href="https://wa.me/972527173841"
+        target="_blank"
+        class="flex items-center justify-center gap-2 w-full py-3 border-2 border-gray-200 rounded-xl text-gray-600 font-medium hover:border-green-400 hover:text-green-600 transition-all text-sm"
+      >
+        <i class="fab fa-whatsapp text-green-500 text-lg"></i>
+        צרי קשר לקבלת גישה
+      </a>
+
+    </div>
+
+    <!-- Features -->
+    <div class="flex flex-wrap justify-center gap-2 mt-6">
+      <span class="feature-pill"><i class="fas fa-calendar-check text-pink-500"></i> מערכת שעות</span>
+      <span class="feature-pill"><i class="fas fa-shopping-bag text-purple-500"></i> חנות</span>
+      <span class="feature-pill"><i class="fas fa-chart-line text-pink-500"></i> מעקב אימונים</span>
+    </div>
+
+    <!-- Back to home -->
+    <div class="text-center mt-6">
+      <a href="home.html" class="text-sm text-gray-500 hover:text-pink-600 transition-colors">
+        <i class="fas fa-arrow-right ml-1"></i> חזרה לדף הבית
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script type="module" src="assets/js/pages/login.js"></script>
+</body>
+</html>

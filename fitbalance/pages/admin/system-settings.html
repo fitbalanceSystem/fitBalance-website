@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>הגדרות מערכת</title>
+
+
+  <link rel="stylesheet" href="css/system_settings.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/system-settings.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <a href="index.html">
+        <img src="images/logo.png" alt="לוגו" class="logo" />
+      </a>
+      <div class="sidebar-actions">
+        <button onclick="refreshCache()">🔄 רענן Cache</button>
+        <button onclick="openAddModal()">➕ הוסף הגדרה</button>
+        <button onclick="deleteSelected()">🗑️ מחק נבחרים</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="page-header">
+        <h1>הגדרות מערכת</h1>
+      </div>
+      <div id="settings-container"></div>
+    </div>
+  </div>
+
+  <!-- מודאל הוספה/עריכה -->
+  <div class="modal" id="settingModal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2 id="modalTitle">הוספת הגדרה</h2>
+      <input id="modal-category" placeholder="קטגוריה">
+      <input id="modal-key" placeholder="מפתח">
+      <textarea id="modal-value" placeholder='JSON ערך'></textarea>
+      <input id="modal-type" placeholder="סוג קלט (text, boolean, list)">
+      <input id="modal-description" placeholder="תיאור">
+      <button onclick="saveModalSetting()">💾 שמירה</button>
+    </div>
+  </div>
+<!-- מודאל עריכת JSON -->
+<div class="modal" id="jsonEditModal">
+  <div class="modal-content json-editor-modal">
+    <span class="close" onclick="closeJsonModal()">&times;</span>
+    <h2>עריכת ערך JSON</h2>
+    <textarea id="json-editor" placeholder="JSON ערך" oninput="validateJsonEditor()"></textarea>
+    <div id="json-error" class="error-message"></div>
+    <button onclick="saveJsonValue()">💾 שמירה</button>
+  </div>
+</div>
+
+<style>
+  .json-editor-modal {
+    width: 80%;
+    max-width: 800px;
+  }
+
+  #json-editor {
+    width: 100%;
+    height: 300px;
+    font-family: monospace;
+    font-size: 14px;
+    direction: ltr;
+  }
+
+  .error-message {
+    color: red;
+    font-size: 0.9em;
+    margin-top: 4px;
+  }
+
+  #json-editor.invalid {
+    border: 2px solid red;
+    background-color: #ffe5e5;
+  }
+</style>
+
+
+</body>
+</html>

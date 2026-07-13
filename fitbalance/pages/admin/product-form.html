@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ניהול מוצרים</title>
+  <link rel="stylesheet" href="css/product-form.css">
+</head>
+<body>
+  <div class="form-container">
+    <h2>הוספת מוצר חדש</h2>
+    <form id="productForm">
+      <label>שם מוצר:</label>
+      <input type="text" id="name" required>
+
+      <label>תיאור:</label>
+      <textarea id="description" rows="3"></textarea>
+
+      <label>מחיר:</label>
+      <input type="number" id="price" step="0.01" required>
+
+      <label>קטגוריה:</label>
+      <input type="text" id="category">
+
+      <label>תמונה:</label>
+      <input type="file" id="image" accept="image/*">
+
+      <button type="submit">שמור מוצר</button>
+    </form>
+    <div id="message"></div>
+  </div>
+
+  <script type="module" src="js/product-form.js"></script>
+</body>
+</html>

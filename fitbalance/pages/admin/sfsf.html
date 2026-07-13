@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>לקוחות</title>
+  <link rel="stylesheet" href="css/weekly-calendar.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- טוענים את קובץ ה-JS החיצוני עם defer כדי לטעון אחרי ה-DOM -->
+  <script src="js/customers.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <a href="index.html">
+        <img src="images/logo.png" alt="לוגו" class="logo" />
+      </a>
+      <ul class="nav-links">
+        <li><a href="customers.html" class="active">לקוחות</a></li>
+        <li><a href="instructors.html">מדריכות</a></li>
+        <li><a href="classes.html">חוגים</a></li>
+        <li><a href="schedule.html">מערכת שעות</a></li>
+        <li><a href="#">דוחות</a></li>
+      </ul>
+      <div class="sidebar-actions">
+        <button id="newCustomerBtn">הוסף לקוחה</button>
+        <button>ייצא</button>
+      </div>
+    </aside>
+
+    <!-- תוכן ראשי -->
+    <main class="main-content">
+      <header class="page-header">
+        <h1>מערכת שעות שבועית</h1>
+      </header>
+
+      <!-- יומן שבועי -->
+      <section id="schedule-container">
+        <div class="toolbar">
+          <button onclick="changeWeek(-1)">שבוע קודם</button>
+          <span id="week-range" style="font-weight:bold; margin: 0 15px;"></span>
+          <button onclick="changeWeek(1)">שבוע הבא</button>
+        </div>
+        <div class="calendar-container">
+          <div id="time-column" class="time-column"></div>
+          <div id="days-grid" class="days-grid"></div>
+        </div>
+        <script src="js/weekly-calendar.js"></script>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/weekly-calendar.js"></script>
+</body>
+</html>

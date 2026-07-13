@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FitBalance | פרופיל עובד</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+
+<div class="page-content p-6 max-w-3xl mx-auto space-y-6">
+
+  <!-- Header card -->
+  <div class="card p-6 fade-in" style="background:linear-gradient(135deg,#1a1035,#3b1f7a);border:none">
+    <div class="flex flex-col sm:flex-row items-center gap-5">
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#ec4899,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-size:26px;font-weight:700;border:3px solid rgba(255,255,255,.2);flex-shrink:0">
+        <span id="avatar-initials"></span>
+      </div>
+      <div class="text-center sm:text-right flex-1">
+        <h1 id="emp-name" class="text-2xl font-bold text-white skeleton h-7 w-40 mb-2"></h1>
+        <p id="emp-role" class="text-sm skeleton h-4 w-32" style="color:rgba(255,255,255,.55)"></p>
+        <div class="flex flex-wrap gap-2 mt-3 justify-center sm:justify-start">
+          <span id="emp-badge" class="badge skeleton h-6 w-28" style="background:rgba(139,92,246,.25);color:#c4b5fd"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details card -->
+  <div class="card p-6 fade-in">
+    <h2 class="font-bold text-gray-800 mb-5 flex items-center gap-2" style="font-size:15px">
+      <span style="width:32px;height:32px;border-radius:8px;background:#f3f0ff;display:inline-flex;align-items:center;justify-content:center">
+        <i class="fas fa-user" style="color:#8b5cf6;font-size:13px"></i>
+      </span>
+      פרטים אישיים
+    </h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+      <div>
+        <div class="text-xs font-semibold text-gray-400 mb-1">שם מלא</div>
+        <div id="f-fullname" class="text-sm font-semibold text-gray-800"></div>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-gray-400 mb-1">שם משתמש</div>
+        <div id="f-username" class="text-sm font-semibold text-gray-800"></div>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-gray-400 mb-1">אימייל</div>
+        <div id="f-email" class="text-sm font-semibold text-gray-800"></div>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-gray-400 mb-1">טלפון</div>
+        <div id="f-phone" class="text-sm font-semibold text-gray-800"></div>
+      </div>
+      <div>
+        <div class="text-xs font-semibold text-gray-400 mb-1">תפקיד</div>
+        <div id="f-role" class="text-sm font-semibold text-gray-800"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule card -->
+  <div class="card p-6 fade-in">
+    <h2 class="font-bold text-gray-800 mb-5 flex items-center gap-2" style="font-size:15px">
+      <span style="width:32px;height:32px;border-radius:8px;background:#fdf2f8;display:inline-flex;align-items:center;justify-content:center">
+        <i class="fas fa-calendar-alt" style="color:#ec4899;font-size:13px"></i>
+      </span>
+      השיעורים שלי
+    </h2>
+    <div id="my-classes" class="space-y-3">
+      <div class="skeleton h-14 rounded-xl"></div>
+      <div class="skeleton h-14 rounded-xl"></div>
+      <div class="skeleton h-14 rounded-xl"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../../utils/constants.js"></script>
+<script src="../../utils/storage.js"></script>
+<script src="../../utils/formatter.js"></script>
+<script src="../../utils/helpers.js"></script>
+<script src="../../utils/popup.js"></script>
+<script src="../../services/supabaseClient.js"></script>
+<script src="../../services/authService.js"></script>
+<script src="../../middleware/auth.js"></script>
+<script src="../../layouts/layout.js"></script>
+<script src="../../assets/js/pages/employee/profile.js"></script>
+</body>
+</html>

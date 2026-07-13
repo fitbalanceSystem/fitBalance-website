@@ -1,0 +1,252 @@
+<link rel="stylesheet" href="css/admin-theme.css" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f8f7ff; direction: rtl; }
+
+  #sidebar {
+    position: fixed; top: 0; right: 0; height: 100%; width: 260px;
+    background: linear-gradient(180deg, #1a1035 0%, #2d1b69 60%, #3b1f7a 100%);
+    z-index: 40; display: flex; flex-direction: column;
+    box-shadow: 4px 0 30px rgba(0,0,0,.25);
+    transition: transform .3s ease;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: center; gap: 10px; text-decoration: none;
+  }
+  .sidebar-logo img { height: 36px; border-radius: 8px; }
+  .sidebar-logo span {
+    font-size: 18px; font-weight: 800;
+    background: linear-gradient(135deg, #f9a8d4, #c4b5fd);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .sidebar-user {
+    padding: 16px 20px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .sidebar-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 14px; font-weight: 700;
+    flex-shrink: 0; border: 2px solid rgba(255,255,255,.2);
+  }
+  .sidebar-user-name { font-size: 14px; font-weight: 600; color: white; }
+  .sidebar-user-role { font-size: 11px; color: rgba(255,255,255,.45); margin-top: 2px; }
+
+  #sidebar nav { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .nav-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-radius: 12px;
+    font-size: 14px; font-weight: 500; text-decoration: none;
+    color: rgba(255,255,255,.55); transition: all .2s;
+    position: relative;
+  }
+  .nav-link:hover { color: white; background: rgba(255,255,255,.08); }
+  .nav-link.active { color: white !important; background: rgba(255,255,255,.12) !important; }
+  .nav-link .nav-icon { width: 20px; text-align: center; font-size: 15px; }
+  .nav-link .nav-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+    margin-right: auto; flex-shrink: 0; display: none;
+  }
+  .nav-link.active .nav-dot { display: block; }
+
+  .nav-section-label {
+    font-size: 10px; font-weight: 700; color: rgba(255,255,255,.25);
+    text-transform: uppercase; letter-spacing: .08em;
+    padding: 12px 14px 4px;
+  }
+
+  .sidebar-footer {
+    padding: 14px;
+    border-top: 1px solid rgba(255,255,255,.08);
+  }
+  .logout-btn {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 10px 14px; border-radius: 12px; border: none;
+    background: transparent; color: rgba(255,255,255,.4);
+    font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s;
+  }
+  .logout-btn:hover { background: rgba(239,68,68,.15); color: #fca5a5; }
+
+  /* Topbar */
+  #_admin_topbar {
+    position: fixed; top: 0; right: 260px; left: 0; height: 64px;
+    background: white; z-index: 30;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+    border-bottom: 1px solid #ede9fe;
+    box-shadow: 0 1px 12px rgba(139,92,246,.07);
+  }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .topbar-greeting { font-size: 13px; color: #9ca3af; }
+  .topbar-greeting strong { color: #1f2937; font-weight: 600; }
+  .topbar-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 12px; font-weight: 700;
+  }
+  #_sidebar_toggle {
+    display: none; background: none; border: none;
+    font-size: 20px; color: #6b7280; cursor: pointer; padding: 4px;
+  }
+
+  /* Layout */
+  .container { display: block !important; }
+  .main-content {
+    margin-top: 64px !important;
+    margin-right: 260px !important;
+    padding: 28px !important;
+    min-height: calc(100vh - 64px);
+  }
+  .page-header h1 {
+    font-size: 22px !important; font-weight: 700 !important;
+    color: #1f2937 !important; margin-bottom: 20px !important;
+  }
+
+  /* Cards & Tables */
+  .card, .bg-white.rounded-xl, .bg-white.rounded-2xl {
+    border-radius: 16px !important;
+    box-shadow: 0 2px 16px rgba(139,92,246,.07) !important;
+    border: 1px solid #f3f0ff !important;
+  }
+  table thead tr th { background: #f8f7ff !important; color: #6b7280 !important; font-size: 12px !important; font-weight: 600 !important; }
+  table tbody tr:hover { background: #faf9ff !important; }
+
+  #_sidebar_overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 35; }
+
+  @media(max-width: 768px) {
+    #sidebar { transform: translateX(100%); }
+    #sidebar.open { transform: translateX(0); }
+    #_admin_topbar { right: 0 !important; }
+    .main-content { margin-right: 0 !important; }
+    #_sidebar_toggle { display: block !important; }
+  }
+</style>
+
+<aside id="sidebar">
+  <a href="index.html" class="sidebar-logo">
+    <img src="../../assets/icons/logo.jpg" onerror="this.style.display='none'" />
+    <span>FitBalance</span>
+  </a>
+  <div class="sidebar-user">
+    <div class="sidebar-avatar" id="_admin_avatar">A</div>
+    <div>
+      <div class="sidebar-user-name" id="_admin_name">מנהל</div>
+      <div class="sidebar-user-role">מנהל מערכת</div>
+    </div>
+  </div>
+
+  <nav>
+    <div class="nav-section-label">ניהול</div>
+    <a href="customers.html" class="nav-link">
+      <span class="nav-icon"><i class="fas fa-users"></i></span>
+      <span>לקוחות</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="instructors.html" class="nav-link">
+      <span class="nav-icon"><i class="fas fa-chalkboard-teacher"></i></span>
+      <span>מדריכות</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="programs.html" class="nav-link">
+      <span class="nav-icon"><i class="fas fa-dumbbell"></i></span>
+      <span>תוכניות</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="weekly-calendar.html" class="nav-link">
+      <span class="nav-icon"><i class="fas fa-calendar-alt"></i></span>
+      <span>מערכת שעות</span>
+      <span class="nav-dot"></span>
+    </a>
+
+    <div class="nav-section-label">דוחות ואוטומציה</div>
+    <a href="reports.html" class="nav-link">
+      <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
+      <span>דוחות</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="automations.html" class="nav-link">
+      <span class="nav-icon"><i class="fas fa-bolt"></i></span>
+      <span>אוטומציות</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="jobs.html" class="nav-link">
+      <span class="nav-icon"><i class="fas fa-cogs"></i></span>
+      <span>תהליכים</span>
+      <span class="nav-dot"></span>
+    </a>
+
+    <div class="nav-section-label">מערכת</div>
+    <a href="system-settings.html" class="nav-link">
+      <span class="nav-icon"><i class="fas fa-sliders-h"></i></span>
+      <span>הגדרות מערכת</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="settings.html" class="nav-link">
+      <span class="nav-icon"><i class="fas fa-cog"></i></span>
+      <span>הגדרות</span>
+      <span class="nav-dot"></span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="logout-btn" id="_admin_logout">
+      <i class="fas fa-sign-out-alt" style="width:20px;text-align:center"></i>
+      התנתקות
+    </button>
+  </div>
+</aside>
+
+<header id="_admin_topbar">
+  <button id="_sidebar_toggle"><i class="fas fa-bars"></i></button>
+  <div class="topbar-right">
+    <span class="topbar-greeting">שלום, <strong id="_topbar_name">מנהל</strong></span>
+    <div class="topbar-avatar" id="_topbar_avatar">A</div>
+  </div>
+</header>
+
+<div id="_sidebar_overlay"></div>
+
+<script>
+  // שם מנהל מה-session
+  try {
+    const u = JSON.parse(sessionStorage.getItem('fb_user'));
+    if (u?.full_name) {
+      const initials = u.full_name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+      document.getElementById('_admin_name').textContent    = u.full_name;
+      document.getElementById('_admin_avatar').textContent  = initials;
+      document.getElementById('_topbar_name').textContent   = u.full_name;
+      document.getElementById('_topbar_avatar').textContent = initials;
+    }
+  } catch(e) {}
+
+  // סימון דף פעיל
+  const current = location.pathname.split('/').pop() || 'index.html';
+  document.querySelectorAll('#sidebar .nav-link').forEach(a => {
+    if (a.getAttribute('href') === current) a.classList.add('active');
+  });
+
+  // התנתקות
+  document.getElementById('_admin_logout').addEventListener('click', () => {
+    sessionStorage.removeItem('fb_user');
+    window.location.href = '/fitbalance/login.html';
+  });
+
+  // Mobile toggle
+  const sidebar  = document.getElementById('sidebar');
+  const overlay  = document.getElementById('_sidebar_overlay');
+  const toggle   = document.getElementById('_sidebar_toggle');
+  toggle.addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+  });
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.style.display = 'none';
+  });
+</script>

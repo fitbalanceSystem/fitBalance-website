@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>מערכת שעות</title>
+  <link rel="stylesheet" href="css/schedule.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="w-64 min-h-screen bg-white shadow-lg flex flex-col">
+
+      <!-- לוגו -->
+      <a href="index.html" class="flex items-center justify-center h-20 border-b">
+        <img src="images/logo.png" alt="לוגו" class="h-12 object-contain">
+      </a>
+    
+      <!-- ניווט -->
+      <nav class="flex-1 p-4">
+        <ul class="space-y-2 text-right">
+          <li>
+            <a href="customers.html"
+               class="block px-4 py-2 rounded-lg bg-blue-600 text-white font-medium">
+              לקוחות
+            </a>
+          </li>
+          <li>
+            <a href="instructors.html"
+               class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+              מדריכות
+            </a>
+          </li>
+          <li>
+            <a href="programs.html"
+               class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+              תוכניות
+            </a>
+          </li>
+          <li>
+            <a href="weekly-calendar.html"
+               class="block px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100">
+              מערכת שעות
+            </a>
+          </li>
+        </ul>
+      </nav>
+    
+      <!-- פעולות -->
+      <div class="p-4 border-t space-y-3">
+        <button
+          id="newCustomerBtn"
+          class="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+          הוסף לקוחה
+        </button>
+    
+        <button
+          class="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition">
+          ייצא
+        </button>
+      </div>
+    
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+      <header class="page-header">
+        <h1>מערכת שעות</h1>
+      </header>
+
+      <section class="schedule-table">
+        <table>
+          <thead>
+            <tr>
+              <th>שעה</th>
+              <th>ראשון</th>
+              <th>שני</th>
+              <th>שלישי</th>
+              <th>רביעי</th>
+              <th>חמישי</th>
+              <th>שישי</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>08:00</td>
+              <td>פילאטיס<br><span>מדריכה: רות</span></td>
+              <td></td>
+              <td>עיצוב<br><span>מדריכה: דנה</span></td>
+              <td></td>
+              <td>יוגה<br><span>מדריכה: נועה</span></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>17:00</td>
+              <td></td>
+              <td>זומבה<br><span>מדריכה: סיגל</span></td>
+              <td></td>
+              <td>פילאטיס<br><span>מדריכה: רות</span></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <!-- שורות נוספות -->
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

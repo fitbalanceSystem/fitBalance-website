@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FitBalance | מערכת שעות</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    .day-tab.active { background: linear-gradient(135deg,#ec4899,#8b5cf6); color:white; box-shadow:0 4px 14px rgba(236,72,153,.35); }
+    .class-card { transition: transform .2s, box-shadow .2s; }
+    .class-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.1); }
+    .registered { border: 2px solid #ec4899; }
+  </style>
+</head>
+<body>
+
+<div class="page-content p-5 max-w-4xl mx-auto">
+
+  <div class="mb-6 fade-in">
+    <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+      <i class="fas fa-calendar-alt text-pink-500"></i> מערכת שעות
+    </h1>
+    <p class="text-gray-500 text-sm mt-1">לחצי על שיעור כדי להירשם או לבטל רישום</p>
+  </div>
+
+  <!-- Day tabs -->
+  <div class="flex gap-2 overflow-x-auto pb-2 mb-6 fade-in" id="day-tabs">
+    <!-- injected by JS -->
+  </div>
+
+  <!-- Classes grid -->
+  <div id="classes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 fade-in">
+    <div class="skeleton h-36 rounded-2xl"></div>
+    <div class="skeleton h-36 rounded-2xl"></div>
+    <div class="skeleton h-36 rounded-2xl"></div>
+    <div class="skeleton h-36 rounded-2xl"></div>
+  </div>
+
+  <div id="empty-state" class="hidden text-center py-16 text-gray-400 fade-in">
+    <div class="text-5xl mb-3">📅</div>
+    <p class="font-medium">אין שיעורים ביום זה</p>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../../utils/constants.js"></script>
+<script src="../../utils/storage.js"></script>
+<script src="../../utils/formatter.js"></script>
+<script src="../../utils/helpers.js"></script>
+<script src="../../utils/popup.js"></script>
+<script src="../../services/supabaseClient.js"></script>
+<script src="../../services/authService.js"></script>
+<script src="../../services/attendanceService.js"></script>
+<script src="../../middleware/auth.js"></script>
+<script src="../../layouts/layout.js"></script>
+<script src="../../assets/js/pages/customer/schedule.js"></script>
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FitBalance | הרשמה</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', sans-serif; }
+    .gradient-text {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .page-bg {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #fce7f3 0%, #ede9fe 100%);
+    }
+    .card {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 1.5rem;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+    }
+    .input-field {
+      width: 100%;
+      padding: .75rem 1rem;
+      border: 2px solid #e5e7eb;
+      border-radius: .75rem;
+      font-size: .95rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      background: white;
+    }
+    .input-field:focus { border-color: #ec4899; box-shadow: 0 0 0 3px rgba(236,72,153,.1); }
+    .input-field:disabled { background: #f9fafb; color: #9ca3af; }
+    label { display: block; font-size: .875rem; font-weight: 600; color: #374151; margin-bottom: .35rem; }
+    .btn-primary {
+      width: 100%; padding: .9rem;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: white; font-size: 1.05rem; font-weight: 700;
+      border-radius: .875rem; border: none; cursor: pointer;
+      box-shadow: 0 8px 24px rgba(236,72,153,.35);
+      transition: opacity .2s, transform .2s;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: .92; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+    .step-indicator {
+      display: flex; gap: .5rem; justify-content: center; margin-bottom: 2rem;
+    }
+    .step { width: 2.5rem; height: 2.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .85rem; transition: all .3s; }
+    .step.active { background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; box-shadow: 0 4px 12px rgba(236,72,153,.4); }
+    .step.done { background: #10b981; color: white; }
+    .step.inactive { background: #e5e7eb; color: #9ca3af; }
+    .step-line { flex: 1; height: 2px; background: #e5e7eb; align-self: center; transition: background .3s; }
+    .step-line.done { background: #10b981; }
+    .error-box { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; border-radius: .75rem; padding: .75rem 1rem; font-size: .875rem; }
+    .success-box { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; border-radius: .75rem; padding: 1.5rem; text-align: center; }
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.4); border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .slide-up { animation: slideUp .5s ease both; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .required::after { content: ' *'; color: #ec4899; }
+  </style>
+</head>
+<body>
+<div class="page-bg flex items-center justify-center px-4 py-10">
+  <div class="w-full max-w-lg slide-up">
+
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <a href="home.html" class="inline-flex items-center gap-3">
+        <img src="assets/icons/logo.jpg" alt="FitBalance" class="h-14 rounded-xl shadow-md" onerror="this.style.display='none'" />
+        <span class="text-3xl font-bold gradient-text">FitBalance</span>
+      </a>
+      <p class="text-gray-500 mt-2 text-sm">הרשמה לחוגים</p>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="step-indicator items-center">
+      <div class="step active" id="step-dot-1">1</div>
+      <div class="step-line" id="line-1"></div>
+      <div class="step inactive" id="step-dot-2">2</div>
+      <div class="step-line" id="line-2"></div>
+      <div class="step inactive" id="step-dot-3">3</div>
+    </div>
+
+    <div class="card p-8">
+
+      <!-- שגיאה כללית -->
+      <div id="global-error" class="error-box hidden mb-5">
+        <i class="fas fa-exclamation-circle ml-1"></i><span></span>
+      </div>
+
+      <!-- ===== שלב 1: פרטים אישיים ===== -->
+      <div id="step-1">
+        <h2 class="text-xl font-bold text-gray-800 mb-1">פרטים אישיים</h2>
+        <p class="text-gray-400 text-sm mb-6">שלב 1 מתוך 3</p>
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="required">שם פרטי</label>
+              <input id="firstName" type="text" class="input-field" placeholder="שרה" />
+            </div>
+            <div>
+              <label class="required">שם משפחה</label>
+              <input id="lastName" type="text" class="input-field" placeholder="כהן" />
+            </div>
+          </div>
+          <div>
+            <label class="required">תעודת זהות</label>
+            <input id="idValue" type="text" inputmode="numeric" maxlength="9" class="input-field" placeholder="9 ספרות" />
+          </div>
+          <div>
+            <label>תאריך לידה</label>
+            <input id="birthDate" type="date" class="input-field" />
+          </div>
+          <div>
+            <label class="required">טלפון נייד</label>
+            <input id="mobile" type="tel" class="input-field" placeholder="050-0000000" />
+          </div>
+          <div>
+            <label class="required">אימייל</label>
+            <input id="email" type="email" class="input-field" placeholder="your@email.com" />
+          </div>
+        </div>
+        <button onclick="goToStep2()" class="btn-primary mt-6">
+          המשך <i class="fas fa-arrow-left mr-2"></i>
+        </button>
+      </div>
+
+      <!-- ===== שלב 2: כתובת ===== -->
+      <div id="step-2" class="hidden">
+        <h2 class="text-xl font-bold text-gray-800 mb-1">כתובת מגורים</h2>
+        <p class="text-gray-400 text-sm mb-6">שלב 2 מתוך 3</p>
+        <div class="space-y-4">
+          <div>
+            <label>עיר</label>
+            <input id="city" type="text" class="input-field" placeholder="ירושלים" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="col-span-2">
+              <label>רחוב</label>
+              <input id="street" type="text" class="input-field" placeholder="הרצל" />
+            </div>
+            <div>
+              <label>מספר</label>
+              <input id="houseNumber" type="number" class="input-field" placeholder="5" />
+            </div>
+          </div>
+
+          <hr class="my-2 border-gray-100" />
+          <p class="text-sm font-semibold text-gray-600">פרטי משלם (אם שונה מהנרשמת)</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label>שם פרטי משלם</label>
+              <input id="payerFirstName" type="text" class="input-field" placeholder="אופציונלי" />
+            </div>
+            <div>
+              <label>שם משפחה משלם</label>
+              <input id="payerLastName" type="text" class="input-field" placeholder="אופציונלי" />
+            </div>
+          </div>
+          <div>
+            <label>ת.ז משלם</label>
+            <input id="payerId" type="text" inputmode="numeric" maxlength="9" class="input-field" placeholder="אופציונלי" />
+          </div>
+          <div>
+            <label>טלפון משלם</label>
+            <input id="payerMobile" type="tel" class="input-field" placeholder="אופציונלי" />
+          </div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button onclick="goToStep(1)" class="flex-1 py-3 border-2 border-gray-200 rounded-xl text-gray-600 font-semibold hover:border-pink-300 transition-all">
+            <i class="fas fa-arrow-right ml-1"></i> חזרה
+          </button>
+          <button onclick="goToStep3()" class="flex-1 btn-primary">
+            המשך <i class="fas fa-arrow-left mr-2"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== שלב 3: אישורים ===== -->
+      <div id="step-3" class="hidden">
+        <h2 class="text-xl font-bold text-gray-800 mb-1">אישורים והגשה</h2>
+        <p class="text-gray-400 text-sm mb-6">שלב 3 מתוך 3</p>
+        <div class="space-y-3">
+          <label class="flex items-start gap-3 cursor-pointer p-3 rounded-xl hover:bg-pink-50 transition-colors">
+            <input id="cb-health" type="checkbox" class="mt-1 w-4 h-4 accent-pink-500" />
+            <span class="text-sm text-gray-700">קראתי ואני מאשרת את <strong>הצהרת הבריאות</strong> ומצבי הבריאות מאפשר פעילות גופנית</span>
+          </label>
+          <label class="flex items-start gap-3 cursor-pointer p-3 rounded-xl hover:bg-pink-50 transition-colors">
+            <input id="cb-policy" type="checkbox" class="mt-1 w-4 h-4 accent-pink-500" />
+            <span class="text-sm text-gray-700">קראתי ואני מאשרת את <strong>תקנון ומדיניות הביטולים</strong> של FitBalance</span>
+          </label>
+          <label class="flex items-start gap-3 cursor-pointer p-3 rounded-xl hover:bg-purple-50 transition-colors">
+            <input id="cb-whatsapp" type="checkbox" class="mt-1 w-4 h-4 accent-purple-500" checked />
+            <span class="text-sm text-gray-700">אני מעוניינת להצטרף לקבוצת WhatsApp של המתאמנות</span>
+          </label>
+          <label class="flex items-start gap-3 cursor-pointer p-3 rounded-xl hover:bg-purple-50 transition-colors">
+            <input id="cb-email-list" type="checkbox" class="mt-1 w-4 h-4 accent-purple-500" checked />
+            <span class="text-sm text-gray-700">אני מעוניינת לקבל עדכונים ומבצעים במייל</span>
+          </label>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-4 text-sm text-blue-700">
+          <i class="fas fa-info-circle ml-1"></i>
+          לאחר ההרשמה תקבלי אימייל אישור. צוות FitBalance יצור איתך קשר לתיאום פרטי התשלום.
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button onclick="goToStep(2)" class="flex-1 py-3 border-2 border-gray-200 rounded-xl text-gray-600 font-semibold hover:border-pink-300 transition-all">
+            <i class="fas fa-arrow-right ml-1"></i> חזרה
+          </button>
+          <button id="submit-btn" onclick="submitRegistration()" class="flex-1 btn-primary flex items-center justify-center gap-2">
+            <span id="btn-spinner" class="spinner hidden"></span>
+            <span id="btn-text">שלחי הרשמה 🎉</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== הצלחה ===== -->
+      <div id="step-success" class="hidden success-box">
+        <div class="text-5xl mb-4">🎉</div>
+        <h2 class="text-2xl font-bold text-green-700 mb-2">ההרשמה התקבלה!</h2>
+        <p class="text-green-600 mb-1">ברוכה הבאה ל-FitBalance!</p>
+        <p class="text-gray-500 text-sm mb-6">צוות FitBalance יצור איתך קשר בקרוב לתיאום פרטים.</p>
+        <a href="home.html" class="inline-block bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-3 rounded-full font-semibold hover:opacity-90 transition-opacity">
+          לדף הבית
+        </a>
+      </div>
+
+    </div>
+
+    <div class="text-center mt-6">
+      <p class="text-sm text-gray-500">
+        כבר רשומה?
+        <a href="login.html" class="text-pink-600 font-semibold hover:underline">כניסה לאזור האישי</a>
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="services/supabaseClient.js"></script>
+<script>
+  // ---- ולידציה ת.ז ישראלית (ספרת ביקורת לופי) ----
+  function isValidIsraeliId(id) {
+    const s = String(id).trim();
+    if (!/^\d{1,9}$/.test(s)) return false;
+    const padded = s.padStart(9, '0');
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      let d = parseInt(padded[i]) * ((i % 2) + 1);
+      if (d > 9) d -= 9;
+      sum += d;
+    }
+    return sum % 10 === 0;
+  }
+
+  function isValidPhone(phone) {
+    return /^0(5[0-9]|7[2-9])[0-9]{7}$/.test(phone.replace(/[-\s]/g, ''));
+  }
+
+  // ---- ניווט בין שלבים ----
+  function goToStep(n) {
+    [1, 2, 3].forEach(i => {
+      document.getElementById(`step-${i}`).classList.add('hidden');
+      document.getElementById(`step-dot-${i}`).className = 'step ' + (i < n ? 'done' : i === n ? 'active' : 'inactive');
+      if (i < 3) document.getElementById(`line-${i}`).className = 'step-line' + (i < n ? ' done' : '');
+    });
+    document.getElementById(`step-${n}`).classList.remove('hidden');
+    document.getElementById('global-error').classList.add('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('global-error');
+    el.querySelector('span').textContent = msg;
+    el.classList.remove('hidden');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function val(id) { return document.getElementById(id).value.trim(); }
+
+  function goToStep2() {
+    if (!val('firstName')) return showError('נא להזין שם פרטי');
+    if (!val('lastName'))  return showError('נא להזין שם משפחה');
+    if (!val('idValue') || !isValidIsraeliId(val('idValue'))) return showError('תעודת זהות לא תקינה');
+    if (!val('mobile') || !isValidPhone(val('mobile'))) return showError('מספר נייד לא תקין');
+    if (!val('email') || !/^[^@]+@[^@]+\.[^@]+$/.test(val('email'))) return showError('נא להזין כתובת אימייל תקינה');
+    goToStep(2);
+  }
+
+  function goToStep3() { goToStep(3); }
+
+  async function submitRegistration() {
+    if (!document.getElementById('cb-health').checked)  return showError('יש לאשר את הצהרת הבריאות');
+    if (!document.getElementById('cb-policy').checked)  return showError('יש לאשר את תקנון הביטולים');
+
+    const btn     = document.getElementById('submit-btn');
+    const spinner = document.getElementById('btn-spinner');
+    const btnText = document.getElementById('btn-text');
+    btn.disabled  = true;
+    spinner.classList.remove('hidden');
+    btnText.textContent = 'שולחת...';
+
+    try {
+      // בדוק אם אימייל או ת.ז כבר קיימים
+      const { data: existing } = await window._sb
+        .from('customers')
+        .select('id')
+        .or(`email.eq.${val('email')},idValue.eq.${val('idValue')}`)
+        .maybeSingle();
+
+      if (existing) {
+        showError('אימייל או תעודת זהות כבר רשומים במערכת. ניתן להיכנס לאזור האישי.');
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        btnText.textContent = 'שלחי הרשמה 🎉';
+        return;
+      }
+
+      const houseNo = val('houseNumber') ? parseInt(val('houseNumber')) : null;
+
+      const { error } = await window._sb.from('customers').insert({
+        firstName:                  val('firstName'),
+        lastName:                   val('lastName'),
+        idValue:                    val('idValue'),
+        birthDate:                  val('birthDate') || null,
+        mobile:                     val('mobile'),
+        email:                      val('email'),
+        city:                       val('city') || null,
+        street:                     val('street') || null,
+        houseNo,
+        payerFirstName:             val('payerFirstName') || null,
+        payerLastName:              val('payerLastName') || null,
+        payerId:                    val('payerId') || null,
+        payerMobile:                val('payerMobile') || null,
+        isSignedHealthForm:         document.getElementById('cb-health').checked,
+        issignedRegisTrationPolicy: document.getElementById('cb-policy').checked,
+        inWhatsAppList:             document.getElementById('cb-whatsapp').checked,
+        inEmailList:                document.getElementById('cb-email-list').checked,
+        status_code:                'interested',
+      });
+
+      if (error) throw error;
+
+      // הצג הצלחה
+      [1, 2, 3].forEach(i => document.getElementById(`step-${i}`).classList.add('hidden'));
+      [1, 2, 3].forEach(i => document.getElementById(`step-dot-${i}`).className = 'step done');
+      [1, 2].forEach(i => document.getElementById(`line-${i}`).className = 'step-line done');
+      document.getElementById('step-success').classList.remove('hidden');
+
+    } catch (err) {
+      console.error(err);
+      showError('אירעה שגיאה בהרשמה. נסי שוב או צרי קשר בטלפון.');
+      btn.disabled = false;
+      spinner.classList.add('hidden');
+      btnText.textContent = 'שלחי הרשמה 🎉';
+    }
+  }
+</script>
+</body>
+</html>

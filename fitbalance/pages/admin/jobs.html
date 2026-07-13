@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>תהליכים אוטומטיים</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50 font-sans flex" style="font-family: 'Segoe UI', Arial, sans-serif;">
+
+  <div id="sidebar-placeholder"></div>
+  <script src="utilities/sidebar.js"></script>
+
+  <!-- Main -->
+  <main class="flex-1 p-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">תהליכים אוטומטיים</h1>
+        <p class="text-sm text-gray-500 mt-1">ניהול והרצת Batch Jobs — מתרענן כל 30 שניות</p>
+      </div>
+      <button onclick="init()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-4 py-2 rounded-lg transition">
+        ↻ רענן
+      </button>
+    </div>
+
+    <!-- Jobs Table -->
+    <div class="bg-white rounded-xl shadow overflow-hidden">
+      <table class="min-w-full text-right text-sm">
+        <thead class="bg-gray-50 border-b">
+          <tr>
+            <th class="px-4 py-3 text-gray-500 font-medium">תיאור</th>
+            <th class="px-4 py-3 text-gray-500 font-medium text-center">סוג</th>
+            <th class="px-4 py-3 text-gray-500 font-medium text-center">סטטוס</th>
+            <th class="px-4 py-3 text-gray-500 font-medium text-center">ריצה אחרונה</th>
+            <th class="px-4 py-3 text-gray-500 font-medium text-center">ריצה הבאה</th>
+            <th class="px-4 py-3 text-gray-500 font-medium text-center">פעולה</th>
+          </tr>
+        </thead>
+        <tbody id="jobsBody" class="divide-y divide-gray-100">
+          <tr><td colspan="6" class="text-center p-6 text-gray-400">טוען...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 text-white text-sm px-5 py-3 rounded-xl shadow-lg z-50 transition-all"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/jobs.js"></script>
+</body>
+</html>

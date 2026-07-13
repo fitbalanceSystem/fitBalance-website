@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>טופס רישום לקוח</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/customer-form.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="global-spinner" class="spinner-overlay hidden"></div>
+  <div class="container">
+    <div id="sidebar-placeholder"></div>
+    <script src="utilities/sidebar.js"></script>
+    <main class="main-content">
+      <header class="page-header">
+        <h1 id="formTitle">טופס רישום לקוח</h1>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <span id="saveStatus" style="display:none;font-size:13px;color:#8b5cf6;font-weight:600;"></span>
+          <button class="save-btn"><i class="fas fa-save"></i> שמור</button>
+          <button class="cancel-btn"><i class="fas fa-times"></i> ביטול</button>
+        </div>
+      </header>
+
+      <ul class="nav-links">
+        <li><a href="#tab1" class="active">פרטים אישיים</a></li>
+        <li><a href="#tab2">אינדיקציות וטפסים</a></li>
+        <li><a href="#tab4">חוגים ונוכחות</a></li>
+      </ul>
+
+      <div class="tab-content" id="tab1">
+        <form id="customerForm">
+          <div class="form-grid">
+            <div>
+              <label for="idNumber">ת.ז</label>
+              <input type="text" id="idNumber" />
+            </div>
+            <div>
+              <label for="firstName">שם פרטי</label>
+              <input type="text" id="firstName" />
+            </div>
+            <div>
+              <label for="lastName">שם משפחה</label>
+              <input type="text" id="lastName" />
+            </div>
+            <div>
+              <label for="birthDate">תאריך לידה</label>
+              <input type="date" id="birthDate" />
+            </div>
+            <div>
+              <label for="city">עיר</label>
+              <input type="text" id="city" />
+            </div>
+            <div>
+              <label for="street">רחוב</label>
+              <input type="text" id="street" />
+            </div>
+            <div>
+              <label for="houseNumber">מספר בית</label>
+              <input type="text" id="houseNumber" />
+            </div>
+            <div>
+              <label for="mobile">נייד</label>
+              <input type="tel" id="mobile" />
+            </div>
+            <div>
+              <label for="email">אימייל</label>
+              <input type="email" id="email" />
+            </div>
+            <div>
+              <label for="arnonaId">ת.ז משלם ארנונה</label>
+              <input type="text" id="arnonaId" />
+            </div>
+            <div>
+              <label for="arnonaFirstName">שם משלם ארנונה</label>
+              <input type="text" id="arnonaFirstName" />
+            </div>
+            <div>
+              <label for="arnonaLastName">משפחה משלם ארנונה</label>
+              <input type="text" id="arnonaLastName" />
+            </div>
+            <div>
+              <label for="arnonaMobile">נייד משלם ארנונה</label>
+              <input type="tel" id="arnonaMobile" />
+            </div>
+            <div>
+              <label for="arnonaEmail">אימייל משלם ארנונה</label>
+              <input type="email" id="arnonaEmail" />
+            </div>
+            <div>
+              <label for="status">סטטוס</label>
+              <select id="status"></select>
+            </div>
+          </div>
+        </form>
+
+      </div>
+
+      <div class="tab-content" id="tab2" style="display: none;">
+        <div class="indications">
+          <label><input type="checkbox" id="checkbox1" /> הצהרת בריאות</label>
+          <label><input type="checkbox" id="checkbox2" /> נהלי רישום</label>
+          <label><input type="checkbox" id="checkbox3" /> קבוצת ווצאפון</label>
+          <label><input type="checkbox" id="checkbox4" /> תפוצות מייל</label>
+          <label><input type="checkbox" id="checkbox5" /> תפוצת ווצאפ כולן</label>
+          <label><input type="checkbox" id="checkbox6" /> תפוצת ווצאפ מתאמנות</label>
+          <div class="pregnancy-group">
+            <label><input type="checkbox" id="isPregnant" /> בהריון</label>
+            <label for="dueDate"> תאריך לידה משוער</label>
+            <input type="date" id="dueDate" class="due-date" disabled />
+          </div>
+        </div>
+
+        <button class="add-note-btn" id="addNoteBtn">+ הוסף הערה</button>
+        <button class="add-note-btn" id="saveNotesBtn">שמור הערות</button>
+
+        <table class="notes-table" id="notesTable">
+          <thead>
+            <tr>
+              <th>תאריך</th>
+              <th>הערה</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- שורות דינמיות יתווספו כאן -->
+          </tbody>
+        </table>
+      </div>
+
+   
+
+    <!-- ====== TAB חוגים ונוכחות ====== -->
+<div class="tab-content" id="tab4" style="display: none;">
+  <!-- כפתורי פעולה -->
+  <div class="flex justify-start items-center mb-4 gap-2">
+    <button class="add-program-btn px-3 py-1 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-md shadow"
+            onclick="openClassesModal()">
+      + הוסף תוכנית
+    </button>
+
+    <button class="save-programs-btn px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md shadow"
+            id="saveProgramsBtn">
+      💾 שמור תוכניות
+    </button>
+
+    <button id="addTrialBtn" class="px-3 py-1 bg-orange-400 hover:bg-orange-500 text-white font-semibold rounded-md shadow">
+      🔍 שבץ לניסיון
+    </button>
+
+    <!-- לחצן תיעוד השלמות -->
+    <button id="logCompletionBtn" class="save-programs-btn px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-md shadow" onclick="logCompletion()">
+ תיעוד השלמות
+</button>
+  </div>
+
+  <!-- דפדוף בין שנים לימודיות -->
+  <div class="school-year-navigation flex items-center justify-center my-4 gap-4">
+    <button id="prevYearBtn"
+            class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg shadow transition">
+      &lt;
+    </button>
+  
+    <span id="schoolYearLabel" class="text-lg font-bold px-4 py-2 bg-gray-100 rounded-lg shadow">
+      2025-2026
+    </span>
+  
+    <button id="nextYearBtn"
+            class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg shadow transition">
+      &gt;
+    </button>
+  </div>
+
+  <!-- טבלת תוכניות -->
+  <div class="overflow-x-auto">
+  <table class="customers-program-table w-full text-center border-collapse border border-gray-300">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="border px-2 py-1">סוג תוכנית</th>
+        <th class="border px-2 py-1">שם</th>
+        <th class="border px-2 py-1">יום</th>
+        <th class="border px-2 py-1">שעה</th>
+        <th class="border px-2 py-1">ת. התחלה</th>
+        <th class="border px-2 py-1">ת. סיום</th>
+        <th class="border px-2 py-1">מחיר</th>
+        <th class="border px-2 py-1">סה"כ לתשלום</th>
+        <th class="border px-2 py-1">שולם</th>
+        <th class="border px-2 py-1">חוב</th>
+        <th class="border px-2 py-1">פעולות</th>
+      </tr>
+    </thead>
+    <tbody id="classesBody">
+      <!-- תוכניות יתווספו כאן ע"י JS -->
+    </tbody>
+  </table>
+  </div>
+</div>
+<!-- מודאל נוכחות -->
+<!-- Modal backdrop -->
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
+  <!-- Modal container -->
+  <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-xl p-4">
+    <!-- Modal header -->
+    <div class="flex justify-between items-center mb-3">
+      <h2 class="text-lg font-bold" id="modal-title">כותרת המודאל</h2>
+      <button id="close-modal" class="text-gray-600 hover:text-gray-900 text-xl font-bold">&times;</button>
+    </div>
+
+    <!-- Modal content: טבלה עם כותרות -->
+    <table class="w-full text-sm border-collapse">
+      <thead>
+        <tr class="border-b bg-gray-100">
+          <th class="p-2 text-right">תאריך</th>
+          <th class="p-2 text-right">יום</th>
+          <th class="p-2 text-right">שעה</th>
+          <th class="p-2 text-right">שיעור</th>
+        </tr>
+      </thead>
+      <tbody id="attendance-table-body">
+        <!-- כאן יוכנסו השורות דינמית באמצעות JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+    </main>
+  </div>
+
+  <script>
+    // ניווט בין הטאבים
+    const links = document.querySelectorAll(".nav-links a");
+    const tabs = document.querySelectorAll(".tab-content");
+
+    links.forEach(link => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        links.forEach(l => l.classList.remove("active"));
+        link.classList.add("active");
+
+        tabs.forEach(tab => tab.style.display = "none");
+        const target = document.querySelector(link.getAttribute("href"));
+        if (target) target.style.display = "block";
+      });
+    });
+
+
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="js/customer-form.js"></script>
+
+  <!-- מודאל בחירת תוכניות -->
+  <div id="classesModal" style="display:none; position:fixed; inset:0; background:rgba(15,10,40,.65); z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div style="background:white; border-radius:16px; padding:28px; max-width:800px; width:95vw; max-height:85vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,.2); position:relative;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="font-size:18px; font-weight:700; color:#1f2937;">בחרי תוכניות</h3>
+        <button id="closeModalBtn" style="background:#f3f0ff; border:none; border-radius:50%; width:32px; height:32px; font-size:18px; cursor:pointer; color:#7c3aed;">×</button>
+      </div>
+      <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:12px; cursor:pointer;">
+        <input type="checkbox" id="showAllProgramsCheckbox" onchange="window.loadModalPrograms()">
+        הצג הכל (כולל לא פעילות)
+      </label>
+      <div style="overflow-x:auto;">
+        <table id="modalClassesTable" style="width:100%; border-collapse:collapse; font-size:13px;">
+          <thead>
+            <tr style="background:#f8f7ff; border-bottom:2px solid #ede9fe;">
+              <th style="padding:10px 12px; text-align:right;"></th>
+              <th style="padding:10px 12px; text-align:right;">סוג תוכנית</th>
+              <th style="padding:10px 12px; text-align:right;">שם</th>
+              <th style="padding:10px 12px; text-align:right;">יום</th>
+              <th style="padding:10px 12px; text-align:right;">שעה</th>
+              <th style="padding:10px 12px; text-align:right;">סניף</th>
+              <th style="padding:10px 12px; text-align:right;">ת.התחלה</th>
+              <th style="padding:10px 12px; text-align:right;">ת.סיום</th>
+            </tr>
+          </thead>
+          <tbody id="modalProgramsBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+        <button id="addSelectedBtn" style="background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border:none; border-radius:10px; padding:10px 24px; font-size:14px; font-weight:600; cursor:pointer;">הוסף נבחרים</button>
+      </div>
+    </div>
+  </div>
+  
+<!-- מודאל שיבוץ ניסיון -->
+<div id="trialModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
+  <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-2xl p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-bold">שיבוץ לניסיון</h2>
+      <button id="closeTrialModal" class="text-gray-600 hover:text-gray-900 text-xl font-bold">&times;</button>
+    </div>
+    <div class="mb-3">
+      <label class="block text-sm font-medium mb-1">בחרי תוכנית</label>
+      <select id="trialProgramSelect" class="w-full border rounded px-3 py-2">
+        <option value="">בחרי תוכנית...</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">בחרי מפגש</label>
+      <select id="trialSessionSelect" class="w-full border rounded px-3 py-2" disabled>
+        <option value="">קודם בחרי תוכנית...</option>
+      </select>
+    </div>
+    <div class="flex gap-2 justify-end">
+      <button id="confirmTrialBtn" class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded font-semibold">שבץ</button>
+      <button id="cancelTrialBtn" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded">ביטול</button>
+    </div>
+    <!-- ניסיונות קיימים -->
+    <div class="mt-5">
+      <h3 class="font-semibold mb-2">ניסיונות קיימים</h3>
+      <table class="w-full text-sm border-collapse">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="border px-2 py-1">תוכנית</th>
+            <th class="border px-2 py-1">תאריך מפגש</th>
+            <th class="border px-2 py-1">יום</th>
+            <th class="border px-2 py-1">שעה</th>
+            <th class="border px-2 py-1"></th>
+          </tr>
+        </thead>
+        <tbody id="trialListBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- מודאל תשלום -->
+<div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
+  <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-sm p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-bold">תשלום עבור חוג</h2>
+      <button id="closePaymentModal" class="text-gray-600 hover:text-gray-900 text-xl font-bold">&times;</button>
+    </div>
+    <div class="mb-4">
+      <p class="text-sm text-gray-600 mb-1">חוג: <strong id="paymentProgramName"></strong></p>
+      <p class="text-sm text-gray-600 mb-3">מחיר מוגדר: <strong id="paymentProgramPrice"></strong></p>
+    </div>
+    <div class="mb-3">
+      <label class="block text-sm font-medium mb-1">סכום לתשלום (₪)</label>
+      <input type="number" id="paymentAmount" min="0" step="0.01" class="w-full border rounded px-3 py-2" />
+    </div>
+    <div class="mb-3">
+      <label class="block text-sm font-medium mb-1">אמצעי תשלום</label>
+      <select id="paymentMethod" class="w-full border rounded px-3 py-2">
+        <option value="cash">מזומן</option>
+        <option value="transfer">העברה בנקאית</option>
+        <option value="bit">ביט</option>
+        <option value="paybox">פייבוקס</option>
+        <option value="standing_order">הוראת קבע עירייה</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium mb-1">הערה</label>
+      <input type="text" id="paymentNote" class="w-full border rounded px-3 py-2" placeholder="אופציונלי..." />
+    </div>
+    <div class="flex gap-2 justify-end">
+      <button id="confirmPaymentBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold">שמור תשלום</button>
+      <button id="cancelPaymentBtn" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- מודאל היסטוריית תשלומים -->
+<div id="paymentHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
+  <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-lg p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-bold">היסטוריית תשלומים — <span id="historyProgramName"></span></h2>
+      <button id="closeHistoryModal" class="text-gray-600 hover:text-gray-900 text-xl font-bold">&times;</button>
+    </div>
+    <table class="w-full text-sm border-collapse mb-3">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="border px-2 py-1">תאריך</th>
+          <th class="border px-2 py-1">סכום</th>
+          <th class="border px-2 py-1">אמצעי תשלום</th>
+          <th class="border px-2 py-1">הערה</th>
+          <th class="border px-2 py-1"></th>
+        </tr>
+      </thead>
+      <tbody id="paymentHistoryBody"></tbody>
+      <tfoot>
+        <tr class="font-bold bg-gray-50">
+          <td class="border px-2 py-1">סה"כ</td>
+          <td class="border px-2 py-1" id="paymentHistoryTotal"></td>
+          <td colspan="3" class="border px-2 py-1"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- ספינר גלובלי -->
+<div id="globalLoader" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center z-[1000]">
+  <div class="w-10 h-10 border-4 border-pink-400 border-t-transparent rounded-full animate-spin"></div>
+</div>
+
+</body>
+</html>

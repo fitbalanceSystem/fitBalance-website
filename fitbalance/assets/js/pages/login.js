@@ -148,6 +148,18 @@ form.addEventListener('submit', async (e) => {
         role: employee.user_name === 'admin' ? 'admin' : 'employee',
         full_name: employee.full_name ?? `${employee.firstName ?? ''} ${employee.lastName ?? ''}`.trim(),
       });
+
+      console.log("ADMIN_HOME:", window.ROUTES.ADMIN_HOME);
+      console.log("EMPLOYEE_HOME:", window.ROUTES.EMPLOYEE_HOME);
+      
+      const target = employee.user_name === 'admin'
+          ? window.ROUTES.ADMIN_HOME
+          : window.ROUTES.EMPLOYEE_HOME;
+      
+      console.log("Redirecting to:", target);
+      
+      window.location.href = target;
+
       window.location.href = employee.user_name === 'admin' ? window.ROUTES.ADMIN_HOME : window.ROUTES.EMPLOYEE_HOME;
     }
   } catch (err) {

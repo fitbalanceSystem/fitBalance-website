@@ -1,6 +1,6 @@
 window.ROUTES = {
-  LOGIN:         '/fitbalance/login.html',
-  CUSTOMER_HOME: '/fitbalance/pages/customer/profile.html',
-  EMPLOYEE_HOME: '/fitbalance/pages/employee/profile.html',
-  ADMIN_HOME:    '/fitbalance/pages/admin/',
+  LOGIN:         '/login.html',
+  CUSTOMER_HOME: '/pages/customer/profile.html',
+  EMPLOYEE_HOME: '/pages/employee/profile.html',
+  ADMIN_HOME:    '/pages/admin/',
 };

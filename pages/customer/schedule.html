@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FitBalance | מערכת שעות</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+
+<div class="page-content p-5 max-w-5xl mx-auto">
+
+  <!-- כותרת + ניווט -->
+  <div class="card p-5 mb-5 fade-in">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <h1 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+        <i class="fas fa-calendar-alt text-pink-500"></i> מערכת שעות
+      </h1>
+      <div class="flex items-center gap-2">
+        <button id="prev-week" class="w-8 h-8 rounded-full bg-white border border-gray-200 hover:border-pink-400 flex items-center justify-center text-gray-600 transition-all">‹</button>
+        <span id="nav-label" class="text-sm font-semibold text-gray-700 min-w-max"></span>
+        <button id="next-week" class="w-8 h-8 rounded-full bg-white border border-gray-200 hover:border-pink-400 flex items-center justify-center text-gray-600 transition-all">›</button>
+        <button id="today-btn" class="px-3 py-1 text-xs font-semibold bg-pink-100 text-pink-600 rounded-full hover:bg-pink-200 transition-all">היום</button>
+        <button id="print-btn" class="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-all"><i class="fas fa-print"></i></button>
+        <button id="download-btn" class="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition-all"><i class="fas fa-download"></i></button>
+      </div>
+    </div>
+    <p class="text-xs text-gray-400 mt-2">שיעורים המסומנים ב־✦ הם שיעורים שאת משובצת בהם</p>
+  </div>
+
+  <!-- גריד שבועי -->
+  <div id="schedule-grid" class="fade-in overflow-x-auto">
+    <div class="text-center py-16 text-gray-400">
+      <div class="text-4xl mb-3">⏳</div>
+      <p>טוען...</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../../utils/constants.js"></script>
+<script src="../../utils/storage.js"></script>
+<script src="../../utils/cart.js"></script>
+<script src="../../utils/formatter.js"></script>
+<script src="../../utils/helpers.js"></script>
+<script src="../../utils/popup.js"></script>
+<script src="../../services/supabaseClient.js"></script>
+<script src="../../services/authService.js"></script>
+<script src="../../services/attendanceService.js"></script>
+<script src="../../middleware/auth.js"></script>
+<script src="../../layouts/layout.js"></script>
+<script src="../../assets/js/pages/customer/schedule.js"></script>
+</body>
+</html>

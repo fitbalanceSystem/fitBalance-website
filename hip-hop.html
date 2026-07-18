@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/png" href="assets/icons/icon.png">
+<title>׳—׳•׳’׳™ ׳¨׳™׳§׳•׳“ ׳׳‘׳ ׳•׳× ׳•׳ ׳¢׳¨׳•׳×</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  * { font-family: 'Heebo', sans-serif; }
+  .hero { min-height: 100vh; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(131,24,67,.82) 0%, rgba(15,15,30,.72) 100%); z-index: 1; }
+  .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+  .floating { animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  .pulse-ring { animation: pulse-ring 2s ease-out infinite; }
+  @keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(131,24,67,.5)} 70%{box-shadow:0 0 0 20px rgba(131,24,67,0)} 100%{box-shadow:0 0 0 0 rgba(131,24,67,0)} }
+  .card-hover { transition: all .35s cubic-bezier(.4,0,.2,1); }
+  .card-hover:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 25px 50px rgba(0,0,0,.15); }
+  .input-field { border: 2px solid #f3f4f6; border-radius: 14px; padding: 14px 16px; width: 100%; font-size: 1rem; transition: border-color .2s, box-shadow .2s; outline: none; background: #fafafa; }
+  .input-field:focus { border-color: #ec4899; box-shadow: 0 0 0 4px rgba(131,24,67,.12); background: #fff; }
+  .gradient-text { background: linear-gradient(135deg, #ec4899, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .badge { background: linear-gradient(135deg, #fdf2f8, #ede9fe); border: 1px solid #f9a8d4; color: #ec4899; border-radius: 999px; padding: 6px 18px; font-size: .85rem; font-weight: 600; display: inline-block; }
+  .scroll-indicator { animation: bounce 2s infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+  .gallery-img { aspect-ratio: 1; object-fit: cover; border-radius: 20px; transition: transform .35s, box-shadow .35s; }
+  .gallery-img:hover { transform: scale(1.05); box-shadow: 0 20px 40px rgba(0,0,0,.2); }
+  .feature-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0; }
+  .testimonial-card { background: white; border-radius: 24px; padding: 28px; border: 1px solid #f3f4f6; box-shadow: 0 4px 20px rgba(0,0,0,.06); }
+  .section-divider { height: 3px; background: linear-gradient(90deg, #ec4899, #8b5cf6, #ec4899); border-radius: 999px; width: 60px; margin: 12px auto 0; }
+
+  /* Stage Lights */
+  .stage-light { position:relative; display:flex; flex-direction:column; align-items:center; }
+  .light-head {
+    width:28px; height:20px;
+    background:var(--c);
+    border-radius:6px 6px 10px 10px;
+    box-shadow: 0 0 12px 4px var(--c), 0 0 24px 8px var(--c);
+    animation: lightPulse 1.6s ease-in-out infinite;
+    animation-delay: var(--d);
+  }
+  .light-beam {
+    width:0; height:0;
+    border-left: 22px solid transparent;
+    border-right: 22px solid transparent;
+    border-top: 70px solid;
+    border-top-color: var(--c);
+    opacity: 0;
+    animation: beamPulse 1.6s ease-in-out infinite;
+    animation-delay: var(--d);
+    filter: blur(6px);
+    margin-top: -2px;
+  }
+  @keyframes lightPulse {
+    0%,100% { opacity:.4; box-shadow:0 0 6px 2px var(--c); }
+    50%      { opacity:1;  box-shadow:0 0 20px 8px var(--c), 0 0 40px 16px var(--c); }
+  }
+  @keyframes beamPulse {
+    0%,100% { opacity:.1; }
+    50%      { opacity:.55; }
+  }
+</style>
+</head>
+<body class="bg-gray-50 overflow-x-hidden">
+
+<!-- לחצן דף הבית -->
+<a href="home.html" style="position:fixed;top:16px;right:16px;z-index:100;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.3);color:white;padding:10px 20px;border-radius:999px;font-size:14px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:8px;transition:background .2s" 
+onmouseover="this.style.background='rgba(255,255,255,0.25)'" 
+onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+  לדף הבית
+</a>
+
+<!-- ===== HERO ===== -->
+<header class="hero flex flex-col items-center justify-center text-center px-6">
+  <video class="hero-video" src="assets/image/123.mp4" autoplay muted loop playsinline></video>
+
+  <div class="relative z-10 max-w-3xl mx-auto">
+
+    <span class="badge mb-5 inline-block">הרשמה פתוחה לשנת תשפ"ו</span>
+
+    <h1 class="text-5xl md:text-7xl font-black text-white leading-tight mb-6">
+      חוגי ריקוד<br>
+      <span style="background:linear-gradient(135deg,#f9a8d4,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+        לבנות ונערות
+      </span>
+    </h1>
+
+    <p class="text-lg md:text-xl text-pink-50 mb-8 leading-relaxed" style="max-width:600px;margin-right:auto;margin-left:auto;">
+      הריקוד מעניק לבנות ולנערות הרבה מעבר לתנועה —
+      הוא מחזק ביטחון עצמי, מפתח תחושת הצלחה ויוצר חברויות אמיתיות.<br><br>
+
+      בכל שיעור הן רוכשות מיומנויות חדשות, לומדות להתמיד ולהאמין ביכולות שלהן.
+      כי כשילדה רוקדת — היא לא רק לומדת צעדים,<br>
+      <strong style="color:#f9a8d4;">היא מגלה את הכוח שבתוכה.</strong>
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+
+      <a href="#groups" class="pulse-ring bg-pink-600 hover:bg-pink-700 text-white px-10 py-4 rounded-full text-lg font-bold transition-all duration-300 shadow-lg">
+        🎀 השאירי פרטים עכשיו
+      </a>
+
+      <a href="#why-us" class="border-2 border-white/50 hover:border-white text-white px-10 py-4 rounded-full text-lg font-semibold transition-all duration-300 backdrop-blur-sm">
+        גלי עוד
+      </a>
+
+    </div>
+
+  </div>
+
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 scroll-indicator">
+    <svg class="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </div>
+
+</header>
+
+<!-- ===== WHY US – VALUES ===== -->
+<section id="why-us" class="max-w-5xl mx-auto py-20 px-6">
+
+  <div class="text-center mb-14">
+
+    <span class="badge mb-4">למה דווקא אצלנו?</span>
+
+    <h2 class="text-4xl font-black gradient-text">
+      ריקוד עם לב — ועם ערכים
+    </h2>
+
+    <div class="section-divider"></div>
+
+    <p class="mt-6 text-gray-500 text-lg max-w-2xl mx-auto leading-relaxed">
+      שילוב מנצח של מקצועיות, ערכים והנאה!
+
+      <br><br>
+
+      אצלנו הבנות נהנות מחוג ריקוד מקצועי ומעשיר, תוך הקפדה מלאה על קו תורני
+      ושמירה על ערכי הצניעות. השיעורים מתקיימים באווירה מכבדת ונעימה,
+      עם קוד לבוש הולם, תקנון צניעות ברור, מוזיקה כשרה ומותאמת או קטעים ללא מילים,
+      ותנועות מבוקרות המותאמות לרוח המקום.
+
+      <br><br>
+
+      מעבר ללימוד הריקוד, אנו שמות דגש על חיזוק הביטחון העצמי,
+      עבודת צוות, התמדה והנאה אמיתית מהדרך.
+    </p>
+
+  </div>
+
+
+  <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+    <div class="card-hover bg-white rounded-3xl p-7 shadow-sm border border-gray-100 text-center">
+      <div class="text-4xl mb-4">👗</div>
+      <h3 class="text-lg font-bold mb-2">קוד לבוש וצניעות</h3>
+      <p class="text-gray-500 text-sm leading-relaxed">
+        לבוש הולם ותקנון ברור — כדי שכל בת תרגיש בנוח עם עצמה.
+      </p>
+    </div>
+
+
+    <div class="card-hover bg-white rounded-3xl p-7 shadow-sm border border-gray-100 text-center">
+      <div class="text-4xl mb-4">🎵</div>
+      <h3 class="text-lg font-bold mb-2">מוזיקה כשרה</h3>
+      <p class="text-gray-500 text-sm leading-relaxed">
+        מוזיקה שנבחרת בקפידה — כשרה, ללא מילים או מותאמת לאופי הפעילות.
+      </p>
+    </div>
+
+
+    <div class="card-hover bg-white rounded-3xl p-7 shadow-sm border border-gray-100 text-center">
+      <div class="text-4xl mb-4">💃</div>
+      <h3 class="text-lg font-bold mb-2">תנועות מבוקרות</h3>
+      <p class="text-gray-500 text-sm leading-relaxed">
+        כל תנועה נבנית מתוך מחשבה — ריקוד שמכבד את הבת ואת הערכים שלה.
+      </p>
+    </div>
+
+
+    <div class="card-hover bg-white rounded-3xl p-7 shadow-sm border border-gray-100 text-center">
+      <div class="text-4xl mb-4">💗</div>
+      <h3 class="text-lg font-bold mb-2">יחס אישי</h3>
+      <p class="text-gray-500 text-sm leading-relaxed">
+        אני מכירה כל בת בשמה. אין כאן מספרים — יש כאן ילדות.
+      </p>
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ===== SHOW + AWARDS ===== -->
+<section class="bg-gradient-to-l from-pink-600 to-purple-700 py-20 px-6 text-white text-center">
+
+  <div class="max-w-4xl mx-auto">
+
+    <span class="inline-block bg-white/20 text-white rounded-full px-5 py-2 text-sm font-semibold mb-6">
+      גולת הכותרת של השנה
+    </span>
+
+    <h2 class="text-4xl md:text-5xl font-black mb-6">
+
+      <!-- Stage Lights Animation -->
+      <div style="display:flex;justify-content:center;align-items:flex-end;gap:18px;margin-bottom:20px;position:relative;height:100px;">
+
+        <div class="stage-light" style="--c:#ff3cac;--d:0s">
+          <div class="light-head"></div>
+          <div class="light-beam"></div>
+        </div>
+
+        <div class="stage-light" style="--c:#ffdd00;--d:.4s">
+          <div class="light-head"></div>
+          <div class="light-beam"></div>
+        </div>
+
+        <div class="stage-light" style="--c:#00cfff;--d:.8s">
+          <div class="light-head"></div>
+          <div class="light-beam"></div>
+        </div>
+
+        <div class="stage-light" style="--c:#a855f7;--d:1.2s">
+          <div class="light-head"></div>
+          <div class="light-beam"></div>
+        </div>
+
+      </div>
+
+      מופע סיום מרהיב
+
+    </h2>
+
+    <p class="text-xl text-pink-50 leading-relaxed mb-10 max-w-2xl mx-auto">
+      הבנות מציגות את כל מה שלמדו במהלך השנה בפני המשפחה והחברות —
+      חוויה מרגשת ובלתי נשכחת על במה מקצועית.
+    </p>
+
+
+    <div class="grid md:grid-cols-3 gap-6">
+
+      <div class="bg-white/15 backdrop-blur-sm rounded-2xl p-6">
+        <div class="text-3xl mb-3">🏆</div>
+        <h3 class="font-bold text-lg mb-1">תעודות הוקרה</h3>
+        <p class="text-pink-50 text-sm">
+          חלוקת תעודות מרשימות בסוף השנה לכל המשתתפות.
+        </p>
+      </div>
+
+
+      <div class="bg-white/15 backdrop-blur-sm rounded-2xl p-6">
+        <div class="text-3xl mb-3">🎁</div>
+        <h3 class="font-bold text-lg mb-1">הפתעות בדרך</h3>
+        <p class="text-pink-50 text-sm">
+          ימי כיף, אירועים מיוחדים וחוויות שלא תשכחו לאורך כל השנה.
+        </p>
+      </div>
+
+
+      <div class="bg-white/15 backdrop-blur-sm rounded-2xl p-6">
+        <div class="text-3xl mb-3">📞</div>
+        <h3 class="font-bold text-lg mb-1">רוצה לדעת עוד?</h3>
+        <p class="text-pink-50 text-sm">
+          התקשרי אלינו לפרטים נוספים ולהרשמה.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ===== GROUPS ===== -->
+<section id="groups" class="max-w-5xl mx-auto py-20 px-6">
+
+  <h2 class="text-4xl font-black gradient-text">
+    הקבוצות שלנו
+  </h2>
+
+  <div class="section-divider"></div>
+
+  <div class="grid md:grid-cols-3 gap-6">
+
+    <!-- Beginners -->
+    <div class="card-hover bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col">
+
+      <div class="text-3xl mb-4">🎀</div>
+
+      <h3 class="text-xl font-bold mb-3">
+        קבוצות לפי גיל ורמה
+      </h3>
+
+      <p class="text-gray-500 text-sm mb-4 flex-1">
+        כיתות ג׳ עד י״ב, בחלוקה לפי גיל ורמה.
+      </p>
+
+      <button onclick="openModal('kids', 'מתחילות')" 
+        class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-2xl transition-colors mt-auto">
+        🎀 השאירי פרטים
+      </button>
+
+    </div>
+
+
+    <!-- Advanced -->
+    <div class="card-hover bg-gradient-to-br from-pink-50 to-purple-50 rounded-3xl p-8 border border-pink-200 flex flex-col">
+
+      <div class="text-3xl mb-4">⭐</div>
+
+      <h3 class="text-xl font-bold mb-3">
+        קבוצות מתקדמות
+      </h3>
+
+      <p class="text-gray-600 text-sm leading-relaxed mb-5 flex-1">
+        נפתח על בסיס 
+        <strong>
+          מיון אישי והמלצת המדריכה
+        </strong>,
+        כדי לאפשר לכל בת להתקדם בקצב המתאים לה.
+      </p>
+
+      <button onclick="openModal('kids', 'מתקדמות')" 
+        class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-2xl transition-colors mt-auto">
+        ⭐ השאירי פרטים
+      </button>
+
+    </div>
+
+
+    <!-- Women -->
+    <div class="card-hover bg-gradient-to-br from-pink-50 to-pink-50 rounded-3xl p-8 border border-pink-200 flex flex-col">
+
+      <div class="text-3xl mb-4">💃</div>
+
+      <h3 class="text-xl font-bold mb-3">
+        קבוצת נשים
+      </h3>
+
+      <p class="text-gray-600 text-sm leading-relaxed mb-5 flex-1">
+        השנה נפתחת גם 
+        <strong>קבוצת נשים</strong> —
+        בהתאם לביקוש!
+      </p>
+
+      <button onclick="openModal('women')" 
+        class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-2xl transition-colors mt-auto">
+        💃 השאירי פרטים
+      </button>
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ===== INSTRUCTOR ===== -->
+<section class="bg-gray-900 py-20 px-6">
+
+  <div class="max-w-4xl mx-auto">
+
+    <div class="text-center mb-12">
+
+      <span class="inline-block bg-pink-900/50 text-pink-200 rounded-full px-5 py-2 text-sm font-semibold mb-4">
+        על המדריכה
+      </span>
+
+      <h2 class="text-4xl font-black text-white">
+        💃 המדריכה שלנו
+      </h2>
+
+    </div>
+
+
+    <div class="bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col md:flex-row gap-8 items-center">
+
+      <div class="w-28 h-28 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-5xl flex-shrink-0">
+        💃
+      </div>
+
+
+      <div class="text-center md:text-right">
+
+        <h3 class="text-2xl font-black text-white mb-1">
+          שולמית דיין
+        </h3>
+
+        <p class="text-purple-500 font-semibold mb-4">
+          מדריכת ריקוד מקצועית
+        </p>
+
+        <p class="text-gray-300 leading-relaxed">
+          מדריכת ריקוד מקצועית ובעלת ניסיון בעבודה עם ילדות, נערות ונשים.
+          משלבת אהבה גדולה לעולם המחול יחד עם גישה חינוכית,
+          סבלנות ויחס אישי לכל תלמידה.
+
+          <br><br>
+
+          מאמינה שכל בת יכולה להתפתח, לפרוח ולהצליח כאשר היא מקבלת
+          את הכלים, הביטחון והליווי המתאימים.
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ===== TESTIMONIALS ===== -->
+<section class="max-w-5xl mx-auto py-20 px-6">
+
+  <div class="text-center mb-14">
+
+    <span class="badge mb-4">
+      מה אומרים עלינו
+    </span>
+
+    <h2 class="text-4xl font-black gradient-text">
+      עדויות מהורים ותלמידות
+    </h2>
+
+    <div class="section-divider"></div>
+
+    <p class="mt-4 text-gray-400 text-sm">
+      בשנה שעברה פעלו מספר קבוצות גיל,
+      ובנות רבות סיימו את השנה עם התקדמות משמעותית
+      ביכולות הריקוד ובביטחון העצמי.
+    </p>
+
+  </div>
+
+
+  <div class="grid md:grid-cols-2 gap-6">
+
+
+    <div class="testimonial-card card-hover">
+
+      <div class="flex gap-1 text-yellow-400 mb-4">
+        ⭐⭐⭐⭐⭐
+      </div>
+
+      <p class="text-gray-700 leading-relaxed mb-5">
+        "הבת שלי חיכתה לשיעור כל שבוע.
+        חזרה הביתה עם חיוך ועם ביטחון שלא ראיתי בה קודם.
+        בדיוק מה שחיפשנו."
+      </p>
+
+      <div class="flex items-center gap-3">
+
+        <div class="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-lg">
+          👩
+        </div>
+
+        <div>
+          <p class="font-bold text-sm">
+            אמא של תלמידה
+          </p>
+          <p class="text-gray-400 text-xs">
+            כיתה ה׳
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="testimonial-card card-hover">
+
+      <div class="flex gap-1 text-yellow-400 mb-4">
+        ⭐⭐⭐⭐⭐
+      </div>
+
+      <p class="text-gray-700 leading-relaxed mb-5">
+        "הכי אהבתי את ההופעה בסוף השנה.
+        שולמית תמיד ידעה מה אני צריכה —
+        גם כשאני לא ידעתי בעצמי."
+      </p>
+
+      <div class="flex items-center gap-3">
+
+        <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-lg">
+          👧
+        </div>
+
+        <div>
+          <p class="font-bold text-sm">
+            תלמידה
+          </p>
+
+          <p class="text-gray-400 text-xs">
+            כיתה ז׳
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="testimonial-card card-hover">
+
+      <div class="flex gap-1 text-yellow-400 mb-4">
+        ⭐⭐⭐⭐⭐
+      </div>
+
+      <p class="text-gray-700 leading-relaxed mb-5">
+        "היה חשוב לנו שהחוג ישמור על הערכים שלנו.
+        לא רק שהיא למדה לרקוד —
+        היא גם למדה לאהוב את עצמה."
+      </p>
+
+      <div class="flex items-center gap-3">
+
+        <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-lg">
+          👩
+        </div>
+
+        <div>
+          <p class="font-bold text-sm">
+            אמא של תלמידה
+          </p>
+
+          <p class="text-gray-400 text-xs">
+            כיתה ח׳
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="testimonial-card card-hover">
+
+      <div class="flex gap-1 text-yellow-400 mb-4">
+        ⭐⭐⭐⭐⭐
+      </div>
+
+      <p class="text-gray-700 leading-relaxed mb-5">
+        "בכיתי במופע.
+        לא ציפיתי לראות את הבת שלי עומדת על הבמה ככה —
+        בביטחון, בשמחה ובצניעות.
+        שנה שלמה של עבודה שנראתה."
+      </p>
+
+      <div class="flex items-center gap-3">
+
+        <div class="w-10 h-10 rounded-full bg-pink-50 flex in items-center justify-center text-lg">
+          👩
+        </div>
+
+        <div>
+          <p class="font-bold text-sm">
+            אמא של תלמידה
+          </p>
+
+          <p class="text-gray-400 text-xs">
+            כיתה י׳
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+
+  </div>
+
+</section>
+
+<!-- ===== MODALS ===== -->
+<!-- Kids Modal -->
+<div id="modal-kids" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background:rgba(0,0,0,.6);backdrop-filter:blur(4px)">
+
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+
+    <div class="bg-gradient-to-l from-pink-600 to-purple-500 p-6 text-center text-white relative">
+
+      <button onclick="closeModal('kids')" 
+        class="absolute top-4 left-4 text-white/70 hover:text-white text-2xl leading-none">
+        ✕
+      </button>
+
+      <div class="text-3xl mb-2 floating">🎀</div>
+
+      <h2 id="kidsModalTitle" class="text-2xl font-black">
+        הרשמה לחוג
+      </h2>
+
+      <p class="text-pink-50 text-sm mt-1">
+        כיתות ג׳–י״ב • נחזור אלייך תוך 24 שעות
+      </p>
+
+    </div>
+
+
+    <div class="p-6">
+
+      <form id="formKids" class="space-y-3">
+
+        <div class="grid grid-cols-2 gap-3">
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">
+              שם פרטי *
+            </label>
+            <input id="k_child_name" class="input-field" placeholder="שם פרטי" required>
+          </div>
+
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">
+              שם משפחה
+            </label>
+            <input id="k_last_name" class="input-field" placeholder="שם משפחה">
+          </div>
+
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">
+              שם הורה *
+            </label>
+            <input id="k_mother_name" class="input-field" placeholder="שם פרטי ומשפחה" required>
+          </div>
+
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">
+              טלפון נייד *
+            </label>
+            <input id="k_phone" class="input-field" placeholder="05X-XXXXXXX" type="tel" required>
+          </div>
+
+        </div>
+
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1">
+            מייל
+          </label>
+          <input id="k_email" class="input-field" placeholder="example@mail.com" type="email">
+        </div>
+
+
+        <div>
+
+          <label class="block text-xs font-semibold text-gray-500 mb-1">
+            כיתה
+          </label>
+
+          <select id="k_group" class="input-field" required>
+
+            <option value="" selected disabled>
+              בחרי כיתה...
+            </option>
+
+            <option>כיתה ג׳</option>
+            <option>כיתה ד׳</option>
+            <option>כיתה ה׳</option>
+            <option>כיתה ו׳</option>
+            <option>כיתה ז׳</option>
+            <option>כיתה ח׳</option>
+            <option>כיתה ט׳</option>
+            <option>כיתה י׳</option>
+            <option>כיתה י״א</option>
+            <option>כיתה י״ב</option>
+
+          </select>
+
+        </div>
+
+
+        <button type="submit" id="btnKids"
+          class="w-full bg-gradient-to-l from-pink-600 to-purple-500 hover:from-pink-700 hover:to-pink-700 text-white py-3 rounded-2xl font-bold transition-all">
+
+          שלחי פרטים ✔
+
+        </button>
+
+
+      </form>
+
+
+      <p class="text-center text-gray-400 text-xs mt-3">
+        🔒 הפרטים מאובטחים ולא יועברו לצד שלישי
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Women Modal -->
+<div id="modal-women" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background:rgba(0,0,0,.6);backdrop-filter:blur(4px)">
+
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+
+    <div class="bg-gradient-to-l from-pink-500 to-pink-600 p-6 text-center text-white relative">
+
+      <button onclick="closeModal('women')" 
+        class="absolute top-4 left-4 text-white/70 hover:text-white text-2xl leading-none">
+        ✕
+      </button>
+
+      <div class="text-3xl mb-2 floating">💃</div>
+
+      <h2 class="text-2xl font-black">
+        הרשמה לקבוצת נשים
+      </h2>
+
+      <p class="text-pink-50 text-sm mt-1">
+        קבוצה חדשה • בהתאם לביקוש • נחזור אלייך בהקדם
+      </p>
+
+    </div>
+
+
+    <div class="p-6">
+
+      <form id="formWomen" class="space-y-3">
+
+        <div class="grid grid-cols-2 gap-3">
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">
+              שם פרטי *
+            </label>
+            <input id="w_child_name" class="input-field" placeholder="שם פרטי" required>
+          </div>
+
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">
+              שם משפחה
+            </label>
+            <input id="w_last_name" class="input-field" placeholder="שם משפחה">
+          </div>
+
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">
+              טלפון נייד *
+            </label>
+            <input id="w_phone" class="input-field" placeholder="05X-XXXXXXX" type="tel" required>
+          </div>
+
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1">
+              מייל
+            </label>
+            <input id="w_email" class="input-field" placeholder="example@mail.com" type="email">
+          </div>
+
+        </div>
+
+
+        <button type="submit" id="btnWomen"
+          class="w-full bg-gradient-to-l from-pink-500 to-pink-600 hover:from-pink-700 hover:to-pink-700 text-white py-3 rounded-2xl font-bold transition-all">
+
+          שלחי פרטים 💃
+
+        </button>
+
+      </form>
+
+
+      <p class="text-center text-gray-400 text-xs mt-3">
+        🔒 הפרטים מאובטחים ולא יועברו לצד שלישי
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ===== GALLERY ===== -->
+<section class="max-w-6xl mx-auto py-20 px-6">
+
+  <div class="text-center mb-12">
+
+    <span class="badge mb-4">
+      רגעים מהסטודיו
+    </span>
+
+    <h2 class="text-4xl font-black gradient-text">
+      גלריה
+    </h2>
+
+    <div class="section-divider"></div>
+
+  </div>
+
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+    <img src="assets/gallery1.jpg" class="gallery-img w-full" alt="גלריה 1">
+
+    <img src="assets/gallery2.jpg" class="gallery-img w-full" alt="גלריה 2">
+
+    <img src="assets/gallery3.jpg" class="gallery-img w-full" alt="גלריה 3">
+
+    <img src="assets/gallery4.jpg" class="gallery-img w-full" alt="גלריה 4">
+
+  </div>
+
+</section>
+
+<!-- ===== CONTACT ===== -->
+<section class="bg-gray-900 py-14 px-6">
+
+  <div class="max-w-4xl mx-auto">
+
+    <div class="text-center mb-10">
+
+      <span class="inline-block bg-pink-900/50 text-pink-200 rounded-full px-5 py-2 text-sm font-semibold mb-4">
+        צרי קשר
+      </span>
+
+      <h2 class="text-3xl font-black text-white">
+        אנחנו כאן בשבילך 💖
+      </h2>
+
+    </div>
+
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+
+      <a href="tel:0527173841" 
+        class="flex flex-col items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-5 transition-colors text-center">
+
+        <span class="text-2xl">📱</span>
+
+        <span class="text-purple-500 font-semibold text-sm">
+          נייד
+        </span>
+
+        <span class="text-white font-bold">
+          052-717-3841
+        </span>
+
+      </a>
+
+
+
+      <a href="https://wa.me/9720552704596" target="_blank" 
+        class="flex flex-col items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-5 transition-colors text-center">
+
+        <span class="text-2xl">💬</span>
+
+        <span class="text-purple-500 font-semibold text-sm">
+          WhatsApp
+        </span>
+
+        <span class="text-white font-bold">
+          055-270-4596
+        </span>
+
+      </a>
+
+
+
+      <a href="mailto:efrathugim@gmail.com" 
+        class="flex flex-col items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-5 transition-colors text-center">
+
+        <span class="text-2xl">✉️</span>
+
+        <span class="text-purple-500 font-semibold text-sm">
+          מייל
+        </span>
+
+        <span class="text-white font-bold text-sm">
+          efrathugim@gmail.com
+        </span>
+
+      </a>
+
+
+
+      <div class="flex flex-col items-center gap-2 bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
+
+        <span class="text-2xl">📍</span>
+
+        <span class="text-purple-500 font-semibold text-sm">
+          כתובת
+        </span>
+
+        <span class="text-white text-sm leading-relaxed">
+          מהרי"ק 5 <span class="text-gray-400">(ותיקה)</span>
+          <br>
+          עופרה חז"ה 5 <span class="text-gray-400">(פסגות)</span>
+          <br>
+        </span>
+
+      </div>
+
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="bg-gray-950 text-gray-500 text-center py-6 px-6">
+
+  <p class="text-sm">
+    © 2025 FitBalance • כל הזכויות שמורות
+  </p>
+
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="services/supabaseClient.js"></script>
+<script src="hipp.js"></script>
+</body>
+</html>
+
+
+

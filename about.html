@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <link rel="icon" type="image/png" href="/assets/icons/icon3.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FitBalance | ׳׳•׳“׳•׳×</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', sans-serif; }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-bg {
+      background: linear-gradient(135deg, #fce7f3 0%, #ede9fe 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(236,72,153,0.15) 0%, transparent 70%);
+      top: -100px; left: -100px;
+      animation: pulse-blob 6s ease-in-out infinite;
+    }
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%);
+      bottom: -50px; right: -50px;
+      animation: pulse-blob 8s ease-in-out infinite reverse;
+    }
+    @keyframes pulse-blob {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    .floating { animation: float 4s ease-in-out infinite; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+    .card {
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    }
+
+    .nav-link { position: relative; }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; right: 0;
+      width: 0; height: 2px;
+      background: #ec4899;
+      transition: width 0.3s;
+    }
+    .nav-link:hover::after { width: 100%; }
+
+    header.scrolled { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+
+    .team-card {
+      background: white;
+      border-radius: 1.5rem;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .team-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 24px 48px rgba(0,0,0,0.15);
+    }
+
+    .value-card {
+      border-radius: 1.5rem;
+      padding: 2rem;
+      transition: transform 0.3s;
+    }
+    .value-card:hover { transform: translateY(-4px); }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, #ec4899, #8b5cf6);
+    }
+
+    .milestone-dot {
+      width: 14px; height: 14px;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      border-radius: 50%;
+      position: absolute;
+      right: -7px;
+      top: 6px;
+      box-shadow: 0 0 0 4px white, 0 0 0 6px #ec4899;
+    }
+
+    .stat-ring {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      background: conic-gradient(#ec4899 var(--pct), #f3e8ff var(--pct));
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .stat-ring::before {
+      content: '';
+      position: absolute;
+      width: 76px; height: 76px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    @keyframes spin-in {
+      from { transform: rotate(-90deg); opacity: 0; }
+      to { transform: rotate(0deg); opacity: 1; }
+    }
+  </style>
+</head>
+<body class="bg-white">
+
+  <!-- Header -->
+  <header id="main-header" class="fixed top-0 right-0 left-0 bg-white z-50 h-16 flex items-center px-6 justify-between transition-shadow duration-300">
+    <div class="flex items-center gap-3">
+      <img src="assets/icons/logo.jpg" alt="FitBalance" class="h-14" onerror="this.style.display='none'" />
+      <span class="text-xl font-bold gradient-text">FitBalance</span>
+    </div>
+  
+    <nav class="hidden md:flex items-center gap-8 text-gray-700 font-medium">
+      <a href="home.html" class="nav-link hover:text-pink-600">דף הבית</a>
+      <a href="home.html#classes" class="nav-link hover:text-pink-600">שיעורים</a>
+      <a href="home.html#shop" class="nav-link hover:text-pink-600">חנות</a>
+      <a href="home.html#testimonials" class="nav-link hover:text-pink-600">המלצות</a>
+      <a href="about.html" class="nav-link text-pink-600 font-bold">אודות</a>
+      <a href="login.html" class="bg-pink-600 text-white px-5 py-2 rounded-full hover:bg-pink-700 transition-colors shadow-md">
+        <i class="fas fa-user ml-1"></i> כניסה לאזור אישי
+      </a>
+    </nav>
+  
+    <button id="menu-btn" class="md:hidden text-gray-600 text-2xl">
+      <i class="fas fa-bars"></i>
+    </button>
+  </header>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden fixed top-16 right-0 left-0 bg-white shadow-lg z-40 p-6 flex-col gap-4 text-gray-700 font-medium">
+    <a href="home.html" class="block py-2 border-b hover:text-pink-600">דף הבית</a>
+    <a href="home.html#classes" class="block py-2 border-b hover:text-pink-600">שיעורים</a>
+    <a href="home.html#shop" class="block py-2 border-b hover:text-pink-600">חנות</a>
+    <a href="home.html#testimonials" class="block py-2 border-b hover:text-pink-600">המלצות</a>
+    <a href="about.html" class="block py-2 border-b text-pink-600 font-bold">אודות</a>
+    <a href="login.html" class="mt-2 block bg-pink-600 text-white px-5 py-3 rounded-full text-center hover:bg-pink-700">כניסה לאזור אישי</a>
+</div>
+  <!-- Hero -->
+  <section class="hero-bg min-h-screen flex items-center justify-center text-center px-6 pt-16">
+    <div class="relative z-10 max-w-3xl">
+      <div class="floating text-6xl mb-6">💜</div>
+  
+      <div class="inline-block bg-white bg-opacity-70 text-pink-600 font-semibold px-4 py-1 rounded-full text-sm mb-4 shadow-sm">
+        הסיפור שלנו
+      </div>
+  
+      <h1 class="text-5xl md:text-6xl font-bold text-gray-800 mb-6 leading-tight">
+        אנחנו <span class="gradient-text">FitBalance</span>
+      </h1>
+  
+      <p class="text-xl text-gray-600 leading-relaxed mb-10">
+        מקום שבו נשים מגלות את הכוח שבהן, בונות קהילה ומרגישות הכי טוב שיש.<br/>
+        כבר מעל 5 שנים אנחנו כאן בשבילכן.
+      </p>
+  
+      <a href="#story" class="inline-flex items-center gap-2 text-pink-600 font-semibold hover:gap-3 transition-all">
+        גלי את הסיפור שלנו <i class="fas fa-arrow-down"></i>
+      </a>
+    </div>
+  </section>
+
+  <!-- Story -->
+  <section id="story" class="py-24 px-6 bg-white">
+    <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      
+      <div class="fade-in">
+        <div class="inline-block bg-pink-50 text-pink-600 font-semibold px-4 py-1 rounded-full text-sm mb-4">
+          הסיפור שלנו
+        </div>
+  
+        <h2 class="text-4xl font-bold text-gray-800 mb-6 leading-tight">
+          מחלום קטן<br/>לקהילה גדולה
+        </h2>
+  
+        <p class="text-gray-600 leading-relaxed mb-4">
+          FitBalance נולדה מתוך אהבה אמיתית לתנועה ולבריאות. אפרת, חלמה ליצור מקום שבו כל אישה – בכל גיל ורמה – תרגיש בבית.
+        </p>
+  
+        <p class="text-gray-600 leading-relaxed mb-6">
+          היום, אחרי כבר כמה שנים, אנחנו קהילה של עשרות נשים שמתאמנות, צוחקות ומתחזקות יחד. כל שיעור הוא הרבה יותר מאימון – זו חוויה.
+        </p>
+  
+        <div class="flex gap-6">
+          <div class="text-center">
+            <div class="text-3xl font-bold gradient-text counter" data-target="150">0</div>
+            <div class="text-sm text-gray-500 mt-1">מתאמנות</div>
+          </div>
+  
+          <div class="text-center">
+            <div class="text-3xl font-bold gradient-text counter" data-target="10">0</div>
+            <div class="text-sm text-gray-500 mt-1">שנות ניסיון</div>
+          </div>
+  
+          <div class="text-center">
+            <div class="text-3xl font-bold gradient-text counter" data-target="8">0</div>
+            <div class="text-sm text-gray-500 mt-1">סוגי שיעורים</div>
+          </div>
+        </div>
+      </div>
+  
+      <div class="fade-in relative">
+        <div class="bg-gradient-to-br from-pink-50 to-purple-100 rounded-3xl p-10 text-center shadow-xl">
+          <div class="text-8xl mb-4">🏃‍♀️</div>
+  
+          <blockquote class="text-gray-700 text-lg italic leading-relaxed">
+            "רציתי ליצור מקום שבו כל אישה תרגיש שהיא יכולה – ושהיא לא לבד."
+          </blockquote>
+  
+          <div class="mt-4 font-bold text-pink-600">
+            - אפרת, רכזת חוגים - FitBalance
+          </div>
+        </div>
+  
+        <div class="absolute -bottom-4 -left-4 w-20 h-20 bg-purple-200 rounded-full opacity-60"></div>
+        <div class="absolute -top-4 -right-4 w-12 h-12 bg-pink-200 rounded-full opacity-60"></div>
+      </div>
+  
+    </div>
+  </section>
+
+<!-- Values -->
+<section class="py-24 px-6 bg-gray-50">
+  <div class="max-w-5xl mx-auto">
+
+    <div class="text-center mb-14 fade-in">
+      <div class="inline-block bg-pink-50 text-pink-600 font-semibold px-4 py-1 rounded-full text-sm mb-4">
+        מה מניע אותנו
+      </div>
+
+      <h2 class="text-4xl font-bold text-gray-800 mb-3">
+        הערכים שלנו
+      </h2>
+
+      <p class="text-gray-500 text-lg">
+        מקום שמחבר בין גוף, נפש, קהילה ורוח
+      </p>
+    </div>
+
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+      <div class="value-card bg-purple-50 text-center fade-in">
+        <div class="text-5xl mb-4">✨</div>
+
+        <h3 class="text-lg font-bold text-gray-800 mb-2">
+          ערכים ואווירה רוחנית
+        </h3>
+
+        <p class="text-gray-500 text-sm">
+          מרחב שמאפשר ליהנות מתנועה ובריאות תוך שמירה על הערכים הרוחניים והאווירה המתאימה לנו.
+        </p>
+      </div>
+
+
+      <div class="value-card bg-pink-50 text-center fade-in">
+        <div class="text-5xl mb-4">🤝</div>
+
+        <h3 class="text-lg font-bold text-gray-800 mb-2">
+          קהילה וגיבוש
+        </h3>
+
+        <p class="text-gray-500 text-sm">
+          לא רק שיעור – אלא מקום של חיבור, חברות, שמחה והרגשה שאנחנו חלק ממשהו גדול יותר.
+        </p>
+      </div>
+
+
+      <div class="value-card bg-green-50 text-center fade-in">
+        <div class="text-5xl mb-4">🌿</div>
+
+        <h3 class="text-lg font-bold text-gray-800 mb-2">
+          בריאות ומודעות
+        </h3>
+
+        <p class="text-gray-500 text-sm">
+          להעניק כלים לאורח חיים בריא, הקשבה לגוף, מודעות והרגלים טובים שמחזיקים לאורך זמן.
+        </p>
+      </div>
+
+
+      <div class="value-card bg-yellow-50 text-center fade-in">
+        <div class="text-5xl mb-4">😊</div>
+
+        <h3 class="text-lg font-bold text-gray-800 mb-2">
+          שמחה ועשייה טובה
+        </h3>
+
+        <p class="text-gray-500 text-sm">
+          להכניס אנרגיה טובה, חיוך ושמחה לחיים דרך תנועה, מפגשים וחוויות משותפות.
+        </p>
+      </div>
+
+
+    </div>
+  </div>
+</section>
+
+<!-- Team -->
+<section class="py-24 px-6 bg-white">
+  <div class="max-w-5xl mx-auto">
+
+    <div class="text-center mb-14 fade-in">
+      <div class="inline-block bg-pink-50 text-pink-600 font-semibold px-4 py-1 rounded-full text-sm mb-4">
+        הצוות שלנו
+      </div>
+
+      <h2 class="text-4xl font-bold text-gray-800 mb-3">
+        הנשים מאחורי הקסם
+      </h2>
+
+      <p class="text-gray-500 text-lg">
+        מדריכות מקצועיות, מלאות אנרגיה ושליחות שמלוות כל מתאמנת בדרך שלה
+      </p>
+    </div>
+
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
+
+      <!-- אפרת -->
+      <div class="team-card fade-in">
+        <div class="bg-gradient-to-br from-pink-200 to-pink-200 h-48 flex items-center justify-center text-7xl">👩</div>
+
+        <div class="p-6 text-center">
+          <h3 class="text-xl font-bold text-gray-800 mb-1">אפרת חוברה</h3>
+
+          <div class="text-pink-600 font-medium text-sm mb-3">
+            מדריכה ורכזת חוגים
+          </div>
+
+          <p class="text-gray-500 text-sm leading-relaxed">
+            מוסמכת בפילאטיס, עיצוב חיטוב, אירובי דאנס והתעמלות לנשים בהריון ולאחר לידה.
+            18 שנות ניסיון, אהבה גדולה לתנועה ולהלב הפועם של FitBalance.
+          </p>
+
+          <div class="flex justify-center gap-3 mt-4">
+            <span class="bg-pink-50 text-pink-600 text-xs px-3 py-1 rounded-full">פילאטיס</span>
+            <span class="bg-pink-50 text-pink-600 text-xs px-3 py-1 rounded-full">עיצוב גוף</span>
+            <span class="bg-yellow-100 text-yellow-600 text-xs px-3 py-1 rounded-full">אירובי</span>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- שולמית -->
+      <div class="team-card fade-in">
+        <div class="bg-gradient-to-br from-pink-200 to-blue-200 h-48 flex items-center justify-center text-7xl">👩‍🦰</div>
+
+        <div class="p-6 text-center">
+          <h3 class="text-xl font-bold text-gray-800 mb-1">שולמית דיין</h3>
+
+          <div class="text-pink-600 font-medium text-sm mb-3">
+            מדריכת ריקוד | היפ הופ וזומבה
+          </div>
+
+          <p class="text-gray-500 text-sm leading-relaxed">
+            רקדנית מקצועית עם ניסיון בהדרכה. מביאה לכל שיעור קצב, שמחה ואנרגיה שמדביקה את כולן.
+          </p>
+
+          <div class="flex justify-center gap-3 mt-4">
+            <span class="bg-pink-50 text-pink-600 text-xs px-3 py-1 rounded-full">היפ הופ</span>
+            <span class="bg-blue-100 text-blue-600 text-xs px-3 py-1 rounded-full">זומבה</span>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- חיה -->
+      <div class="team-card fade-in">
+        <div class="bg-gradient-to-br from-orange-200 to-red-200 h-48 flex items-center justify-center text-7xl">👩‍🦱</div>
+
+        <div class="p-6 text-center">
+          <h3 class="text-xl font-bold text-gray-800 mb-1">חיה שטרית</h3>
+
+          <div class="text-orange-600 font-medium text-sm mb-3">
+            מדריכת HIT ועיצוב פילאטיס
+          </div>
+
+          <p class="text-gray-500 text-sm leading-relaxed">
+            מדריכה מקצועית המשלבת אימוני כוח, חיזוק ועיצוב הגוף עם עבודה מדויקת ובריאה.
+            מאמינה בתהליך הדרגתי שמעצים כל מתאמנת.
+          </p>
+
+          <div class="flex justify-center gap-3 mt-4">
+            <span class="bg-orange-100 text-orange-600 text-xs px-3 py-1 rounded-full">HIT</span>
+            <span class="bg-red-100 text-red-600 text-xs px-3 py-1 rounded-full">עיצוב</span>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- טליה -->
+      <div class="team-card fade-in">
+        <div class="bg-gradient-to-br from-green-200 to-emerald-200 h-48 flex items-center justify-center text-7xl">👩</div>
+
+        <div class="p-6 text-center">
+          <h3 class="text-xl font-bold text-gray-800 mb-1">טליה אהרון</h3>
+
+          <div class="text-green-600 font-medium text-sm mb-3">
+            מדריכת עיצוב חיטוב ופילאטיס
+          </div>
+
+          <p class="text-gray-500 text-sm leading-relaxed">
+            משלבת דיוק, חיזוק ותנועה נכונה באימונים מחטבים ומעצימים.
+            שמה דגש על יחס אישי והתקדמות בקצב שמתאים לכל אחת.
+          </p>
+
+          <div class="flex justify-center gap-3 mt-4">
+            <span class="bg-green-100 text-green-600 text-xs px-3 py-1 rounded-full">עיצוב חיטוב</span>
+            <span class="bg-emerald-100 text-emerald-600 text-xs px-3 py-1 rounded-full">פילאטיס</span>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- יעל -->
+      <div class="team-card fade-in">
+        <div class="bg-gradient-to-br from-yellow-200 to-pink-200 h-48 flex items-center justify-center text-7xl">💃</div>
+
+        <div class="p-6 text-center">
+          <h3 class="text-xl font-bold text-gray-800 mb-1">יעל אוחיון</h3>
+
+          <div class="text-yellow-600 font-medium text-sm mb-3">
+            מדריכת ביילה
+          </div>
+
+          <p class="text-gray-500 text-sm leading-relaxed">
+            מביאה שילוב של מוזיקה, תנועה ושמחת חיים לשיעורי ביילה.
+            אימון חווייתי שמחבר בין כושר, קצב והנאה.
+          </p>
+
+          <div class="flex justify-center gap-3 mt-4">
+            <span class="bg-yellow-100 text-yellow-600 text-xs px-3 py-1 rounded-full">ביילה</span>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- צפנת -->
+      <div class="team-card fade-in">
+        <div class="bg-gradient-to-br from-blue-200 to-cyan-200 h-48 flex items-center justify-center text-7xl">👩</div>
+
+        <div class="p-6 text-center">
+          <h3 class="text-xl font-bold text-gray-800 mb-1">צפנת מדמון</h3>
+
+          <div class="text-blue-600 font-medium text-sm mb-3">
+            מדריכת עיצוב חיטוב ופילאטיס
+          </div>
+
+          <p class="text-gray-500 text-sm leading-relaxed">
+            מדריכה באהבה ובמקצועיות, עם דגש על חיזוק הגוף, יציבה נכונה והרגשה טובה.
+            מאמינה שאימון טוב מתחיל בחיבור בין גוף לנפש.
+          </p>
+
+          <div class="flex justify-center gap-3 mt-4">
+            <span class="bg-blue-100 text-blue-600 text-xs px-3 י1 rounded-full">עיצוב</span>
+            <span class="bg-cyan-100 text-cyan-600 text-xs px-3 py-1 rounded-full">פילאטיס</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Timeline -->
+<section class="py-24 px-6 bg-gray-50" dir="rtl">
+  <div class="max-w-4xl mx-auto">
+
+    <div class="text-center mb-16 fade-in">
+
+      <div class="inline-block bg-pink-50 text-pink-600 font-semibold px-5 py-2 rounded-full text-sm mb-5">
+        המסע שלנו
+      </div>
+    
+      <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+        הדרך שלנו לאורך השנים ✨
+      </h2>
+    
+      <p class="text-gray-500 text-lg">
+        מסע שהתחיל מאהבה לתנועה והפך לקהילה של נשים ובנות עם ערכים, שמחה ואנרגיה טובה
+      </p>
+    
+    </div>
+
+
+
+    <div class="relative border-r-2 border-pink-200 pr-10 space-y-12">
+
+
+<!-- 2008 -->
+<div class="relative fade-in">
+
+  <div class="milestone-dot"></div>
+
+  <div class="bg-white rounded-3xl p-6 shadow-lg">
+
+    <div class="flex items-center gap-5 mb-5">
+
+      <img src="assets/images/timeline/istockphoto-658291850-612x612.jpg"
+           class="w-20 h-20 rounded-full object-cover shadow-md"
+           alt="התחלה">
+
+      <div>
+        <div class="text-pink-600 font-bold text-sm">
+          2008
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-800">
+          הכל התחיל מאהבה לתנועה 🌱
+        </h3>
+      </div>
+
+    </div>
+
+    <p class="text-gray-500 leading-relaxed">
+      אפרת התחילה את הדרך כמאמנת רגילה בסטודיו קטן בעלעד.
+      מתוך החיבור לתנועה, לאנרגיה ולתחושת הסיפוק של האימון,
+      נולד החלום להפוך את האהבה הזו לדרך חיים.
+    </p>
+
+  </div>
+
+</div>
+
+
+
+
+<!-- 2009 -->
+<div class="relative fade-in">
+
+  <div class="milestone-dot"></div>
+
+  <div class="bg-white rounded-3xl p-6 shadow-lg">
+
+    <div class="flex items-center gap-5 mb-5">
+
+      <img src="assets/images/timeline/educational-concept-plant-sprouting-book-stack-small-green-grows-colorful-books-symbolizing-education-384969820.webp"
+           class="w-20 h-20 rounded-full object-cover shadow-md"
+           alt="לימודים">
+
+      <div>
+
+        <div class="text-pink-600 font-bold text-sm">
+          2009
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-800">
+          לומדים, מתפתחים וצוברים ניסיון 📚
+        </h3>
+
+      </div>
+
+    </div>
+
+    <p class="text-gray-500 leading-relaxed">
+      אפרת המשיכה לעבוד בסטודיו ובמקביל התחילה ללמוד,
+      להשתלם ולהעמיק בעולם הכושר והתנועה,
+      מתוך רצון להעניק למתאמנות מקצועיות, יחס אישי וחוויה מיוחדת.
+    </p>
+
+  </div>
+
+</div>
+
+
+
+
+<!-- 2012 -->
+<div class="relative fade-in">
+
+  <div class="milestone-dot"></div>
+
+  <div class="bg-white rounded-3xl p-6 shadow-lg">
+
+    <div class="flex items-center gap-5 mb-5">
+
+      <img src="assets/images/timeline/images.jpg"
+           class="w-20 h-20 rounded-full object-cover shadow-md"
+           alt="חזון">
+
+      <div>
+
+        <div class="text-pink-600 font-bold text-sm">
+          2012
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-800">
+          נולד החזון 💜
+        </h3>
+
+      </div>
+
+    </div>
+
+    <p class="text-gray-500 leading-relaxed">
+      מתוך ההיכרות עם הציבור החרדי,
+      התחזק הרצון ליצור מקום ייחודי –
+      מקום שבו נשים ובנות יוכלו להתאמן באווירה נעימה,
+      צנועה ומשפחתית, עם מוזיקה כשרה וערכים.
+    </p>
+
+  </div>
+
+</div>
+
+
+
+
+
+<!-- 2017 -->
+<div class="relative fade-in">
+
+  <div class="milestone-dot"></div>
+
+  <div class="bg-white rounded-3xl p-6 shadow-lg">
+
+    <div class="flex items-center gap-5 mb-5">
+
+      <img src="assets/images/timeline/pngtree-gym-fitness-ball-3d-illustration-png-image_3327403.jpg"
+           class="w-20 h-20 rounded-full object-cover shadow-md"
+           alt="צוות">
+
+      <div>
+
+        <div class="text-pink-600 font-bold text-sm">
+          2017
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-800">
+          החלום מתחיל לקבל צורה 🏋️‍♀️
+        </h3>
+
+      </div>
+
+    </div>
+
+    <p class="text-gray-500 leading-relaxed">
+      אפרת הדריכה במספר חדרי כושר כמדריכה ומאמנת אישית,
+      ובמקביל המשיכה לבנות את החזון –
+      להקים בראש ובראשונה קהילה נשית עם חיבור, שמחה ואמונה בדרך.
+    </p>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+<!-- 2021 -->
+<div class="relative fade-in">
+
+  <div class="milestone-dot"></div>
+
+  <div class="bg-white rounded-3xl p-6 shadow-lg">
+
+    <div class="flex items-center gap-5 mb-5">
+
+      <img src="assets/images/timeline/asphalt-lit-sunset-light-road-disappears-distance-front-sun-concept-new-beginning-starting-new-126658459.webp"
+           class="w-20 h-20 rounded-full object-cover shadow-md"
+           alt="צמיחה בתקופה מאתגרת">
+
+      <div>
+
+        <div class="text-pink-600 font-bold text-sm">
+          2021
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-800">
+          צומחים גם בתקופות מאתגרות 🌱
+        </h3>
+
+      </div>
+
+    </div>
+
+    <p class="text-gray-500 leading-relaxed">
+      בתקופת הקורונה נפתחה הזדמנות חדשה.
+      אפרת פתחה שני שיעורים דרך המחלקה לתרבות תורנית בראש העין,
+      עם 20 בנות בלבד –
+      התחלה קטנה שהייתה הבסיס לקהילה הגדולה שנבנתה בהמשך.
+    </p>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+<!-- 2023 -->
+<div class="relative fade-in">
+
+  <div class="milestone-dot"></div>
+
+  <div class="bg-white rounded-3xl p-6 shadow-lg">
+
+    <div class="flex items-center gap-5 mb-5">
+
+      <img src="assets/images/timeline/asphalt-lit-sunset-light-road-disappears-distance-front-sun-concept-new-beginning-starting-new-126658459.webp"
+           class="w-20 h-20 rounded-full object-cover shadow-md"
+           alt="FitBalance">
+
+      <div>
+
+        <div class="text-pink-600 font-bold text-sm">
+          2023
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-800">
+          נולדה FitBalance 💜
+        </h3>
+
+      </div>
+
+    </div>
+
+    <p class="text-gray-500 leading-relaxed">
+      אחרי שנים של עשייה, צמיחה וחיבור בין אנשים,
+      הקהילה קיבלה שם וזהות –
+      <strong>FitBalance</strong>.
+      שם שמייצג את הדרך שלנו:
+      איזון בין גוף, נפש, בריאות ושמחת חיים.
+    </p>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+<!-- 2024 -->
+<div class="relative fade-in">
+
+  <div class="milestone-dot"></div>
+
+  <div class="bg-white rounded-3xl p-6 shadow-lg">
+
+    <div class="flex items-center gap-5 mb-5">
+
+      <img src="assets/images/timeline/200501-F-PO640-0034.avif"
+           class="w-20 h-20 rounded-full object-cover shadow-md"
+           alt="אתר">
+
+      <div>
+
+        <div class="text-pink-600 font-bold text-sm">
+          2024
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-800">
+          נכנסים לעולם הדיגיטלי 🚀
+        </h3>
+
+      </div>
+
+    </div>
+
+    <p class="text-gray-500 leading-relaxed">
+      השקנו אתר חדש ואזור אישי למתאמנות,
+      כדי ליצור חיבור טוב יותר לקהילה,
+      ניהול נוח יותר וחוויית שירות מתקדמת.
+    </p>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+<!-- 2025 -->
+<div class="relative fade-in">
+
+  <div class="milestone-dot"></div>
+
+  <div class="bg-white rounded-3xl p-6 shadow-lg">
+
+    <div class="flex items-center gap-5 mb-5">
+
+      <img src="assets/images/timeline/spring-background-with-tulips-candles-knitted-element_169016-51782.avif"
+           class="w-20 h-20 rounded-full object-cover shadow-md"
+           alt="אירועי קהילה">
+
+      <div>
+
+        <div class="text-pink-600 font-bold text-sm">
+          2025 ✨
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-800">
+          קהילה של חיבור, בריאות ושמחה 💜
+        </h3>
+
+      </div>
+
+    </div>
+
+    <p class="text-gray-500 text-sm leading-relaxed">
+
+      מעבר לשיעורי הספורט, המשכנו לבנות קהילה חזקה ומחוברת –
+      מקום שבו המתאמנות לא רק מגיעות להתאמן,
+      אלא גם להכיר, להתחבר ולחוות יחד.
+
+      <br><br>
+
+      יצרנו ערבי גיבוש מיוחדים, ערבי ריקודים מלאים באנרגיה,
+      מפגשים חברתיים וסדנאות בריאות שהעניקו כלים מעשיים
+      לאורח חיים בריא ומאוזן.
+
+      <br><br>
+
+      כל פעילות חיזקה עוד יותר את תחושת השייכות,
+      את החיבור בין המתאמנות ואת האווירה המיוחדת
+      שהופכת את FitBalance להרבה מעבר לחוג –
+      לקהילה אמיתית של נשים ובנות.
+
+    </p>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+<!-- היום -->
+<div class="relative fade-in">
+
+  <div class="milestone-dot"></div>
+
+  <div class="bg-white rounded-3xl p-6 shadow-xl border-2 border-pink-200">
+
+    <div class="flex items-center gap-5 mb-5">
+
+      <img src="assets/images/timeline/images (1).jpg"
+           class="w-20 h-20 rounded-full object-cover shadow-md"
+           alt="קהילת FitBalance">
+
+      <div>
+
+        <div class="text-pink-600 font-bold text-sm">
+          2026 ועד היום ✨
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-800">
+          הרבה מעבר לחוג – משפחת FitBalance 💗
+        </h3>
+
+      </div>
+
+    </div>
+
+    <p class="text-gray-500 leading-relaxed">
+
+      היום FitBalance היא קהילה גדולה ומיוחדת של מעל 150 מתאמנות,
+      עם מגוון שיעורים, צוות מדריכות, אתר, אזור אישי,
+      חולצות וביגוד שמחזקים את תחושת השייכות,
+      ושיתופי פעולה חדשים שנועדו להוסיף ערך לחברות הקהילה.
+
+      <br><br>
+
+      גם Forever הצטרפה אלינו מתוך רצון משותף
+      לעזור, לתמוך ולהעניק כלים נוספים לאורח חיים בריא ומאוזן.
+
+      <br><br>
+
+      והמסע שלנו רק ממשיך...
+
+    </p>
+
+  </div>
+
+</div>
+
+
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="py-24 px-6 bg-gradient-to-r from-pink-600 to-purple-500 text-white text-center">
+  <div class="max-w-2xl mx-auto fade-in">
+
+    <div class="floating text-5xl mb-6">🎉</div>
+
+    <h2 class="text-4xl font-bold mb-4">
+      מוכנה להצטרף?
+    </h2>
+
+    <p class="text-xl mb-10 opacity-90">
+      הצטרפי לקהילה שלנו ותרגישי את ההבדל מהשיעור הראשון
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+
+      <a href="login.html"
+         class="bg-white text-pink-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-pink-50 transition-all shadow-lg">
+        <i class="fas fa-user ml-2"></i>
+        כניסה לאזור אישי
+      </a>
+
+      <a href="https://wa.me/972527173841"
+         target="_blank"
+         class="border-2 border-white text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white hover:bg-opacity-10 transition-all">
+        <i class="fab fa-whatsapp ml-2"></i>
+        דברי איתנו
+      </a>
+
+    </div>
+
+  </div>
+</section>
+
+
+<!-- Footer -->
+<footer class="bg-gray-900 text-gray-400 py-10 px-6">
+
+  <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-right">
+
+    <div>
+
+      <h4 class="text-white font-bold text-lg mb-3">
+        FitBalance
+      </h4>
+
+      <p class="text-sm">
+        חוגי ספורט מתקדמים לנשים במועדון התורני
+      </p>
+
+    </div>
+
+
+    <div>
+
+      <h4 class="text-white font-bold text-lg mb-3">
+        ניווט מהיר
+      </h4>
+
+      <div class="flex flex-col gap-2 text-sm">
+
+        <a href="home.html" class="hover:text-purple-500">
+          דף הבית
+        </a>
+
+        <a href="home.html#classes" class="hover:text-purple-500">
+          שיעורים
+        </a>
+
+        <a href="home.html#shop" class="hover:text-purple-500">
+          חנות
+        </a>
+
+        <a href="about.html" class="hover:text-purple-500">
+          אודות
+        </a>
+
+        <a href="login.html" class="hover:text-purple-500">
+          כניסה לאזור אישי
+        </a>
+
+      </div>
+
+    </div>
+
+
+    <div>
+
+      <h4 class="text-white font-bold text-lg mb-3">
+        צור קשר
+      </h4>
+
+      <div class="flex flex-col gap-2 text-sm">
+
+        <a href="tel:052-717-3841" class="hover:text-purple-500">
+          <i class="fas fa-phone ml-1"></i>
+          052-717-3841
+        </a>
+
+        <a href="mailto:efrathugim@gmail.com" class="hover:text-purple-500">
+          <i class="fas fa-envelope ml-1"></i>
+          efrathugim@gmail.com
+        </a>
+
+        <a href="https://wa.me/972527173841"
+           target="_blank"
+           class="hover:text-purple-500">
+          <i class="fab fa-whatsapp ml-1"></i>
+          וואטסאפ
+        </a>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="text-center mt-8 text-sm border-t border-gray-700 pt-6">
+    © 2026 FitBalance – כל הזכויות שמורות
+  </div>
+
+</footer>
+
+<script type="module" src="assets/js/pages/about.js"></script>
+
+</body>
+</html>
+
+
+

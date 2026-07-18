@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <link rel="icon" type="image/png" href="/assets/icons/icon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FitBalance | חוגי ספורט ברמה</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', sans-serif; }
+
+    .hero-bg {
+      background: linear-gradient(135deg, #fce7f3 0%, #ede9fe 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(236,72,153,0.15) 0%, transparent 70%);
+      top: -100px; left: -100px;
+      animation: pulse-blob 6s ease-in-out infinite;
+    }
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%);
+      bottom: -50px; right: -50px;
+      animation: pulse-blob 8s ease-in-out infinite reverse;
+    }
+    @keyframes pulse-blob {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    .card {
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    }
+
+    .nav-link {
+      position: relative;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; right: 0;
+      width: 0; height: 2px;
+      background: #ec4899;
+      transition: width 0.3s;
+    }
+    .nav-link:hover::after { width: 100%; }
+
+    .floating {
+      animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .no-js .fade-in { opacity: 1; transform: none; }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .counter { font-variant-numeric: tabular-nums; }
+
+    .testimonial-card {
+      background: white;
+      border-radius: 1.5rem;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      transition: transform 0.3s;
+    }
+    .testimonial-card:hover { transform: translateY(-4px); }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header.scrolled {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .flip-card {
+      perspective: 1000px;
+      height: 220px;
+      cursor: pointer;
+    }
+    .flip-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+    .flip-card.flipped .flip-inner {
+      transform: rotateY(180deg);
+    }
+    .flip-front, .flip-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .flip-front {
+      background: white;
+      box-shadow: 0 2px 16px rgba(139,92,246,0.07);
+      border: 1px solid #f3f0ff;
+    }
+    .flip-back {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: white;
+      transform: rotateY(180deg);
+    }
+
+    .top-banner {
+      background-size: 200% 100%;
+      animation: banner-slide 4s ease infinite;
+    }
+    @keyframes banner-slide {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .flip-card {
+  perspective: 1000px;
+  height: 280px;
+}
+
+.flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.7s ease;
+  transform-style: preserve-3d;
+}
+
+.flip-card:hover .flip-inner {
+  transform: rotateY(180deg);
+}
+
+
+.flip-front,
+.flip-back {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 1.5rem;
+  padding: 1.75rem;
+}
+
+
+.flip-front {
+  background: white;
+  pointer-events: auto;
+}
+
+
+.flip-back {
+  background: linear-gradient(135deg,#ec4899,#8b5cf6);
+  color: white;
+  transform: rotateY(180deg);
+  pointer-events: none;
+}
+
+
+/* מעבר עכבר */
+.flip-card:hover .flip-front {
+  pointer-events: none;
+}
+
+.flip-card:hover .flip-back {
+  pointer-events: auto;
+}
+  </style>
+</head>
+<body class="bg-white">
+
+  <!-- Top Announcement Banner -->
+  <div class="fixed top-0 right-0 left-0 z-50 py-2.5 px-4 text-center" style="background:linear-gradient(90deg,#ec4899,#8b5cf6,#ec4899);background-size:200% 100%;animation:banner-slide 4s ease infinite;">
+    <a href="hip-hop.html" class="inline-flex items-center justify-center gap-3 text-white font-bold text-sm hover:opacity-90 transition-opacity">
+      <span class="text-base">🎤</span>
+      <span>חדש! חוגי היפ הופ נפתחים ב-FitBalance לשנת התשפ"ו</span>
+      <span class="bg-white text-pink-600 text-xs font-black px-3 py-1 rounded-full shadow">להרשמה ←</span>
+    </a>
+  </div>
+
+  <!-- Header -->
+  <header id="main-header" class="fixed top-8 right-0 left-0 bg-white z-40 h-16 flex items-center px-6 justify-between transition-shadow duration-300">
+    <div class="flex items-center gap-3">
+      <img src="assets/icons/logo.jpg" alt="FitBalance" class="h-14" onerror="this.style.display='none'" />
+      <span class="text-xl font-bold gradient-text">FitBalance</span>
+    </div>
+    <nav class="hidden md:flex items-center gap-8 text-gray-700 font-medium">
+      <a href="#home" class="nav-link hover:text-pink-600">דף הבית</a>
+      <a href="#classes" class="nav-link hover:text-pink-600">שיעורים</a>
+      <a href="#shop" class="nav-link hover:text-pink-600">חנות</a>
+      <a href="#testimonials" class="nav-link hover:text-pink-600">המלצות</a>
+      <a href="#about" class="nav-link hover:text-pink-600">אודות</a>
+      <a href="login.html" class="bg-pink-600 text-white px-5 py-2 rounded-full hover:bg-pink-700 transition-colors shadow-md">
+        <i class="fas fa-user ml-1"></i> כניסה לאזור אישי
+      </a>
+    </nav>
+    <button id="menu-btn" class="md:hidden text-gray-600 text-2xl"><i class="fas fa-bars"></i></button>
+  </header>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden fixed top-16 right-0 left-0 bg-white shadow-lg z-40 p-6 flex-col gap-4 text-gray-700 font-medium">
+    <a href="#home" class="block py-2 border-b hover:text-pink-600">דף הבית</a>
+    <a href="#classes" class="block py-2 border-b hover:text-pink-600">שיעורים</a>
+    <a href="#shop" class="block py-2 border-b hover:text-pink-600">חנות</a>
+    <a href="#testimonials" class="block py-2 border-b hover:text-pink-600">המלצות</a>
+    <a href="#about" class="block py-2 border-b hover:text-pink-600">אודות</a>
+    <a href="login.html" class="mt-2 block bg-pink-600 text-white px-5 py-3 rounded-full text-center hover:bg-pink-700">כניסה לאזור אישי</a>
+  </div>
+
+  <!-- Hero -->
+  <section id="home" class="hero-bg min-h-screen flex items-center justify-center text-center px-6 pt-24">
+    <div class="relative z-10 max-w-3xl">
+      <div class="floating text-6xl mb-6">🏃‍♀️</div>
+      <h1 class="text-5xl md:text-6xl font-bold text-gray-800 mb-4 leading-tight">
+        ברוכות הבאות ל<span class="gradient-text">FitBalance</span>
+      </h1>
+      <p class="text-xl text-gray-600 mb-10 leading-relaxed">
+        חוגי ספורט מתקדמים לנשים – פילאטיס, עיצוב גוף, היפ הופ ועוד.<br/>
+        הצטרפי לקהילה שלנו ותרגישי את ההבדל!
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <button onclick="openViewScheduleModal()" class="bg-pink-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-pink-700 transition-all shadow-lg hover:shadow-xl">
+          <i class="fas fa-calendar-alt ml-2"></i>מערכת שעות
+        </button>
+        <button onclick="openScheduleModal()" class="border-2 border-purple-600 text-purple-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-purple-50 transition-all">
+          <i class="fas fa-user-plus ml-2"></i>שיבוץ לחוג
+        </button>
+        <a href="login.html" class="border-2 border-pink-600 text-pink-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-pink-50 transition-all">
+          <i class="fas fa-user ml-2"></i>כניסה לאזור אישי
+        </a>
+      </div>
+      <!-- Stats -->
+      <div class="mt-16 grid grid-cols-3 gap-6 max-w-lg mx-auto">
+        <div class="text-center">
+          <div class="text-3xl font-bold text-[#1e40af] counter" data-target="150">0</div>
+          <div class="text-sm text-gray-500 mt-1">מתאמנות</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-[#1e40af] counter" data-target="10">0</div>
+          <div class="text-sm text-gray-500 mt-1">שנות ניסיון</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-[#1e40af] counter" data-target="8">0</div>
+          <div class="text-sm text-gray-500 mt-1">סוגי שיעורים</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trial Lesson Section - For New Girls -->
+  <section id="trial" class="py-16 px-6 bg-white">
+    <div class="max-w-2xl mx-auto text-center fade-in">
+      <div class="text-5xl mb-4">✨</div>
+      <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3">
+        מעולם לא התאמנת אצלנו?
+      </h2>
+      <p class="text-gray-500 text-lg mb-8 leading-relaxed">
+        מגיע לך שיעור ניסיון מתנה 🎁<br/>
+        מלאי פרטים ונחזור אלייך לתיאום – בלי התחייבות, רק כיף!
+      </p>
+      <form id="trial-form" class="bg-gradient-to-br from-pink-50 to-purple-100 rounded-3xl p-8 shadow-lg text-right" onsubmit="submitTrialForm(event)">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">שם פרטי *</label>
+            <input type="text" id="trial-first" required placeholder="שם פרטי" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 bg-white" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">שם משפחה *</label>
+            <input type="text" id="trial-last" required placeholder="שם משפחה" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 bg-white" />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">נייד *</label>
+            <input type="tel" id="trial-phone" required placeholder="050-0000000" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 bg-white"
+              oninput="clearPhoneError()" onblur="checkPhoneError()" />
+            <p id="trial-phone-error" class="hidden text-red-500 text-xs mt-1"></p>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">אימייל</label>
+            <input type="email" id="trial-email" placeholder="אופציונלי" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 bg-white" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">תוכנית</label>
+            <select id="trial-program" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 bg-white">
+              <option value="">בחרי תוכנית...</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">קבוצה</label>
+            <select id="trial-group" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 bg-white" disabled>
+              <option value="">בחרי קבוצה...</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="w-full bg-pink-600 text-white py-4 rounded-full font-bold text-lg hover:bg-pink-700 transition-all shadow-md hover:shadow-xl">
+          🎉 אני רוצה שיעור ניסיון!
+        </button>
+        <p id="trial-success" class="hidden mt-4 text-green-600 font-semibold text-center">✅ קיבלנו! נחזור אלייך בהקדם 💕</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- Registration Open Section - For Community -->
+  <section id="registration" class="py-16 px-6 bg-gradient-to-br from-pink-600 to-purple-600 text-white text-center">
+    <div class="max-w-2xl mx-auto fade-in">
+      <div class="text-5xl mb-4">🎊</div>
+      <h2 class="text-3xl md:text-4xl font-bold mb-3">
+        קהילת FitBalance – ההרשמה נפתחה!
+      </h2>
+      <p class="text-xl opacity-90 mb-2 leading-relaxed">
+        החוגים יחלו ב־<strong>1.9.2026</strong>
+      </p>
+      <p class="text-lg opacity-80 mb-8">
+        הבטיחי את מקומך עכשיו – המקומות מוגבלים 🔒
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <button onclick="openScheduleModal()" class="bg-white text-pink-600 px-8 py-4 rounded-full text-lg font-bold hover:bg-pink-50 transition-all shadow-lg">
+          📅 לשיבוץ במערכת השעות
+        </button>
+        <a href="login.html" class="border-2 border-white text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-white hover:text-pink-600 transition-all">
+          כניסה לאזור אישי
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hip Hop Banner -->
+  <div class="bg-gradient-to-r from-pink-500 via-purple-500 to-pink-600 py-4 px-6 text-center">
+    <a href="hip-hop.html" class="inline-flex items-center gap-3 text-white font-bold text-lg hover:opacity-90 transition-opacity">
+      <span class="text-2xl">🎤</span>
+      <span>חדש! חוגי היפ הופ נשים ונערות לשנת התשפ"ו נפתחים – לפרטים והרשמה</span>
+      <span class="bg-white text-pink-600 text-xs font-bold px-3 py-1 rounded-full">חדש</span>
+      <i class="fas fa-arrow-left"></i>
+    </a>
+  </div>
+  <section id="classes" class="py-20 px-6 bg-gradient-to-b from-gray-50 to-white">
+
+    <div class="max-w-6xl mx-auto">
+  
+      <!-- Title -->
+      <div class="text-center mb-14 fade-in">
+  
+        <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+          השיעורים שלנו
+        </h2>
+  
+        <p class="text-gray-500 text-lg">
+          מגוון חוגים ואימונים לנשים ולנערות באווירה מקצועית ומהנה
+        </p>
+  
+      </div>
+  
+  
+  
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+  
+  
+  
+        <!-- HIP HOP - SALES -->
+        <div class="flip-card fade-in relative">
+  
+          <span class="absolute top-4 right-4 z-10
+            bg-gradient-to-r from-pink-500 to-purple-500
+            text-white text-xs font-bold
+            px-3 py-1 rounded-full shadow">
+            🔥 הרשמה לשנת התשפ"ו החלה
+          </span>
+  
+  
+          <div class="flip-inner">
+  
+  
+            <div class="flip-front border-2 border-purple-500 shadow-xl">
+  
+  
+              <div class="text-5xl mb-5">
+                🎤
+              </div>
+  
+  
+              <h3 class="text-xl font-bold text-gray-800 mb-2">
+                היפ הופ
+              </h3>
+  
+  
+              <p class="text-gray-500 text-sm">
+                הרשמה לקבוצות חדשות לנשים ונערות נפתחות עכשיו!
+              </p>
+  
+  
+              <a href="hip-hop.html"
+                class="mt-5 inline-block
+                bg-pink-600 text-white
+                px-7 py-3 rounded-full
+                font-bold hover:bg-pink-700 transition">
+                לפרטים והרשמה ←
+              </a>
+  
+  
+            </div>
+  
+  
+  
+            <div class="flip-back">
+  
+              <div class="text-4xl mb-3">
+                🎤
+              </div>
+  
+  
+              <h3 class="text-xl font-bold mb-3">
+                היפ הופ
+              </h3>
+  
+  
+              <p class="mb-5">
+                חוג ריקוד מלא אנרגיה,
+                ביטחון עצמי וכיף.
+                קבוצות לפי גילאים.
+              </p>
+  
+  
+              <a href="hip-hop.html"
+                class="bg-white text-pink-600
+                px-5 py-2 rounded-full font-bold">
+                להרשמה עכשיו ←
+              </a>
+  
+  
+            </div>
+  
+  
+          </div>
+  
+        </div>
+  
+  
+  
+  
+  
+        <!-- PILATES -->
+        <div class="flip-card fade-in">
+  
+          <div class="flip-inner">
+  
+            <div class="flip-front">
+  
+  
+              <div class="text-5xl mb-5">
+                🧘‍♀️
+              </div>
+  
+  
+              <h3 class="text-xl font-bold text-gray-800 mb-2">
+                פילאטיס
+              </h3>
+  
+  
+              <p class="text-gray-500 text-sm">
+                חיזוק הגוף, יציבה וגמישות
+              </p>
+  
+  
+              <button onclick="openViewScheduleModal()"
+              class="mt-5 text-[#1e40af] font-semibold">
+              </button>
+  
+  
+            </div>
+  
+  
+            <div class="flip-back">
+  
+              <div class="text-4xl mb-3">
+                🧘‍♀️
+              </div>
+  
+  
+              <h3 class="font-bold text-xl mb-3">
+                פילאטיס
+              </h3>
+  
+  
+              <p>
+                אימון מדויק לחיזוק השרירים,
+                שיפור היציבה והרגשה טובה בגוף.
+              </p>
+  
+  
+            </div>
+  
+          </div>
+  
+        </div>
+  
+  
+  
+  
+  
+        <!-- עיצוב גוף -->
+        <div class="flip-card fade-in">
+  
+          <div class="flip-inner">
+  
+  
+            <div class="flip-front">
+  
+              <div class="text-5xl mb-5">
+                🏋️‍♀️
+              </div>
+  
+  
+              <h3 class="text-xl font-bold text-gray-800 mb-2">
+                עיצוב גוף
+              </h3>
+  
+  
+              <p class="text-gray-500 text-sm">
+                חיטוב וחיזוק לכל הגוף
+              </p>
+  
+  
+              <button onclick="openViewScheduleModal()"
+              class="mt-5 text-[#1e40af] font-semibold">
+              </button>
+  
+            </div>
+  
+  
+  
+            <div class="flip-back">
+  
+              <div class="text-4xl mb-3">
+                🏋️‍♀️
+              </div>
+  
+              <h3 class="font-bold text-xl mb-3">
+                עיצוב גוף
+              </h3>
+  
+              <p>
+                שילוב של תרגילי כוח,
+                חיטוב ותנועה בקצב מתאים.
+              </p>
+  
+            </div>
+  
+  
+          </div>
+  
+        </div>
+  
+  
+  
+  
+  
+        <!-- HIT -->
+        <div class="flip-card fade-in">
+  
+          <div class="flip-inner">
+  
+            <div class="flip-front">
+  
+              <div class="text-5xl mb-5">
+                🔥
+              </div>
+  
+  
+              <h3 class="text-xl font-bold text-gray-800 mb-2">
+                HIT
+              </h3>
+  
+  
+              <p class="text-gray-500 text-sm">
+                אימון עצים ואפקטיבי
+              </p>
+  
+  
+              <button onclick="openViewScheduleModal()"
+              class="mt-5 text-[#1e40af] font-semibold">
+              </button>
+  
+            </div>
+  
+  
+  
+            <div class="flip-back">
+  
+              <div class="text-4xl mb-3">
+                🔥
+              </div>
+  
+  
+              <h3 class="font-bold text-xl mb-3">
+                HIT
+              </h3>
+  
+  
+              <p>
+                אימון קצר ועוצמתי
+                לשיפור כושר ושריפת קלוריות.
+              </p>
+  
+            </div>
+  
+          </div>
+  
+        </div>
+  
+  
+  
+  
+  
+        <!-- יוגה -->
+        <div class="flip-card fade-in">
+  
+          <div class="flip-inner">
+  
+            <div class="flip-front">
+  
+              <div class="text-5xl mb-5">
+                🌿
+              </div>
+  
+  
+              <h3 class="text-xl font-bold text-gray-800 mb-2">
+                יוגה
+              </h3>
+  
+  
+              <p class="text-gray-500 text-sm">
+                נשימה, גמישות ורוגע, יפתח לפי ביקוש
+              </p>
+  
+  
+              <button onclick="openViewScheduleModal()"
+              class="mt-5 text-[#1e40af] font-semibold">
+              </button>
+  
+  
+            </div>
+  
+  
+            <div class="flip-back">
+  
+              <div class="text-4xl mb-3">
+                🌿
+              </div>
+  
+              <h3 class="font-bold text-xl mb-3">
+                יוגה
+              </h3>
+  
+              <p>
+                תרגול המשלב גוף ונפש
+                באווירה רגועה.
+              </p>
+  
+            </div>
+  
+          </div>
+  
+        </div>
+  
+  
+  
+  
+  
+        <!-- ZUMBA -->
+        <div class="flip-card fade-in">
+  
+          <div class="flip-inner">
+  
+            <div class="flip-front">
+  
+  
+              <div class="text-5xl mb-5">
+                🎵
+              </div>
+  
+  
+              <h3 class="text-xl font-bold text-gray-800 mb-2">
+                ביילה
+              </h3>
+  
+  
+              <p class="text-gray-500 text-sm">
+                אימון מהנה שמשלב מוזיקה,
+                תנועה וכושר.
+              </p>
+  
+  
+              <button onclick="openViewScheduleModal()"
+              class="mt-5 text-[#1e40af] font-semibold">
+              </button>
+  
+  
+            </div>
+  
+  
+  
+            <div class="flip-back">
+  
+              <div class="text-4xl mb-3">
+                🎵
+              </div>
+  
+  
+              <h3 class="font-bold text-xl mb-3">
+                ביילה
+              </h3>
+  
+  
+              <p>
+                מגוון סגנונות ריקוד, שילוב של חיזוק רצפת אגן וחיטוב, הכל בשיעור אחד סוחף ומרענן
+              </p>
+  
+            </div>
+  
+  
+          </div>
+  
+        </div>
+  
+  
+      </div>
+  
+  
+  
+  
+      <div class="text-center mt-14">
+  
+        <button onclick="openViewScheduleModal()"
+        class="bg-pink-600 text-white px-10 py-4
+        rounded-full font-bold shadow-lg
+        hover:bg-pink-700 transition">
+  
+          📅 לכל מערכת השעות
+  
+        </button>
+  
+      </div>
+  
+  
+    </div>
+  
+  </section>
+
+  <!-- Shop -->
+  <section id="shop" class="py-20 px-6 bg-white">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-12 fade-in">
+        <h2 class="text-4xl font-bold text-gray-800 mb-3">החנות שלנו</h2>
+        <p class="text-gray-500 text-lg">מוצרי בריאות וכושר במחירים מיוחדים</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 fade-in">
+        <div class="card bg-[#eff6ff] rounded-2xl p-8 text-center">
+          <div class="mb-4"><img src="assets/icons/unnamed.webp" alt="FitBalance" class="w-40 h-40 object-contain mx-auto"></div>
+          <h3 class="text-lg font-bold text-[#1e40af] mb-1">בריאות טבעית</h3>
+          <p class="text-gray-500 text-sm">מוצרי FOREVER</p>
+        </div>
+        <div class="card bg-[#eff6ff] rounded-2xl p-8 text-center">
+          <div class="mb-4"><img src="assets/icons/6.png" alt="FitBalance" class="w-40 h-40 object-contain mx-auto"></div>
+          <h3 class="text-lg font-bold text-purple-700 mb-1">ציוד ספורט</h3>
+          <p class="text-gray-500 text-sm">משקולות, קוביות ועוד..</p>
+        </div>
+        <div class="card bg-[#f0fdf4] rounded-2xl p-8 text-center">
+          <div class="mb-4"><img src="assets/icons/7.png" alt="FitBalance" class="w-40 h-40 object-contain mx-auto"></div>
+          <h3 class="text-lg font-bold text-[#15803d] mb-1">ביגוד ספורט</h3>
+          <p class="text-gray-500 text-sm">בגדי ספורט נוחים ואיכותיים</p>
+        </div>
+      </div>
+      <div class="text-center mt-10 fade-in">
+        <a href="pages/customer/shop.html" class="border-2 border-[#1e40af] text-[#1e40af] px-8 py-3 rounded-full font-semibold hover:bg-[#eff6ff] transition-all">לכל החנות 🛍️</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section id="testimonials" class="py-20 px-6 bg-gray-50">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-12 fade-in">
+        <h2 class="text-4xl font-bold text-gray-800 mb-3">מה אומרות המתאמנות</h2>
+        <p class="text-gray-500 text-lg">הסיפורים שמדברים בעד עצמם</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="testimonials-container">
+        <div class="testimonial-card fade-in">
+          <div class="text-[#b45309] text-xl mb-3">★★★★★</div>
+          <p class="text-gray-600 mb-4">"הצטרפתי לפני שנה ולא מאמינה לשינוי. המדריכות מדהימות והאווירה משפחתית!"</p>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-[#bfdbfe] rounded-full flex items-center justify-center font-bold text-[#1e40af]">מ</div>
+            <div>
+              <div class="font-semibold text-gray-800">מיכל כהן</div>
+              <div class="text-xs text-gray-400">מתאמנת פילאטיס</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card fade-in">
+          <div class="text-[#b45309] text-xl mb-3">★★★★★</div>
+          <p class="text-gray-600 mb-4">"שיעורי היפ הופ שינו לי את החיים! כיף, אנרגיה ומוזיקה מעולה בכל שיעור."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-[#bfdbfe] rounded-full flex items-center justify-center font-bold text-[#1e40af]">ש</div>
+            <div>
+              <div class="font-semibold text-gray-800">שירה לוי</div>
+              <div class="text-xs text-gray-400">מתאמנת היפ הופ</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card fade-in">
+          <div class="text-[#b45309] text-xl mb-3">★★★★★</div>
+          <p class="text-gray-600 mb-4">"האזור האישי נוח מאוד, רואה הכל בלחיצה אחת. ממליצה לכל אחת!"</p>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center font-bold text-green-600">ר</div>
+            <div>
+              <div class="font-semibold text-gray-800">רחל אברהם</div>
+              <div class="text-xs text-gray-400">מתאמנת עיצוב גוף</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About CTA -->
+  <section id="about" class="py-20 px-6 bg-gradient-to-r from-[#1e40af] to-[#3b82f6] text-white text-center">
+    <div class="max-w-2xl mx-auto fade-in">
+      <h2 class="text-4xl font-bold mb-4">רוצה לדעת עוד?</h2>
+      <p class="text-xl mb-8 opacity-90">הכירי את הצוות שלנו, הערכים שלנו ואיך אנחנו עושות את זה</p>
+      <a href="about.html" class="bg-white text-[#1e40af] px-8 py-4 rounded-full text-lg font-semibold hover:bg-[#eff6ff] transition-all shadow-lg">
+        לדף אודות ←
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-gray-400 py-10 px-6">
+    <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-right">
+      <div>
+        <h4 class="text-white font-bold text-lg mb-3">FitBalance</h4>
+        <p class="text-sm">חוגי ספורט מתקדמים לנשים במועדון התורני</p>
+      </div>
+      <div>
+        <h4 class="text-white font-bold text-lg mb-3">ניווט מהיר</h4>
+        <div class="flex flex-col gap-2 text-sm">
+          <button onclick="openViewScheduleModal()" class="hover:text-purple-500">מערכת שעות</button>
+          <a href="hip-hop.html" class="hover:text-purple-500">חוגי היפ הופ ✨</a>
+          <a href="login/catalog.html" class="hover:text-purple-500">חנות</a>
+          <a href="about.html" class="hover:text-purple-500">אודות</a>
+          <a href="login.html" class="hover:text-purple-500">כניסה לאזור אישי</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-white font-bold text-lg mb-3">צור קשר</h4>
+        <div class="flex flex-col gap-2 text-sm">
+          <a href="tel:052-717-3841" class="hover:text-purple-500"><i class="fas fa-phone ml-1"></i>052-717-3841</a>
+          <a href="mailto:efrathugim@gmail.com" class="hover:text-purple-500"><i class="fas fa-envelope ml-1"></i>efrathugim@gmail.com</a>
+          <a href="https://wa.me/972527173841" target="_blank" class="hover:text-purple-500"><i class="fab fa-whatsapp ml-1"></i>055-270-4596</a>
+        </div>
+      </div>
+    </div>
+    <div class="text-center mt-8 text-sm border-t border-gray-700 pt-6">
+      © 2026 FitBalance – כל הזכויות שמורות
+    </div>
+  </footer>
+
+  <!-- View Schedule Modal -->
+  <div id="view-schedule-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" onclick="closeViewScheduleModal()"></div>
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full flex flex-col" style="max-width:900px;max-height:92vh;">
+
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-[#1e40af] to-[#3b82f6] p-5 text-white flex items-center justify-between flex-shrink-0 rounded-t-3xl">
+        <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-calendar-alt"></i> <span id="vs-title">מערכת שעות</span></h2>
+        <div class="flex items-center gap-2">
+          <button onclick="vsPrint()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1"><i class="fas fa-print"></i> הדפסה</button>
+          <button onclick="vsDownload()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1"><i class="fas fa-download"></i> הורדה</button>
+          <button onclick="closeViewScheduleModal()" class="bg-white bg-opacity-20 hover:bg-opacity-30 w-9 h-9 rounded-full flex items-center justify-center text-lg">✕</button>
+        </div>
+      </div>
+
+      <!-- View toggle + nav -->
+      <div class="flex items-center justify-between px-5 py-3 border-b flex-shrink-0 gap-3 flex-wrap">
+        <div class="flex gap-1 bg-gray-100 rounded-xl p-1">
+          <button onclick="vsSetView('weekly')" id="vs-btn-weekly" class="vs-view-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-all bg-white shadow text-[#1e40af]">שבועי</button>
+          <button onclick="vsSetView('daily')"  id="vs-btn-daily"  class="vs-view-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-all text-gray-500">יומי</button>
+          <button onclick="vsSetView('monthly')" id="vs-btn-monthly" class="vs-view-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-all text-gray-500">חודשי</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="vsNav(-1)" class="w-8 h-8 rounded-full border-2 border-gray-200 flex items-center justify-center hover:border-purple-500 hover:text-purple-500 font-bold">‹</button>
+          <span id="vs-period-label" class="text-sm font-semibold text-gray-700 min-w-[120px] text-center"></span>
+          <button onclick="vsNav(1)"  class="w-8 h-8 rounded-full border-2 border-gray-200 flex items-center justify-center hover:border-purple-500 hover:text-purple-500 font-bold">›</button>
+          <button onclick="vsGoToday()" class="text-xs text-[#1e40af] font-semibold border border-purple-500 px-3 py-1 rounded-full hover:bg-[#eff6ff]">היום</button>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div id="vs-content" class="flex-1 overflow-auto p-4"></div>
+
+    </div>
+  </div>
+
+  <!-- Assign Modal (שיבוץ) -->
+  <div id="schedule-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" id="modal-backdrop"></div>
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col" style="max-height:92vh">
+
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-[#1e40af] to-[#3b82f6] p-5 text-white flex items-center justify-between flex-shrink-0 rounded-t-3xl">
+        <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-calendar-alt"></i> שיבוץ לחוגים</h2>
+        <button id="close-modal" class="bg-white bg-opacity-20 hover:bg-opacity-30 w-9 h-9 rounded-full flex items-center justify-center text-lg transition-all">✕</button>
+      </div>
+
+      <!-- Step: loading -->
+      <div id="step-loading" class="hidden flex-1 flex items-center justify-center py-16 text-gray-400">
+        <div class="text-center"><div class="text-4xl mb-3">⏳</div><p>טוען...</p></div>
+      </div>
+
+      <!-- Step: error -->
+      <div id="step-error" class="hidden flex-1 flex items-center justify-center py-16 text-red-400">
+        <div class="text-center"><div class="text-4xl mb-3">⚠️</div><p>שגיאה בטעינת הנתונים</p></div>
+      </div>
+
+      <!-- Step: id-lookup -->
+      <div id="step-id-lookup" class="hidden flex-1 flex flex-col items-center justify-center p-8 gap-6">
+        <div class="text-center">
+          <div class="text-5xl mb-3">🔍</div>
+          <h3 class="text-xl font-bold text-gray-800 mb-1">שיבוץ לחוגים</h3>
+          <p class="text-gray-500 text-sm">הזיני את מספר תעודת הזהות שלך</p>
+        </div>
+        <div class="w-full max-w-xs">
+          <input id="lookup-id" type="text" inputmode="numeric" placeholder="מספר ת.ז"
+            class="w-full border-2 border-gray-200 rounded-2xl px-5 py-4 text-center text-lg font-semibold focus:outline-none focus:border-purple-500 transition-all"
+            onkeydown="if(event.key==='Enter') lookupCustomer()" />
+        </div>
+        <button id="lookup-btn" onclick="lookupCustomer()"
+          class="bg-[#1e40af] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#1d4ed8] transition-all shadow-md">
+          אישור
+        </button>
+      </div>
+
+      <!-- Step: sessions -->
+      <div id="step-sessions" class="hidden flex flex-col flex-1 overflow-hidden">
+        <div class="px-6 pt-5 pb-2 flex-shrink-0">
+          <p id="customer-greeting" class="text-gray-700 font-semibold text-sm"></p>
+          <p class="text-xs text-gray-400 mt-1">לחצי על שיעור כדי לבחור אותו</p>
+        </div>
+        <div id="sessions-table-wrap" class="overflow-auto flex-1 px-4 pb-4"></div>
+
+        <!-- Assign bar -->
+        <div id="assign-bar" class="hidden flex-shrink-0 px-6 py-4 border-t bg-white flex items-center justify-between gap-4">
+          <span class="text-sm text-gray-600">בחרת <strong id="assign-count" class="text-[#1e40af]">0</strong> חוגים</span>
+          <div class="flex gap-2">
+            <button id="trial-btn" onclick="assignTrial()"
+              class="border-2 border-[#1e40af] text-[#1e40af] px-5 py-2.5 rounded-full font-bold hover:bg-[#eff6ff] transition-all text-sm">
+              שיבוץ ניסיון
+            </button>
+            <button id="assign-btn" onclick="assignSelected()"
+              class="bg-[#1e40af] text-white px-8 py-2.5 rounded-full font-bold hover:bg-[#1d4ed8] transition-all shadow-md text-sm">
+              שבצי אותי ✓
+            </button>
+          </div>
+        </div>
+
+        <!-- Cancellation notice -->
+        <div class="flex-shrink-0 px-6 py-3 bg-gray-50 border-t text-center text-xs text-gray-400 rounded-b-3xl">
+          ניתן להודיע על ביטול עד שבוע לפני סוף אוגוסט
+        </div>
+      </div>
+
+      <!-- Step: register-form -->
+      <div id="step-register-form" class="hidden flex-1 overflow-y-auto p-6">
+        <button onclick="backToLookup()" class="text-sm text-[#1e40af] hover:underline mb-4 flex items-center gap-1"><i class="fas fa-arrow-right text-xs"></i> חזרה</button>
+        <div class="bg-[#eff6ff] border border-[#bfdbfe] rounded-2xl p-4 mb-5 text-center">
+          <p class="text-[#1e40af] font-semibold text-sm">לצורך שיבוץ נא הזיני פרטים</p>
+          <p class="text-purple-500 text-xs mt-1">לא נמצאת במערכת – נרשמי ונשבץ אותך מיד 💜</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">שם פרטי *</label>
+            <input id="reg-first" type="text" placeholder="שם פרטי" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">שם משפחה *</label>
+            <input id="reg-last" type="text" placeholder="שם משפחה" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">טלפון *</label>
+            <input id="reg-mobile" type="tel" placeholder="050-0000000" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">אימייל</label>
+            <input id="reg-email" type="email" placeholder="אופציונלי" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500" />
+          </div>
+        </div>
+        <input id="reg-id" type="hidden" />
+
+        <p class="text-xs font-semibold text-gray-600 mb-2">בחרי חוגים (אופציונלי – ניתן לבחור גם אחרי):</p>
+        <div id="reg-table-wrap" class="mb-5"></div>
+
+        <button id="reg-submit-btn" onclick="submitRegistration()"
+          class="w-full bg-[#1e40af] text-white py-4 rounded-full font-bold text-lg hover:bg-[#1d4ed8] transition-all shadow-md">
+          אישור ושיבוץ
+        </button>
+        <p class="text-center text-xs text-gray-400 mt-3">ניתן להודיע על ביטול עד שבוע לפני סוף אוגוסט</p>
+      </div>
+
+      <!-- Step: success -->
+      <div id="step-success" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center gap-4">
+        <div class="text-6xl">🎉</div>
+        <h3 class="text-2xl font-bold text-gray-800"><span id="success-name"></span>, <span id="success-type">שובצת בהצלחה!</span></h3>
+        <p class="text-gray-500">נרשמת לחוגים הבאים:</p>
+        <ul id="success-classes" class="text-right text-sm text-gray-700 bg-[#eff6ff] rounded-2xl px-6 py-4 w-full space-y-1 list-disc list-inside"></ul>
+        <p class="text-[#1e40af] font-semibold text-sm">ניצור איתך קשר לתשלום 💜</p>
+        <button onclick="closeScheduleModal()" class="mt-2 bg-[#1e40af] text-white px-8 py-3 rounded-full font-bold hover:bg-[#1d4ed8] transition-all">
+          סגירה
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="services/supabaseClient.js"></script>
+  <script src="utils/validation.js"></script>
+  <script src="utils/constants.js"></script>
+  <script src="utils/storage.js"></script>
+  <script src="utils/formatter.js"></script>
+  <script src="utils/cart.js"></script>
+  <script src="utils/popup.js"></script>
+  <script src="services/attendanceService.js"></script>
+  <script src="assets/js/pages/home.js"></script>
+  <script>
+    function toggleFlip(card) { card.classList.toggle('flipped'); }
+
+    function showPhoneError(msg) {
+      const el = document.getElementById('trial-phone-error');
+      const input = document.getElementById('trial-phone');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      input.classList.add('border-red-400');
+    }
+    function clearPhoneError() {
+      document.getElementById('trial-phone-error').classList.add('hidden');
+      document.getElementById('trial-phone').classList.remove('border-red-400');
+    }
+    function checkPhoneError() {
+      const err = validateIsraeliPhone(document.getElementById('trial-phone').value.trim());
+      if (err) showPhoneError(err);
+    }
+
+    // טעינת תוכניות וקבוצות לטופס ניסיון
+    (async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: programs } = await window._sb
+        .from('programs')
+        .select('name')
+        .gte('end_date', today)
+        .order('name');
+
+      const programSel = document.getElementById('trial-program');
+      const seen = new Set();
+      (programs || []).forEach(p => {
+        if (seen.has(p.name)) return;
+        seen.add(p.name);
+        const o = document.createElement('option');
+        o.value = p.name; o.textContent = p.name;
+        programSel.appendChild(o);
+      });
+
+      const groupSel = document.getElementById('trial-group');
+      const GROUPS = [{ code: 1, label: 'נשים' }, { code: 2, label: 'ילדות ונערות' }];
+
+      document.getElementById('trial-program').addEventListener('change', () => {
+        groupSel.innerHTML = '<option value="">בחרי קבוצה...</option>';
+        if (!programSel.value) { groupSel.disabled = true; return; }
+        GROUPS.forEach(g => {
+          const o = document.createElement('option');
+          o.value = g.code; o.textContent = g.label;
+          groupSel.appendChild(o);
+        });
+        groupSel.disabled = false;
+      });
+    })();
+
+    async function submitTrialForm(e) {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type=submit]');
+      btn.disabled = true;
+      try {
+        const programSel = document.getElementById('trial-program');
+        const groupSel   = document.getElementById('trial-group');
+        const phoneErr = validateIsraeliPhone(document.getElementById('trial-phone').value.trim());
+        if (phoneErr) { showPhoneError(phoneErr); btn.disabled = false; return; }
+        const { error } = await window._sb.from('inquiries').insert({
+          child_name:   document.getElementById('trial-first').value.trim(),
+          last_name:    document.getElementById('trial-last').value.trim(),
+          phone:        document.getElementById('trial-phone').value.trim(),
+          email:        document.getElementById('trial-email').value.trim() || null,
+          program_name: programSel.value || null,
+          group_code:   groupSel.value ? Number(groupSel.value) : null,
+          note:         'ניסיון',
+          source:       1
+        });
+        if (error) throw error;
+        document.getElementById('trial-success').classList.remove('hidden');
+        e.target.reset();
+        document.getElementById('trial-group').disabled = true;
+      } catch (err) {
+        alert('שגיאה בשמירה, נסי שוב');
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+  
+</body>
+</html>
+
+
+
+
+

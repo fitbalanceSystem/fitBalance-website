@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <title>הגדרות מערכת</title>
+  <link rel="stylesheet" href="css/settings.css">
+  <link rel="stylesheet" href="css/main.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/settings.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <!-- תפריט צד -->
+    <aside class="sidebar">
+      <a href="index.html">
+        <img src="images/logo.png" alt="לוגו" class="logo" />
+      </a>
+      <div class="sidebar-actions">
+        <button id="newCustomerBtn">הוסף הגדרה</button>
+        <button>ייצא</button>
+      </div>
+    </aside>
+
+    <!-- תוכן ראשי -->
+    <main class="main-content">
+      <header class="page-header">
+        <h1>הגדרות מערכת</h1>
+      </header>
+
+      <!-- תוכן: טבלאות לפי קטגוריות -->
+      <div class="accordion-container">
+        <!-- קטגוריה: codeTables -->
+        <div class="accordion">
+          <button class="accordion-header">טבלת קוד - codeTables</button>
+          <div class="accordion-body">
+            <table class="customers-table">
+              <thead>
+                <tr>
+                  <th>שם</th>
+                  <th>פרטים (JSON)</th>
+                </tr>
+              </thead>
+              <tbody id="codeTables-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- קטגוריה: users -->
+        <div class="accordion">
+          <button class="accordion-header">משתמשים - users</button>
+          <div class="accordion-body">
+            <table class="customers-table">
+              <thead>
+                <tr>
+                  <th>שם</th>
+                  <th>פרטים (JSON)</th>
+                </tr>
+              </thead>
+              <tbody id="users-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- מודאל עריכה -->
+  <div id="editModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h3 id="modalTitle">עריכת רשומה</h3>
+      <table id="editTable" class="customers-table">
+        <thead><tr id="editTableHeader"></tr></thead>
+        <tbody id="editTableBody"></tbody>
+      </table>
+      <button id="addRowBtn" type="button" class="add-row-button">+ הוסף שורה</button>
+      <button onclick="saveChanges()" class="sidebar-actions">שמור</button>
+      <button id="deleteSelectedBtn" type="button">מחק מסומנים</button>
+    </div>
+  </div>
+  
+</body>
+</html>

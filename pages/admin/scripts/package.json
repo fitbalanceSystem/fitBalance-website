@@ -1,0 +1,14 @@
+{
+  "name": "fitplus-batch-jobs",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "job": "node engine/manual.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "node-cron": "^3.0.0",
+    "resend": "^3.0.0"
+  }
+}

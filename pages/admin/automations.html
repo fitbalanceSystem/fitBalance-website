@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>אוטומציות</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div style="display:flex; min-height:100vh;">
+
+    <div id="sidebar-placeholder"></div>
+    <script src="utilities/sidebar.js"></script>
+
+    <main class="flex-1 p-6">
+      <h1 class="text-2xl font-bold text-gray-800 mb-6">⚡ אוטומציות</h1>
+
+      <!-- כרטיס אוטומציה: סיכום שכר -->
+      <div class="bg-white rounded-2xl shadow p-6 mb-6 border border-gray-100">
+        <div class="flex items-start justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-gray-800">📧 סיכום שכר חודשי למדריכות</h2>
+            <p class="text-gray-500 text-sm mt-1">רצה ב-1 לכל חודש — שולחת לכל מדריכה פעילה טבלת נוכחות + בקשה לחשבונית</p>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">🕕 1 לחודש, 08:00</span>
+              <span id="autoStatus" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">✓ פעיל</span>
+            </div>
+          </div>
+          <button onclick="triggerManual()"
+            class="flex items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg font-medium transition text-sm">
+            <i class="fas fa-play"></i> הרץ עכשיו
+          </button>
+        </div>
+      </div>
+
+      <!-- לוג הרצות -->
+      <div class="bg-white rounded-2xl shadow p-6 border border-gray-100">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-gray-800">📋 היסטוריית הרצות</h2>
+          <button onclick="loadLogs()" class="text-sm text-blue-600 hover:underline">
+            <i class="fas fa-sync-alt"></i> רענן
+          </button>
+        </div>
+
+        <!-- סינון לפי חודש -->
+        <div class="flex items-center gap-3 mb-4">
+          <label class="text-sm font-medium text-gray-600">חודש:</label>
+          <input type="month" id="filterMonth" class="border rounded px-3 py-1 text-sm" />
+          <button onclick="loadLogs()" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm">סנן</button>
+        </div>
+
+        <!-- KPI -->
+        <div id="logsKpi" class="grid grid-cols-3 gap-3 mb-4"></div>
+
+        <!-- טבלה -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 text-gray-600">
+                <th class="p-3 border text-right">תאריך הרצה</th>
+                <th class="p-3 border text-right">חודש</th>
+                <th class="p-3 border text-right">מדריכה</th>
+                <th class="p-3 border text-center">מפגשים</th>
+                <th class="p-3 border text-right">סכום</th>
+                <th class="p-3 border text-center">סטטוס</th>
+              </tr>
+            </thead>
+            <tbody id="logsBody">
+              <tr><td colspan="6" class="text-center p-4 text-gray-400">טוען...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-lg text-sm hidden transition-all z-50"></div>
+
+  <script src="js/automations.js"></script>
+</body>
+</html>

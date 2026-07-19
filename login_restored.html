@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FitBalance | כניסה לאזור האישי</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .page-bg {
+      height: 100vh;
+      overflow: hidden;
+      background: linear-gradient(135deg, #fce7f3 0%, #ede9fe 100%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 1rem;
+    }
+    .blob {
+      position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.4;
+      animation: pulse-blob 7s ease-in-out infinite; pointer-events: none;
+    }
+    .blob-1 { width:400px;height:400px;background:radial-gradient(circle,rgba(236,72,153,.3),transparent 70%);top:-150px;left:-150px; }
+    .blob-2 { width:300px;height:300px;background:radial-gradient(circle,rgba(139,92,246,.3),transparent 70%);bottom:-100px;right:-100px;animation-delay:3s; }
+    @keyframes pulse-blob { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+
+    .card {
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 1.5rem;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+      padding: 1.4rem 1.75rem;
+    }
+    .input-field {
+      width: 100%; padding: .55rem 2.5rem .55rem 2rem;
+      border: 2px solid #e5e7eb; border-radius: .65rem;
+      font-size: .875rem; outline: none; direction: rtl;
+      transition: border-color .2s, box-shadow .2s; background: white;
+    }
+    .input-field:focus { border-color:#ec4899; box-shadow:0 0 0 3px rgba(236,72,153,.1); }
+    .input-icon { position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:#9ca3af;pointer-events:none;font-size:.8rem; }
+
+    .btn-primary {
+      width:100%; padding:.65rem; border:none; cursor:pointer;
+      background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white;
+      font-size:.9rem; font-weight:600; border-radius:.65rem;
+      box-shadow:0 6px 18px rgba(236,72,153,.35);
+      transition:opacity .2s, transform .2s;
+    }
+    .btn-primary:hover:not(:disabled) { opacity:.92; transform:translateY(-1px); }
+    .btn-primary:disabled { opacity:.7; cursor:not-allowed; }
+
+    .error-box {
+      background:#fef2f2; border:1px solid #fecaca; color:#dc2626;
+      border-radius:.65rem; padding:.45rem .75rem; font-size:.8rem;
+      display:flex; align-items:center; gap:.4rem;
+    }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+    .shake { animation:shake .4s ease; }
+
+    .spinner { width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:inline-block; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    .slide-up { animation:slideUp .5s ease both; }
+    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    .feature-pill {
+      display:inline-flex; align-items:center; gap:.3rem;
+      background:rgba(236,72,153,.08); border-radius:999px;
+      padding:.2rem .65rem; font-size:.7rem; color:#9ca3af;
+    }
+    .divider { display:flex;align-items:center;gap:.75rem;color:#9ca3af;font-size:.78rem; }
+    .divider::before,.divider::after { content:'';flex:1;height:1px;background:#e5e7eb; }
+    .role-btn { background:transparent; border:none; cursor:pointer; color:#9ca3af; font-weight:600; font-size:.82rem; padding:.5rem; transition: all .2s; }
+    .role-btn.active { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="page-bg">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="relative z-10 w-full max-w-sm slide-up">
+
+    <!-- Logo -->
+    <div class="text-center mb-3">
+      <a href="home.html" class="inline-flex items-center gap-2">
+        <img src="assets/icons/logo.jpg" alt="FitBalance" class="h-9 rounded-lg shadow" onerror="this.style.display='none'" />
+        <span class="text-2xl font-bold gradient-text">FitBalance</span>
+      </a>
+    </div>
+
+    <!-- Card -->
+    <div class="card">
+
+      <div class="text-center mb-3">
+        <h1 class="text-base font-bold text-gray-800">ברוכה הבאה 👋</h1>
+        <p class="text-gray-400 text-xs mt-0.5">הכניסי פרטים כדי להיכנס לאזור האישי</p>
+      </div>
+
+      <!-- Error -->
+      <div id="error-msg" class="error-box hidden mb-3">
+        <i class="fas fa-exclamation-circle text-red-400"></i>
+        <span></span>
+      </div>
+
+      <!-- Role toggle -->
+      <div class="flex rounded-xl overflow-hidden border-2 border-gray-100 mb-3">
+        <button type="button" id="role-customer" class="role-btn active flex-1 transition-all">
+          <i class="fas fa-user ml-1"></i> לקוחה
+        </button>
+        <button type="button" id="role-employee" class="role-btn flex-1 transition-all">
+          <i class="fas fa-chalkboard-teacher ml-1"></i> עובד/ת
+        </button>
+      </div>
+
+      <form id="login-form" novalidate class="space-y-2.5">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1" id="label-email">כתובת אימייל</label>
+          <div class="relative">
+            <span class="input-icon"><i id="icon-email" class="fas fa-envelope"></i></span>
+            <input id="email" type="text" class="input-field" placeholder="your@email.com" autocomplete="off" required />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1" id="label-pass">תעודת זהות</label>
+          <div class="relative">
+            <span class="input-icon"><i id="icon-pass" class="fas fa-id-card"></i></span>
+            <input id="password" type="password" class="input-field" placeholder="מספר ת.ז" autocomplete="off" required />
+            <button type="button" id="toggle-password"
+              class="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors text-xs" tabindex="-1">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn-primary flex items-center justify-center gap-2">
+          <span id="btn-spinner" class="spinner hidden"></span>
+          <span id="btn-text">כניסה</span>
+          <i class="fas fa-arrow-left text-xs"></i>
+        </button>
+
+        <div class="text-center">
+          <button type="button" id="forgot-btn" class="text-xs text-pink-500 hover:text-pink-700 transition-colors underline">
+            שכחתי סיסמא / ת.ז
+          </button>
+        </div>
+      </form>
+
+      <!-- Forgot password panel -->
+      <div id="forgot-panel" class="hidden mt-2">
+        <div class="bg-pink-50 border border-pink-200 rounded-xl p-3">
+          <p class="text-xs text-gray-500 mb-2" id="forgot-desc">הכניסי את כתובת האימייל שלך ונשלח לך הוראות</p>
+          <div class="relative mb-2">
+            <span class="input-icon"><i class="fas fa-envelope"></i></span>
+            <input id="forgot-email" type="email" class="input-field" placeholder="your@email.com" />
+          </div>
+          <div id="forgot-error" class="hidden text-red-500 text-xs mb-1"></div>
+          <div id="forgot-success" class="hidden text-green-600 text-xs mb-1 font-medium"></div>
+          <button id="forgot-submit" type="button"
+            class="w-full py-1.5 bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-opacity">
+            שלחי לי הוראות
+          </button>
+        </div>
+      </div>
+
+      <div class="divider my-3">או</div>
+
+      <a href="https://wa.me/972527173841" target="_blank"
+        class="flex items-center justify-center gap-2 w-full py-2 border-2 border-gray-200 rounded-xl text-gray-500 font-medium hover:border-green-400 hover:text-green-600 transition-all text-xs">
+        <i class="fab fa-whatsapp text-green-500 text-sm"></i>
+        צרי קשר לקבלת גישה
+      </a>
+
+      <!-- Pills -->
+      <div class="flex flex-wrap justify-center gap-1.5 mt-3">
+        <span class="feature-pill"><i class="fas fa-calendar-check text-pink-400"></i> מערכת שעות</span>
+        <span class="feature-pill"><i class="fas fa-shopping-bag text-purple-400"></i> חנות</span>
+        <span class="feature-pill"><i class="fas fa-chart-line text-pink-400"></i> מעקב אימונים</span>
+      </div>
+
+      <!-- Bottom links -->
+      <div class="flex justify-between items-center mt-3 text-xs">
+        <a href="register.html" class="text-pink-600 font-semibold hover:underline">הרשמה חדשה</a>
+        <a href="home.html" class="text-gray-400 hover:text-pink-600 transition-colors">
+          <i class="fas fa-arrow-right ml-1"></i> דף הבית
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="utils/constants.js"></script>
+<script src="utils/storage.js"></script>
+<script src="services/supabaseClient.js"></script>
+<script src="services/authService.js"></script>
+<script src="middleware/auth.js"></script>
+<script src="assets/js/pages/login.js"></script>
+</body>
+</html>

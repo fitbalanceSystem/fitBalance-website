@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FitBalance | תוכניות ונוכחות</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+
+<div class="page-content p-5 max-w-4xl mx-auto space-y-6">
+
+  <!-- כותרת + בורר שנה -->
+  <div class="card p-5 fade-in">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+        <i class="fas fa-id-card text-pink-500"></i> התוכניות שלי
+      </h2>
+      <div id="year-selector" class="flex items-center gap-2"></div>
+    </div>
+  </div>
+
+  <!-- קוביות תוכניות -->
+  <div id="enrollments-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div class="skeleton h-40 rounded-2xl"></div>
+    <div class="skeleton h-40 rounded-2xl"></div>
+  </div>
+
+  <!-- סיכום -->
+  <div id="summary-section"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../../utils/constants.js"></script>
+<script src="../../utils/storage.js"></script>
+<script src="../../utils/cart.js"></script>
+<script src="../../utils/formatter.js"></script>
+<script src="../../utils/helpers.js"></script>
+<script src="../../utils/popup.js"></script>
+<script src="../../services/supabaseClient.js"></script>
+<script src="../../services/authService.js"></script>
+<script src="../../services/customerService.js"></script>
+<script src="../../services/attendanceService.js"></script>
+<script src="../../middleware/auth.js"></script>
+<script src="../../layouts/layout.js"></script>
+<script src="../../assets/js/pages/customer/plans.js"></script>
+</body>
+</html>

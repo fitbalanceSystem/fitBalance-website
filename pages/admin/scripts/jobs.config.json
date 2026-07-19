@@ -1,0 +1,36 @@
+{
+  "jobs": [
+    {
+      "name": "daily-attendance",
+      "description": "חישוב נוכחות יומי לכל המפגשים",
+      "type": "auto",
+      "schedule": "0 23 * * *",
+      "enabled": true,
+      "logic": "calcAttendance"
+    },
+    {
+      "name": "monthly-salary",
+      "description": "חישוב שכר חודשי ושליחת מייל למדריכות",
+      "type": "manual",
+      "schedule": null,
+      "enabled": true,
+      "logic": "calcSalary"
+    },
+    {
+      "name": "monthly-reports",
+      "description": "יצירת דוחות חודשיים אוטומטיים",
+      "type": "auto",
+      "schedule": "0 6 1 * *",
+      "enabled": true,
+      "logic": "generateReports"
+    },
+    {
+      "name": "birthday-greeting",
+      "description": "שליחת מייל מזל טוב ללקוחות יום הולדת",
+      "type": "auto",
+      "schedule": "0 7 * * *",
+      "enabled": true,
+      "logic": "birthdayGreeting"
+    }
+  ]
+}

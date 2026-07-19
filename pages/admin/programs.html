@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../../assets/icons/icon.png">
+  <title>תוכניות</title>
+  <!-- <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/programs.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" /> -->
+  <link rel="stylesheet" href="css/admin-theme.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" />
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> -->
+  <script type="module" src="js/programs.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../../services/supabaseClient.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div id="sidebar-placeholder"></div>
+    <script src="utilities/sidebar.js"></script>
+
+    <main class="main-content">
+      <header class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <h1>תוכניות</h1>
+        <div style="display:flex;gap:8px;">
+          <button id="newProgramBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition text-sm">+ תוכנית חדשה</button>
+          <button id="exportProgramsBtn" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition text-sm">⬇️ ייצא</button>
+        </div>
+      </header>
+
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="חיפוש לפי שם, טלפון או חוג..." />
+        <label style="margin-right:12px;font-weight:500;cursor:pointer">
+          <input type="checkbox" id="showActiveOnly" checked style="margin-left:4px" />
+          הצג פעילים בלבד
+        </label>
+        <i class="fas fa-search"></i>
+      </div>
+      <div id="pagination" class="pagination"></div>
+      <section class="table-section">
+        <div id="table-loader">
+          <div class="loader"></div>
+        </div>
+        <table id="programsTable" border="1" class="customers-table">
+          <thead>
+            <tr>
+              <th>שם</th>
+              <th>יום</th>
+              <th>שעה</th>
+              <th>סניף</th>
+              <th>התחלה</th>
+              <th>סיום</th>
+              <th>פעולות</th>
+            </tr>
+          </thead>
+          <tbody id="programsBody">
+            <!-- הנתונים יתווספו כאן -->
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+<!-- המודאל -->
+<div id="lessonModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span id="closeModal" class="close-btn">&times;</span>
+    <h2 id="modalTitle">הוספת תוכנית</h2>
+
+    <form id="lessonForm">
+      <input type="hidden" id="lessonId" />
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>שם שיעור:</label>
+          <input name="name" type="text" id="lessonName" required />
+        </div>
+        
+        <div class="form-group">
+          <label for="type">סוג</label>
+          <select name="type_code" id="lessonType" required>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>יום:</label>
+          <select id="lessonDay" name="day" required></select>
+        </div>
+
+        <div class="form-group">
+          <label>שעה:</label>
+          <input name="time" type="time" id="lessonTime" required />
+        </div>
+
+        <div class="form-group">
+          <label>תאריך התחלה:</label>
+          <input name="start_date" type="date" id="lessonStartDate" required />
+        </div>
+
+        <div class="form-group">
+          <label>תאריך סיום:</label>
+          <input name="end_date" type="date" id="lessonEndDate" required />
+        </div>
+
+        <div class="form-group">
+          <label>משך שיעור (בדקות):</label>
+          <select name="duration" id="lessonDuration" required>
+            <option value="">בחרי משך</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>סניף:</label>
+          <select name="branch_code" id="lessonBranch" required></select>
+        </div>
+
+        <div class="form-group">
+          <label>מדריכה:</label>
+          <select name="instructor_code" id="lessonInstructor" required></select>
+        </div>
+
+        <div class="form-group">
+          <label>סטטוס:</label>
+          <select  name="status_code" id="lessonStatus" required></select>
+        </div>
+
+        <div class="form-group">
+          <label>מחיר (₪):</label>
+          <input name="price" type="number" id="lessonPrice" min="0" step="0.01" placeholder="0.00" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        
+        <!-- <button class="save-btn"><i class="fas fa-save"></i> שמור וסגור</button>
+        <span id="saveStatus" style="margin-right: 10px; display: none;">⏳ שומר...</span> -->
+
+        <button type="button" id="save-program-btn" class="submit-btn" >שמור</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+  <!-- מודאל צפייה -->
+  <div id="program-view-modal" class="modal">
+    <div class="modal-content">
+      <div id="program-view-loader" class="loader-container">
+        <div class="loader"></div>
+      </div>
+  
+      <h2>פרטי תוכנית</h2>
+      <div id="program-details" style="display: none;"></div>
+  
+      <button class="modal-btn" onclick="closeModal('program-view-modal')">סגור</button>
+    </div>
+  </div>
+  
+
+</body>
+</html>
+

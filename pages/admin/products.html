@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../../assets/icons/icon.png">
+  <title>מוצרים</title>
+  <link rel="stylesheet" href="css/admin-theme.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../../services/supabaseClient.js"></script>
+  <style>
+    .product-img { width:52px; height:52px; object-fit:cover; border-radius:10px; border:1px solid #f3f0ff; }
+    .product-img-placeholder { width:52px; height:52px; border-radius:10px; background:#f3f0ff; display:flex; align-items:center; justify-content:center; font-size:22px; }
+    .badge-active   { background:#d1fae5; color:#065f46; border-radius:999px; padding:2px 10px; font-size:11px; font-weight:700; }
+    .badge-inactive { background:#fee2e2; color:#991b1b; border-radius:999px; padding:2px 10px; font-size:11px; font-weight:700; }
+    #productModal { display:none; position:fixed; inset:0; background:rgba(15,10,40,.65); z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+    #productModal.open { display:flex; }
+    #img-preview { width:100%; height:140px; object-fit:cover; border-radius:12px; display:none; }
+    #img-placeholder { height:140px; border-radius:12px; border:2px dashed #ede9fe; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer; color:#9ca3af; font-size:13px; transition:border-color .2s; }
+    #img-placeholder:hover { border-color:#8b5cf6; color:#7c3aed; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div id="sidebar-placeholder"></div>
+  <script src="utilities/sidebar.js"></script>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h1>🛍️ מוצרים</h1>
+      <button id="addBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm">+ מוצר חדש</button>
+    </header>
+
+    <!-- חיפוש + סינון -->
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="חיפוש לפי שם מוצר..." />
+      <select id="catFilter"><option value="">כל הקטגוריות</option></select>
+      <select id="statusFilter">
+        <option value="">כל הסטטוסים</option>
+        <option value="true">פעיל</option>
+        <option value="false">לא פעיל</option>
+      </select>
+      <i class="fas fa-search"></i>
+    </div>
+
+    <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+      <span style="color:#555; font-size:14px;">מוצגים:</span>
+      <span id="countBadge">0</span>
+      <span style="color:#555; font-size:14px;">מוצרים</span>
+    </div>
+
+    <div class="table-section">
+      <table class="customers-table">
+        <thead>
+          <tr>
+            <th>תמונה</th>
+            <th>שם מוצר</th>
+            <th>קטגוריה</th>
+            <th>מחיר</th>
+            <th>מלאי</th>
+            <th>סטטוס</th>
+            <th>פעולות</th>
+          </tr>
+        </thead>
+        <tbody id="productsBody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- מודאל הוספה/עריכה -->
+<div id="productModal">
+  <div style="background:white; border-radius:20px; width:520px; max-width:95vw; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,.2); position:relative;">
+    <div style="background:linear-gradient(135deg,#ec4899,#8b5cf6); padding:20px 24px; border-radius:20px 20px 0 0; display:flex; justify-content:space-between; align-items:center;">
+      <h2 id="modalTitle" style="color:white; font-size:18px; font-weight:800; margin:0;">מוצר חדש</h2>
+      <button onclick="closeModal()" style="background:rgba(255,255,255,.2); border:none; color:white; width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+    </div>
+
+    <div style="padding:24px;">
+      <!-- תמונה -->
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px; font-weight:600; color:#6b7280; display:block; margin-bottom:6px;">תמונת מוצר</label>
+        <div id="img-placeholder" onclick="document.getElementById('imgInput').click()">
+          <i class="fas fa-cloud-upload-alt" style="font-size:24px;"></i>
+          <span>לחצי להעלאת תמונה</span>
+        </div>
+        <img id="img-preview" />
+        <input type="file" id="imgInput" accept="image/*" style="display:none;" onchange="previewImage(this)" />
+        <button id="removeImgBtn" onclick="removeImage()" style="display:none; margin-top:6px; font-size:12px; color:#ef4444; background:none; border:none; cursor:pointer;">✕ הסר תמונה</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group" style="grid-column:span 2;">
+          <label>שם מוצר *</label>
+          <input type="text" id="f-name" placeholder="שם המוצר" />
+        </div>
+        <div class="form-group" style="grid-column:span 2;">
+          <label>תיאור</label>
+          <textarea id="f-desc" rows="2" style="border:1.5px solid #e5e7eb; border-radius:10px; padding:9px 12px; font-size:13px; font-family:inherit; resize:vertical; outline:none;" placeholder="תיאור קצר..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>מחיר (₪) *</label>
+          <input type="number" id="f-price" min="0" step="0.01" placeholder="0.00" />
+        </div>
+        <div class="form-group">
+          <label>קטגוריה</label>
+          <input type="text" id="f-category" placeholder="לדוגמה: ציוד, ביגוד..." />
+        </div>
+        <div class="form-group">
+          <label>מלאי</label>
+          <input type="number" id="f-stock" min="0" placeholder="כמות" />
+        </div>
+        <div class="form-group">
+          <label>אמוג'י</label>
+          <input type="text" id="f-emoji" placeholder="📦" maxlength="4" />
+        </div>
+        <div class="form-group" style="grid-column:span 2; flex-direction:row; align-items:center; gap:10px;">
+          <input type="checkbox" id="f-active" style="width:16px; height:16px; accent-color:#8b5cf6; cursor:pointer;" />
+          <label for="f-active" style="font-size:13px; font-weight:600; color:#374151; cursor:pointer;">מוצר פעיל (מוצג בחנות)</label>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:20px; justify-content:flex-end;">
+        <button onclick="closeModal()" class="bg-gray-100">ביטול</button>
+        <button id="saveBtn" onclick="saveProduct()" class="submit-btn">שמור</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="utilities/sidebar.js" defer></script>
+<script>
+  let products = [], editId = null, currentImageUrl = null;
+
+  async function load() {
+    const { data, error } = await window._sb.from('products').select('*').order('category').order('name');
+    if (error) { console.error(error); return; }
+    products = data ?? [];
+    populateCatFilter();
+    render();
+  }
+
+  function populateCatFilter() {
+    const cats = [...new Set(products.map(p => p.category).filter(Boolean))];
+    const sel = document.getElementById('catFilter');
+    sel.innerHTML = '<option value="">כל הקטגוריות</option>' +
+      cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+
+  function render() {
+    const q   = document.getElementById('searchInput').value.trim().toLowerCase();
+    const cat = document.getElementById('catFilter').value;
+    const st  = document.getElementById('statusFilter').value;
+
+    const filtered = products.filter(p => {
+      if (q && !p.name?.toLowerCase().includes(q)) return false;
+      if (cat && p.category !== cat) return false;
+      if (st !== '' && String(p.is_active) !== st) return false;
+      return true;
+    });
+
+    document.getElementById('countBadge').textContent = filtered.length;
+    const tbody = document.getElementById('productsBody');
+    tbody.innerHTML = filtered.length ? filtered.map(p => `
+      <tr>
+        <td>${p.image_url
+          ? `<img class="product-img" src="${p.image_url}" alt="${p.name}" />`
+          : `<div class="product-img-placeholder">${p.emoji ?? '📦'}</div>`}
+        </td>
+        <td><strong>${p.name}</strong>${p.description ? `<div style="font-size:11px;color:#9ca3af;margin-top:2px;">${p.description}</div>` : ''}</td>
+        <td>${p.category ?? '—'}</td>
+        <td><strong>₪${Number(p.price ?? 0).toFixed(2)}</strong></td>
+        <td>${p.stock ?? '—'}</td>
+        <td><span class="${p.is_active ? 'badge-active' : 'badge-inactive'}">${p.is_active ? 'פעיל' : 'לא פעיל'}</span></td>
+        <td style="display:flex;gap:6px;">
+          <button onclick="openEdit(${p.id})" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;">✏️ עריכה</button>
+          <button onclick="deleteProduct(${p.id})" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;">🗑️</button>
+        </td>
+      </tr>`).join('')
+      : '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:40px;">אין מוצרים</td></tr>';
+  }
+
+  function openAdd() {
+    editId = null; currentImageUrl = null;
+    document.getElementById('modalTitle').textContent = 'מוצר חדש';
+    ['f-name','f-desc','f-price','f-category','f-stock','f-emoji'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-active').checked = true;
+    resetImageUI();
+    document.getElementById('productModal').classList.add('open');
+  }
+
+  function openEdit(id) {
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+    editId = id; currentImageUrl = p.image_url ?? null;
+    document.getElementById('modalTitle').textContent = 'עריכת מוצר';
+    document.getElementById('f-name').value      = p.name ?? '';
+    document.getElementById('f-desc').value      = p.description ?? '';
+    document.getElementById('f-price').value     = p.price ?? '';
+    document.getElementById('f-category').value  = p.category ?? '';
+    document.getElementById('f-stock').value     = p.stock ?? '';
+    document.getElementById('f-emoji').value     = p.emoji ?? '';
+    document.getElementById('f-active').checked  = p.is_active ?? true;
+    if (p.image_url) {
+      document.getElementById('img-preview').src = p.image_url;
+      document.getElementById('img-preview').style.display = 'block';
+      document.getElementById('img-placeholder').style.display = 'none';
+      document.getElementById('removeImgBtn').style.display = 'inline-block';
+    } else {
+      resetImageUI();
+    }
+    document.getElementById('productModal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('productModal').classList.remove('open');
+    document.getElementById('imgInput').value = '';
+  }
+
+  function previewImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('img-preview').src = e.target.result;
+      document.getElementById('img-preview').style.display = 'block';
+      document.getElementById('img-placeholder').style.display = 'none';
+      document.getElementById('removeImgBtn').style.display = 'inline-block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeImage() {
+    currentImageUrl = null;
+    document.getElementById('imgInput').value = '';
+    resetImageUI();
+  }
+
+  function resetImageUI() {
+    document.getElementById('img-preview').style.display = 'none';
+    document.getElementById('img-preview').src = '';
+    document.getElementById('img-placeholder').style.display = 'flex';
+    document.getElementById('removeImgBtn').style.display = 'none';
+  }
+
+  async function uploadImage(file) {
+    const ext  = file.name.split('.').pop();
+    const path = `products/${Date.now()}.${ext}`;
+    const { error } = await window._sb.storage.from('products').upload(path, file, { upsert: true });
+    if (error) throw error;
+    const { data } = window._sb.storage.from('products').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  async function saveProduct() {
+    const name  = document.getElementById('f-name').value.trim();
+    const price = parseFloat(document.getElementById('f-price').value);
+    if (!name)       { alert('נא להזין שם מוצר'); return; }
+    if (isNaN(price)) { alert('נא להזין מחיר תקין'); return; }
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true; btn.textContent = 'שומר...';
+
+    try {
+      const file = document.getElementById('imgInput').files[0];
+      let imageUrl = currentImageUrl;
+      if (file) imageUrl = await uploadImage(file);
+
+      const payload = {
+        name,
+        description: document.getElementById('f-desc').value.trim() || null,
+        price,
+        category:   document.getElementById('f-category').value.trim() || null,
+        stock:      document.getElementById('f-stock').value !== '' ? parseInt(document.getElementById('f-stock').value) : null,
+        emoji:      document.getElementById('f-emoji').value.trim() || null,
+        is_active:  document.getElementById('f-active').checked,
+        image_url:  imageUrl,
+      };
+
+      if (editId) {
+        const { error } = await window._sb.from('products').update(payload).eq('id', editId);
+        if (error) throw error;
+      } else {
+        const { error } = await window._sb.from('products').insert(payload);
+        if (error) throw error;
+      }
+
+      closeModal();
+      await load();
+    } catch (err) {
+      console.error(err);
+      alert('שגיאה בשמירה: ' + (err.message ?? err));
+    } finally {
+      btn.disabled = false; btn.textContent = 'שמור';
+    }
+  }
+
+  async function deleteProduct(id) {
+    if (!confirm('למחוק מוצר זה?')) return;
+    const { error } = await window._sb.from('products').delete().eq('id', id);
+    if (error) { alert('שגיאה במחיקה'); return; }
+    await load();
+  }
+
+  document.getElementById('addBtn').addEventListener('click', openAdd);
+  document.getElementById('searchInput').addEventListener('input', render);
+  document.getElementById('catFilter').addEventListener('change', render);
+  document.getElementById('statusFilter').addEventListener('change', render);
+
+  load();
+</script>
+</body>
+</html>

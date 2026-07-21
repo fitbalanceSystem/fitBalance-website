@@ -13,6 +13,15 @@
     const html = await res.text();
     document.body.insertAdjacentHTML('afterbegin', html);
     placeholder.remove();
+
+    // התנתקות – חייב להירשם אחרי שה-HTML הוכנס
+    const logoutBtn = document.getElementById('_admin_logout');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        sessionStorage.removeItem('fb_user');
+        window.location.href = '/login.html';
+      });
+    }
   } catch (e) {
     console.error('sidebar load failed:', e);
     placeholder.remove();

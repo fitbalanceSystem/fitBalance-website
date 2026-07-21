@@ -50,7 +50,7 @@ let instructorMap = {};
 async function loadAllData() {
   const [{ data: sessions, error: sErr }, { data: codes }, { data: instructors }] = await Promise.all([
     window._sb.from('program_sessions')
-      .select('id, date, time, branch_code, instructor_code, status, programs(id, alias, name, day, time, branch_code, instructor_code, status_code)')
+      .select('id, date, time, branch_code, instructor_code, status, programs(id, alias, name, day, time, branch_code, instructor_code, status_code, start_date)')
       .neq('status', 2)
       .not('programs', 'is', null),
     window._sb.from('codetables').select('code, descriptionCode').eq('name', 'branch'),
@@ -75,6 +75,7 @@ async function loadAllData() {
         time: p.time || '',
         branch: branchMap[p.branch_code] || '',
         instructor: instructorMap[p.instructor_code] || '',
+        start_date: p.start_date || '',
         sessions: []
       };
     }
@@ -166,7 +167,8 @@ function renderScheduleTable(containerId, selectable) {
   const wrap = document.getElementById(containerId);
   if (!wrap) return;
 
-  const progs = Object.entries(schedulePrograms || {});
+  const progs = Object.entries(schedulePrograms || {})
+    .filter(([, p]) => !p.start_date || p.start_date >= '2026-09-01');  // הצג רק תוכניות פעילות מ-1.9.2026
 
   if (!progs.length) {
     wrap.innerHTML = `

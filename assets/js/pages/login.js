@@ -164,25 +164,9 @@ form.addEventListener('submit', async (e) => {
 
       const employee = await window.authService.signInEmployee(field1, field2);
 
-      // מפה role_id או user_name לשם תפקיד
-      let resolvedRole;
-      if (employee.user_name === 'attendance') {
-        resolvedRole = 'attendance';
-      } else if (employee.role_id === null || employee.role_id === undefined) {
-        resolvedRole = 'admin';
-      } else {
-        resolvedRole = 'employee';
-      }
+      window.storageUtil.save(employee);
 
-      window.storageUtil.save({
-        ...employee,
-        role: resolvedRole,
-        full_name:
-          employee.full_name ??
-          `${employee.firstName ?? ''} ${employee.lastName ?? ''}`.trim(),
-      });
-
-      switch (resolvedRole) {
+      switch (employee.role) {
 
         case 'attendance':
           window.location.href = window.ROUTES.ATTENDANCE_HOME;

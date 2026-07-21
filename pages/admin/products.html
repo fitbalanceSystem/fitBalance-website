@@ -25,7 +25,6 @@
 <body>
 <div class="container">
   <div id="sidebar-placeholder"></div>
-  <script src="utilities/sidebar.js"></script>
 
   <main class="main-content">
     <header class="page-header">
@@ -130,7 +129,7 @@
   </div>
 </div>
 
-<script src="utilities/sidebar.js" defer></script>
+<script src="utilities/sidebar.js"></script>
 <script>
   let products = [], editId = null, currentImageUrl = null;
 
@@ -172,7 +171,7 @@
         <td><strong>${p.name}</strong>${p.description ? `<div style="font-size:11px;color:#9ca3af;margin-top:2px;">${p.description}</div>` : ''}</td>
         <td>${p.category ?? '—'}</td>
         <td><strong>₪${Number(p.price ?? 0).toFixed(2)}</strong></td>
-        <td>${p.stock ?? '—'}</td>
+        <td>${p.stock == null ? '—' : p.stock === 0 ? '<span style="color:#dc2626;font-weight:700;">אזל</span>' : p.stock <= 5 ? `<span style="color:#d97706;font-weight:700;">${p.stock}</span>` : p.stock}</td>
         <td><span class="${p.is_active ? 'badge-active' : 'badge-inactive'}">${p.is_active ? 'פעיל' : 'לא פעיל'}</span></td>
         <td style="display:flex;gap:6px;">
           <button onclick="openEdit(${p.id})" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;">✏️ עריכה</button>
@@ -300,7 +299,11 @@
   async function deleteProduct(id) {
     if (!confirm('למחוק מוצר זה?')) return;
     const { error } = await window._sb.from('products').delete().eq('id', id);
-    if (error) { alert('שגיאה במחיקה'); return; }
+    if (error) {
+      if (error.code === '23503') alert('לא ניתן למחוק — למוצר זה יש הזמנות קיימות.\nניתן להשבית אותו במקום.');
+      else alert('שגיאה במחיקה: ' + error.message);
+      return;
+    }
     await load();
   }
 

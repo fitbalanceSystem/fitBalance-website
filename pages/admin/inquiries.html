@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../../assets/icons/icon.png">
+  <title>מתעניינות</title>
+  <link rel="stylesheet" href="css/admin-theme.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../../services/supabaseClient.js"></script>
+  <script src="js/inquiries.js" defer></script>
+  <style>
+    .status-badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; }
+    .status-new    { background:#fce7f3; color:#be185d; }
+    .status-contacted { background:#dbeafe; color:#1d4ed8; }
+    .status-joined { background:#d1fae5; color:#065f46; }
+    .status-closed { background:#f3f4f6; color:#6b7280; }
+
+    #viewModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+    #viewModal.open { display:flex; }
+    #viewModalBox { background:white; border-radius:20px; width:480px; max-width:95vw; max-height:90vh; overflow-y:auto; direction:rtl; box-shadow:0 20px 60px rgba(0,0,0,.3); }
+    .vm-header { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; padding:24px; border-radius:20px 20px 0 0; }
+    .vm-avatar { width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,.25); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:bold; margin-bottom:10px; }
+    .vm-body { padding:20px 24px; }
+    .vm-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f3f4f6; }
+    .vm-row:last-child { border-bottom:none; }
+    .vm-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+    .vm-label { font-size:11px; color:#9ca3af; }
+    .vm-value { font-size:14px; font-weight:600; color:#111; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="sidebar-placeholder"></div>
+    <script src="utilities/sidebar.js"></script>
+
+    <main class="main-content">
+      <header class="page-header">
+        <h1>🎀 מתעניינות</h1>
+        <button id="exportBtn" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition text-sm">⬇️ ייצא CSV</button>
+      </header>
+
+      <!-- KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="kpiRow">
+        <div class="kpi-card"><div style="font-size:11px;color:#9ca3af;margin-bottom:4px;">סה"כ</div><div style="font-size:24px;font-weight:800;color:#1f2937;" id="kpiTotal">—</div></div>
+        <div class="kpi-card"><div style="font-size:11px;color:#9ca3af;margin-bottom:4px;">חדשות</div><div style="font-size:24px;font-weight:800;color:#be185d;" id="kpiNew">—</div></div>
+        <div class="kpi-card"><div style="font-size:11px;color:#9ca3af;margin-bottom:4px;">טופלו</div><div style="font-size:24px;font-weight:800;color:#1d4ed8;" id="kpiContacted">—</div></div>
+        <div class="kpi-card"><div style="font-size:11px;color:#9ca3af;margin-bottom:4px;">הצטרפו</div><div style="font-size:24px;font-weight:800;color:#065f46;" id="kpiJoined">—</div></div>
+      </div>
+
+      <!-- חיפוש + סינון -->
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="חיפוש לפי שם, טלפון..." />
+        <select id="statusFilter">
+          <option value="">כל הסטטוסים</option>
+          <option value="new">חדשה</option>
+          <option value="contacted">טופלה</option>
+          <option value="joined">הצטרפה</option>
+          <option value="closed">סגורה</option>
+        </select>
+        <select id="programFilter">
+          <option value="">כל התוכניות</option>
+          <option value="1">ילדות (ג׳–ו׳)</option>
+          <option value="2">נערות (ז׳–י״ב)</option>
+          <option value="3">נשים</option>
+        </select>
+        <i class="fas fa-search"></i>
+      </div>
+
+      <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+        <span style="color:#555;font-size:14px;">מוצגות:</span>
+        <span id="countBadge">0</span>
+      </div>
+
+      <div class="pagination">
+        <button id="prevPage" class="page-btn"><i class="fas fa-chevron-right"></i></button>
+        <span id="pageInfo"></span>
+        <button id="nextPage" class="page-btn"><i class="fas fa-chevron-left"></i></button>
+      </div>
+
+      <section class="table-section">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr>
+              <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">תאריך</th>
+              <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">שם הילדה</th>
+              <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">שם הורה</th>
+              <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">טלפון</th>
+              <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">כיתה</th>
+              <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">תוכנית</th>
+              <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">סטטוס</th>
+              <th style="padding:12px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">פעולות</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <!-- מודאל צפייה -->
+  <div id="viewModal">
+    <div id="viewModalBox">
+      <div class="vm-header">
+        <div class="vm-avatar" id="vmAvatar">?</div>
+        <div style="font-size:20px;font-weight:800;" id="vmName"></div>
+        <div style="font-size:12px;opacity:.8;margin-top:4px;" id="vmSub"></div>
+      </div>
+      <div class="vm-body">
+        <div class="vm-row">
+          <div class="vm-icon" style="background:#fce7f3;">👩</div>
+          <div><div class="vm-label">שם הורה</div><div class="vm-value" id="vmParent"></div></div>
+        </div>
+        <div class="vm-row">
+          <div class="vm-icon" style="background:#dbeafe;">📱</div>
+          <div><div class="vm-label">טלפון</div><div class="vm-value" id="vmPhone"></div></div>
+        </div>
+        <div class="vm-row">
+          <div class="vm-icon" style="background:#d1fae5;">✉️</div>
+          <div><div class="vm-label">מייל</div><div class="vm-value" id="vmEmail"></div></div>
+        </div>
+        <div class="vm-row">
+          <div class="vm-icon" style="background:#fef3c7;">🎓</div>
+          <div><div class="vm-label">כיתה</div><div class="vm-value" id="vmGrade"></div></div>
+        </div>
+        <div class="vm-row">
+          <div class="vm-icon" style="background:#ede9fe;">💃</div>
+          <div><div class="vm-label">תוכנית</div><div class="vm-value" id="vmProgram"></div></div>
+        </div>
+        <div class="vm-row">
+          <div class="vm-icon" style="background:#f3f4f6;">📝</div>
+          <div><div class="vm-label">הערה</div><div class="vm-value" id="vmNote"></div></div>
+        </div>
+        <div class="vm-row">
+          <div class="vm-icon" style="background:#fce7f3;">💬</div>
+          <div><div class="vm-label">הערות נוספות</div><div class="vm-value" id="vmNotes"></div></div>
+        </div>
+        <div class="vm-row">
+          <div class="vm-icon" style="background:#fce7f3;">📅</div>
+          <div><div class="vm-label">תאריך הרשמה</div><div class="vm-value" id="vmDate"></div></div>
+        </div>
+        <!-- שינוי סטטוס -->
+        <div style="margin-top:16px;">
+          <label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:6px;">עדכון סטטוס</label>
+          <select id="vmStatusSelect" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:8px 12px;font-size:13px;font-family:inherit;width:100%;outline:none;">
+            <option value="new">חדשה</option>
+            <option value="contacted">טופלה</option>
+            <option value="joined">הצטרפה</option>
+            <option value="closed">סגורה</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+          <button id="vmSaveBtn" class="submit-btn" style="flex:1;">שמור סטטוס</button>
+          <button id="vmConvertBtn" style="flex:1;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;">+ הפוך ללקוחה</button>
+          <button onclick="closeView()" style="flex:1;background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:10px;padding:10px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;">סגור</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

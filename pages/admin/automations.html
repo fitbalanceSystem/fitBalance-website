@@ -3,83 +3,163 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../../assets/icons/icon.png">
   <title>אוטומציות</title>
-  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/admin-theme.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../../services/supabaseClient.js"></script>
+  <style>
+    .auto-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #f3f0ff;
+      box-shadow: 0 2px 16px rgba(139,92,246,.07);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .auto-card-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+    .auto-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:600; }
+    .badge-active   { background:#d1fae5; color:#065f46; }
+    .badge-inactive { background:#f3f4f6; color:#6b7280; }
+    .auto-meta { display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .meta-chip { background:#f8f7ff; border:1px solid #ede9fe; color:#7c3aed; border-radius:8px; padding:3px 10px; font-size:12px; }
+    .run-btn {
+      display:inline-flex; align-items:center; gap:8px;
+      background:linear-gradient(135deg,#ec4899,#8b5cf6);
+      color:white; border:none; border-radius:10px;
+      padding:9px 18px; font-size:13px; font-weight:600;
+      cursor:pointer; font-family:inherit; white-space:nowrap;
+      box-shadow:0 4px 14px rgba(236,72,153,.25);
+      transition:opacity .2s;
+    }
+    .run-btn:hover { opacity:.9; }
+    .run-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .section-title { font-size:15px; font-weight:700; color:#1f2937; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .log-tabs { display:flex; gap:6px; margin-bottom:16px; }
+    .log-tab { padding:6px 16px; border-radius:8px; border:1.5px solid #ede9fe; background:white; color:#6b7280; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+    .log-tab.active { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border-color:transparent; }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-  <div style="display:flex; min-height:100vh;">
-
+<body>
+  <div class="container">
     <div id="sidebar-placeholder"></div>
     <script src="utilities/sidebar.js"></script>
 
-    <main class="flex-1 p-6">
-      <h1 class="text-2xl font-bold text-gray-800 mb-6">⚡ אוטומציות</h1>
+    <main class="main-content">
+      <header class="page-header">
+        <h1>⚡ אוטומציות</h1>
+      </header>
 
-      <!-- כרטיס אוטומציה: סיכום שכר -->
-      <div class="bg-white rounded-2xl shadow p-6 mb-6 border border-gray-100">
-        <div class="flex items-start justify-between">
-          <div>
-            <h2 class="text-lg font-bold text-gray-800">📧 סיכום שכר חודשי למדריכות</h2>
-            <p class="text-gray-500 text-sm mt-1">רצה ב-1 לכל חודש — שולחת לכל מדריכה פעילה טבלת נוכחות + בקשה לחשבונית</p>
-            <div class="flex items-center gap-2 mt-2">
-              <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">🕕 1 לחודש, 08:00</span>
-              <span id="autoStatus" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">✓ פעיל</span>
+      <!-- ===== אוטומציה 1: שכר מדריכות ===== -->
+      <div class="auto-card">
+        <div class="auto-card-header">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+              <span style="font-size:22px;">📧</span>
+              <h2 style="font-size:16px;font-weight:800;color:#1f2937;">סיכום שכר חודשי למדריכות</h2>
+              <span class="auto-badge badge-active">✓ פעיל</span>
+            </div>
+            <p style="font-size:13px;color:#6b7280;line-height:1.6;">רצה ב-1 לכל חודש — שולחת לכל מדריכה פעילה טבלת נוכחות + בקשה לחשבונית.</p>
+            <div class="auto-meta">
+              <span class="meta-chip"><i class="fas fa-clock" style="font-size:10px;"></i> 1 לחודש, 08:00</span>
+              <span class="meta-chip"><i class="fas fa-users" style="font-size:10px;"></i> מדריכות פעילות</span>
+              <span class="meta-chip"><i class="fas fa-envelope" style="font-size:10px;"></i> מייל אוטומטי</span>
             </div>
           </div>
-          <button onclick="triggerManual()"
-            class="flex items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg font-medium transition text-sm">
+          <button class="run-btn" onclick="triggerSalary()">
             <i class="fas fa-play"></i> הרץ עכשיו
           </button>
         </div>
       </div>
 
-      <!-- לוג הרצות -->
-      <div class="bg-white rounded-2xl shadow p-6 border border-gray-100">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold text-gray-800">📋 היסטוריית הרצות</h2>
-          <button onclick="loadLogs()" class="text-sm text-blue-600 hover:underline">
+      <!-- ===== אוטומציה 2: לקוחה לא מגיעה ===== -->
+      <div class="auto-card">
+        <div class="auto-card-header">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+              <span style="font-size:22px;">🔔</span>
+              <h2 style="font-size:16px;font-weight:800;color:#1f2937;">התראה — לקוחה לא מגיעה לחוג</h2>
+              <span class="auto-badge badge-active">✓ פעיל</span>
+            </div>
+            <p style="font-size:13px;color:#6b7280;line-height:1.6;">
+              שולחת מייל אוטומטי ללקוחה שלא הגיעה לחוג שהיא משובצת בו במשך <strong>3 שבועות רצופים</strong>.
+            </p>
+            <div class="auto-meta">
+              <span class="meta-chip"><i class="fas fa-clock" style="font-size:10px;"></i> כל יום ראשון, 09:00</span>
+              <span class="meta-chip"><i class="fas fa-calendar-times" style="font-size:10px;"></i> 3 שבועות היעדרות</span>
+              <span class="meta-chip"><i class="fas fa-envelope" style="font-size:10px;"></i> מייל ללקוחה</span>
+            </div>
+          </div>
+          <button class="run-btn" id="btnAbsence" onclick="runAbsenceCheck()">
+            <i class="fas fa-play"></i> הרץ עכשיו
+          </button>
+        </div>
+
+        <!-- תוצאות הרצה -->
+        <div id="absenceResult" style="display:none;margin-top:20px;border-top:1px solid #f3f0ff;padding-top:16px;">
+          <div class="section-title"><i class="fas fa-list" style="color:#8b5cf6;"></i> תוצאות הרצה אחרונה</div>
+          <div id="absenceKpi" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;"></div>
+          <div class="table-section">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead>
+                <tr>
+                  <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">לקוחה</th>
+                  <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">טלפון</th>
+                  <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">חוג</th>
+                  <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">שבועות היעדרות</th>
+                  <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">מייל</th>
+                  <th style="padding:10px 16px;text-align:center;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">סטטוס</th>
+                </tr>
+              </thead>
+              <tbody id="absenceBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== לוג הרצות: שכר ===== -->
+      <div class="auto-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="section-title" style="margin-bottom:0;"><i class="fas fa-history" style="color:#8b5cf6;"></i> היסטוריית הרצות — שכר מדריכות</div>
+          <button onclick="loadSalaryLogs()" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
             <i class="fas fa-sync-alt"></i> רענן
           </button>
         </div>
 
-        <!-- סינון לפי חודש -->
-        <div class="flex items-center gap-3 mb-4">
-          <label class="text-sm font-medium text-gray-600">חודש:</label>
-          <input type="month" id="filterMonth" class="border rounded px-3 py-1 text-sm" />
-          <button onclick="loadLogs()" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm">סנן</button>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <label style="font-size:13px;font-weight:600;color:#6b7280;">חודש:</label>
+          <input type="month" id="filterMonth" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;outline:none;" />
+          <button onclick="loadSalaryLogs()" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">סנן</button>
         </div>
 
-        <!-- KPI -->
-        <div id="logsKpi" class="grid grid-cols-3 gap-3 mb-4"></div>
+        <div id="salaryKpi" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;"></div>
 
-        <!-- טבלה -->
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
+        <div class="table-section">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
             <thead>
-              <tr class="bg-gray-50 text-gray-600">
-                <th class="p-3 border text-right">תאריך הרצה</th>
-                <th class="p-3 border text-right">חודש</th>
-                <th class="p-3 border text-right">מדריכה</th>
-                <th class="p-3 border text-center">מפגשים</th>
-                <th class="p-3 border text-right">סכום</th>
-                <th class="p-3 border text-center">סטטוס</th>
+              <tr>
+                <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">תאריך הרצה</th>
+                <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">חודש</th>
+                <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">מדריכה</th>
+                <th style="padding:10px 16px;text-align:center;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">מפגשים</th>
+                <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">סכום</th>
+                <th style="padding:10px 16px;text-align:center;font-size:11px;font-weight:700;color:#6b7280;background:#f8f7ff;">סטטוס</th>
               </tr>
             </thead>
             <tbody id="logsBody">
-              <tr><td colspan="6" class="text-center p-4 text-gray-400">טוען...</td></tr>
+              <tr><td colspan="6" style="text-align:center;padding:20px;color:#9ca3af;">טוען...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
+
     </main>
   </div>
 
-  <!-- Toast -->
-  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-lg text-sm hidden transition-all z-50"></div>
+  <div id="toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:white;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.2);"></div>
 
   <script src="js/automations.js"></script>
 </body>

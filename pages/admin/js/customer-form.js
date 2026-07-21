@@ -28,6 +28,18 @@ console.log("YYY1");
   const customerId = parseInt(params.get('id'), 10);
   idCustomer = customerId;
 
+  // מילוי מראש מנתוני מתעניינת
+  const prefillRaw = params.get('prefill');
+  if (!customerId && prefillRaw) {
+    try {
+      const pre = JSON.parse(decodeURIComponent(prefillRaw));
+      if (pre.firstName) document.getElementById('firstName').value = pre.firstName;
+      if (pre.lastName)  document.getElementById('lastName').value  = pre.lastName;
+      if (pre.mobile)    document.getElementById('mobile').value    = pre.mobile;
+      if (pre.email)     document.getElementById('email').value     = pre.email;
+    } catch(e) {}
+  }
+
   const isPregnantCheckbox = document.getElementById("isPregnant");
   const dueDateInput = document.getElementById("dueDate");
 

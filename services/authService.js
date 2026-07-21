@@ -46,19 +46,36 @@ window.authService = {
     return customer;
   },
 
-  async signInEmployee(username, password) {
-    const { data: instructor, error } = await window._sb
-      .from('instructors')
-      .select('*')
-      .eq('user_name', username)
-      .eq('password', password)
-      .maybeSingle();
-      console.log("instructor");
-console.log(instructor);
-    if (error) throw new Error('שגיאה בהתחברות, נסה שוב');
-    if (!instructor) throw new Error('שם משתמש או סיסמא שגויים');
+  async signInEmployee(email, password) {
+    // שלב 1: התחברות דרך Supabase Auth
+    const { data: authData, error: authError } = await window._sb.auth.signInWithPassword({ email, password });
+    if (authError) throw new Error('שם משתמש או סיסמא שגויים');
 
-    return instructor;
+    const authId = authData.user.id;
+
+    // שלב 2: קריאת role מ-user_profiles
+    const { data: profile, error: profileError } = await window._sb
+      .from('user_profiles')
+      .select('role, linked_id')
+      .eq('auth_id', authId)
+      .maybeSingle();
+
+    if (profileError || !profile) throw new Error('לא נמצא פרופיל משתמש במערכת');
+
+    // שלב 3: קריאת פרטי המדריך
+    const { data: instructor, error: instError } = await window._sb
+      .from('instructors')
+      .select('id, firstName, lastName, email')
+      .eq('id', profile.linked_id)
+      .maybeSingle();
+
+    if (instError || !instructor) throw new Error('לא נמצאו פרטי עובד במערכת');
+
+    return {
+      ...instructor,
+      role: profile.role,
+      full_name: `${instructor.firstName ?? ''} ${instructor.lastName ?? ''}`.trim(),
+    };
   },
 
   signOut() {
@@ -91,26 +108,46 @@ console.log(instructor);
   },
 
   async sendResetEmail(email, role) {
-    const table = role === 'customer' ? 'customers' : 'instructors';
-    const { data, error } = await window._sb
-      .from(table)
-      .select('id, email')
-      .eq('email', email)
-      .maybeSingle();
+    console.log("RESET REDIRECT:", `${window.location.origin}/pages/employee/reset-password.html`);
 
-    if (error) throw new Error('שגיאה, נסי שוב');
-    if (!data) throw new Error('לא נמצאה כתובת אימייל זו במערכת');
+    if (role === 'customer') {
+      // לקוחות אינם ב-Supabase Auth — לוג בלבד, המנהלת מטפלת ידנית
+      const { data, error } = await window._sb
+        .from('customers')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
 
-    // שמור בקשת איפוס בטבלה למעקב
-    await window._sb.from('password_reset_requests').insert({
-      email,
-      role,
-      requested_at: new Date().toISOString(),
-      status: 'pending',
+      if (error) throw new Error('שגיאה, נסי שוב');
+      if (!data) throw new Error('לא נמצאה כתובת אימייל זו במערכת');
+
+      await window._sb.from('password_reset_requests').insert({
+        email, role,
+        requested_at: new Date().toISOString(),
+        status: 'pending',
+      });
+      return true;
+    }
+
+    // עובדים — איפוס דרך Supabase Auth
+    // הערה: יש להוסיף את כל הכתובות הבאות ב-Supabase Dashboard:
+    // Authentication → URL Configuration → Redirect URLs
+    //   http://localhost:5500/pages/employee/reset-password.html  (פיתוח)
+    //   http://localhost:3000/pages/employee/reset-password.html  (פיתוח חלופי)
+    //   https://fitbalance.co.il/pages/employee/reset-password.html  (production)
+    const { error: resetError } = await window._sb.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/pages/employee/reset-password.html`,
     });
 
-    // אין שליחת אימייל אוטומטית כי המשתמשים אינם ב-Supabase Auth
-    // המנהלת תקבל התראה בלוח הניהול ותיצור קשר ידנית
+    if (resetError) throw new Error('שגיאה בשליחת מייל איפוס, נסי שוב');
+
+    // לוג לצורך מעקב (הטבלה נשמרת, לא נמחקת)
+    await window._sb.from('password_reset_requests').insert({
+      email, role,
+      requested_at: new Date().toISOString(),
+      status: 'sent',
+    });
+
     return true;
   },
 };

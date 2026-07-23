@@ -197,7 +197,7 @@ window.renderLayout = function(activeId) {
     <div id="_sidebar_overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35"></div>
   `);
 
-  document.getElementById('_logout_btn').addEventListener('click', () => window.authMiddleware.logout());
+  document.getElementById('_logout_btn').addEventListener('click', () => window.authMiddleware?.logout());
   const sidebar = document.getElementById('_sidebar');
   const overlay = document.getElementById('_sidebar_overlay');
   document.getElementById('_sidebar_toggle').addEventListener('click', () => {
@@ -476,7 +476,7 @@ window.renderEmployeeLayout = function(activeId) {
     <div id="_sidebar_overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35"></div>
   `);
 
-  document.getElementById('_logout_btn').addEventListener('click', () => window.authMiddleware.logout());
+  document.getElementById('_logout_btn').addEventListener('click', () => window.authMiddleware?.logout());
   const sidebar = document.getElementById('_sidebar');
   const overlay = document.getElementById('_sidebar_overlay');
   document.getElementById('_sidebar_toggle').addEventListener('click', () => {

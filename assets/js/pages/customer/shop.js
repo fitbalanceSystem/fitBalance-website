@@ -245,13 +245,23 @@
     modal.querySelector('#_guest-submit').addEventListener('click', async () => {
       const name  = modal.querySelector('#_g-name').value.trim();
       const phone = modal.querySelector('#_g-phone').value.trim();
-      if (!name || !phone) { window.popup.toast('שם וטלפון הם שדות חובה', 'warning'); return; }
+      const email = modal.querySelector('#_g-email').value.trim();
+
+      if (!name)  { window.popup.toast('שם מלא הוא שדה חובה', 'warning'); return; }
+      if (!phone) { window.popup.toast('טלפון הוא שדה חובה', 'warning'); return; }
+      if (!/^0[0-9]{8,9}$/.test(phone.replace(/[-\s]/g, ''))) {
+        window.popup.toast('מספר טלפון לא תקין', 'warning'); return;
+      }
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        window.popup.toast('כתובת מייל לא תקינה', 'warning'); return;
+      }
+
       const guestInfo = {
         name,
-        phone,
-        email:   modal.querySelector('#_g-email').value.trim(),
-        address: modal.querySelector('#_g-address').value.trim(),
-        notes:   modal.querySelector('#_g-notes').value.trim(),
+        phone: phone.replace(/[-\s]/g, ''),
+        email:   email || null,
+        address: modal.querySelector('#_g-address').value.trim() || null,
+        notes:   modal.querySelector('#_g-notes').value.trim()   || null,
       };
       modal.remove();
       await submitOrder(null, items, guestInfo);

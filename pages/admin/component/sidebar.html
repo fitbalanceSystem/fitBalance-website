@@ -143,6 +143,11 @@
 
   <nav>
     <div class="nav-section-label">ניהול</div>
+    <a href="inquiries.html" class="nav-link">
+      <span class="nav-icon"><i class="fas fa-star"></i></span>
+      <span>מתעניינות</span>
+      <span class="nav-dot"></span>
+    </a>
     <a href="customers.html" class="nav-link">
       <span class="nav-icon"><i class="fas fa-users"></i></span>
       <span>לקוחות</span>
@@ -167,6 +172,11 @@
     <a href="products.html" class="nav-link">
       <span class="nav-icon"><i class="fas fa-shopping-bag"></i></span>
       <span>מוצרים</span>
+      <span class="nav-dot"></span>
+    </a>
+    <a href="orders.html" class="nav-link">
+      <span class="nav-icon"><i class="fas fa-box"></i></span>
+      <span>הזמנות</span>
       <span class="nav-dot"></span>
     </a>
 
@@ -235,12 +245,6 @@
   const current = location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('#sidebar .nav-link').forEach(a => {
     if (a.getAttribute('href') === current) a.classList.add('active');
-  });
-
-  // התנתקות
-  document.getElementById('_admin_logout').addEventListener('click', () => {
-    sessionStorage.removeItem('fb_user');
-    window.location.href = '/login.html';
   });
 
   // Mobile toggle

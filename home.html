@@ -198,6 +198,15 @@
 .flip-card:hover .flip-back {
   pointer-events: auto;
 }
+#schedule-modal .btn-blue { background:#ec4899; color:white; }
+#schedule-modal .btn-blue:hover { background:#db2777; }
+#schedule-modal .btn-outline-blue { border:2px solid #ec4899; color:#ec4899; background:white; }
+#schedule-modal .btn-outline-blue:hover { background:#fdf2f8; }
+#schedule-modal input:focus { border-color:#ec4899 !important; }
+#schedule-modal strong { color:#ec4899; }
+#schedule-modal .text-\[\#1e40af\], #schedule-modal .text-purple-500 { color:#ec4899 !important; }
+#schedule-modal .bg-\[\#eff6ff\] { background:#fdf2f8 !important; }
+#schedule-modal .border-\[\#bfdbfe\] { border-color:#f9a8d4 !important; }
   </style>
 </head>
 <body class="bg-white">
@@ -856,11 +865,11 @@
   </section>
 
   <!-- About CTA -->
-  <section id="about" class="py-20 px-6 bg-gradient-to-r from-[#1e40af] to-[#3b82f6] text-white text-center">
+  <section id="about" class="py-20 px-6 text-white text-center" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)">
     <div class="max-w-2xl mx-auto fade-in">
       <h2 class="text-4xl font-bold mb-4">רוצה לדעת עוד?</h2>
       <p class="text-xl mb-8 opacity-90">הכירי את הצוות שלנו, הערכים שלנו ואיך אנחנו עושות את זה</p>
-      <a href="about.html" class="bg-white text-[#1e40af] px-8 py-4 rounded-full text-lg font-semibold hover:bg-[#eff6ff] transition-all shadow-lg">
+      <a href="about.html" class="bg-white text-pink-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-pink-50 transition-all shadow-lg">
         לדף אודות ←
       </a>
     </div>
@@ -939,7 +948,7 @@
     <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col" style="max-height:92vh">
 
       <!-- Header -->
-      <div class="bg-gradient-to-r from-[#1e40af] to-[#3b82f6] p-5 text-white flex items-center justify-between flex-shrink-0 rounded-t-3xl">
+      <div style="background:linear-gradient(135deg,#ec4899,#8b5cf6)" class="p-5 text-white flex items-center justify-between flex-shrink-0 rounded-t-3xl">
         <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-calendar-alt"></i> שיבוץ לחוגים</h2>
         <button id="close-modal" class="bg-white bg-opacity-20 hover:bg-opacity-30 w-9 h-9 rounded-full flex items-center justify-center text-lg transition-all">✕</button>
       </div>
@@ -967,7 +976,7 @@
             onkeydown="if(event.key==='Enter') lookupCustomer()" />
         </div>
         <button id="lookup-btn" onclick="lookupCustomer()"
-          class="bg-[#1e40af] text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-[#1d4ed8] transition-all shadow-md">
+          class="btn-blue px-10 py-4 rounded-full font-bold text-lg transition-all shadow-md">
           אישור
         </button>
       </div>
@@ -985,11 +994,11 @@
           <span class="text-sm text-gray-600">בחרת <strong id="assign-count" class="text-[#1e40af]">0</strong> חוגים</span>
           <div class="flex gap-2">
             <button id="trial-btn" onclick="assignTrial()"
-              class="border-2 border-[#1e40af] text-[#1e40af] px-5 py-2.5 rounded-full font-bold hover:bg-[#eff6ff] transition-all text-sm">
+              class="btn-outline-blue px-5 py-2.5 rounded-full font-bold transition-all text-sm">
               שיבוץ ניסיון
             </button>
             <button id="assign-btn" onclick="assignSelected()"
-              class="bg-[#1e40af] text-white px-8 py-2.5 rounded-full font-bold hover:bg-[#1d4ed8] transition-all shadow-md text-sm">
+              class="btn-blue px-8 py-2.5 rounded-full font-bold transition-all shadow-md text-sm">
               שבצי אותי ✓
             </button>
           </div>
@@ -1032,7 +1041,7 @@
         <div id="reg-table-wrap" class="mb-5"></div>
 
         <button id="reg-submit-btn" onclick="submitRegistration()"
-          class="w-full bg-[#1e40af] text-white py-4 rounded-full font-bold text-lg hover:bg-[#1d4ed8] transition-all shadow-md">
+          class="w-full btn-blue py-4 rounded-full font-bold text-lg transition-all shadow-md">
           אישור ושיבוץ
         </button>
         <p class="text-center text-xs text-gray-400 mt-3">ניתן להודיע על ביטול עד שבוע לפני סוף אוגוסט</p>
@@ -1045,7 +1054,7 @@
         <p class="text-gray-500">נרשמת לחוגים הבאים:</p>
         <ul id="success-classes" class="text-right text-sm text-gray-700 bg-[#eff6ff] rounded-2xl px-6 py-4 w-full space-y-1 list-disc list-inside"></ul>
         <p class="text-[#1e40af] font-semibold text-sm">ניצור איתך קשר לתשלום 💜</p>
-        <button onclick="closeScheduleModal()" class="mt-2 bg-[#1e40af] text-white px-8 py-3 rounded-full font-bold hover:bg-[#1d4ed8] transition-all">
+        <button onclick="closeScheduleModal()" class="mt-2 btn-blue px-8 py-3 rounded-full font-bold transition-all">
           סגירה
         </button>
       </div>

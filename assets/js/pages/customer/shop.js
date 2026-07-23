@@ -88,7 +88,7 @@
     if (!p) return;
     let qty = 1;
     document.getElementById('pm-media').innerHTML = p.image_url
-      ? `<img src="${p.image_url}" alt="${p.name}" style="width:100%;height:220px;object-fit:cover;border-radius:16px;margin-bottom:16px;" />`
+      ? `<img src="${p.image_url}" alt="${p.name}" style="width:100%;max-height:320px;object-fit:contain;border-radius:16px;margin-bottom:16px;background:#f8f7ff;" />`
       : `<div style="font-size:72px;height:220px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fdf2f8,#f5f3ff);border-radius:16px;margin-bottom:16px;">${p.emoji ?? '📦'}</div>`;
     document.getElementById('pm-name').textContent     = p.name;
     document.getElementById('pm-category').textContent = p.category ?? '';

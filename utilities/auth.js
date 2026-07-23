@@ -1,21 +1,22 @@
-// js/auth.js
-
+// utilities/auth.js
+// הערה: קובץ זה משמש דפים כלליים (לא attendance).
+// TODO — רפקטור נפרד נדרש עבור pages/attendance:
+//   1. להעביר את getCurrentUser לשימוש ב-authService המרכזי
+//   2. להסיר את localStorage העצמאי מ-app.js ו-auth.js של attendance
+//   3. להוסיף בדיקת הרשאות (role === 'attendance') לפני כניסה למסך
 
 export function getCurrentUser() {
-    return JSON.parse(localStorage.getItem("user"));
-  }
-  
-  export function logout() {
-    localStorage.removeItem("user");
-    window.location.href = "index.html";
-  }
-  
-  export function checkAuth() {
-    const user = getCurrentUser();
-    if (!user) {
-      window.location.href = "index.html";
-    }
-  }
+  return window.storageUtil?.load() ?? null;
+}
+
+export function logout() {
+  window.authMiddleware?.logout();
+}
+
+export function checkAuth() {
+  const user = getCurrentUser();
+  if (!user) window.location.href = '/login.html';
+}
 
   export function formatTime(timeStr) {
     if (!timeStr) return '';

@@ -53,6 +53,7 @@ window.customerService = {
       .from('products')
       .select('*')
       .eq('is_active', true)
+      .or('stock.is.null,stock.gt.0')
       .order('category');
     if (error) throw error;
     return data ?? [];
@@ -88,6 +89,9 @@ window.customerService = {
     const rows = items.map(i => ({ order_id: order.id, product_id: i.id, quantity: i.qty, price: i.price }));
     const { error: iErr } = await window._sb.from('order_items').insert(rows);
     if (iErr) throw iErr;
+    await Promise.all(items.map(i =>
+      window._sb.rpc('decrement_stock', { p_product_id: i.id, p_qty: i.qty })
+    ));
     return order;
   },
 };

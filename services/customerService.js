@@ -89,8 +89,9 @@ window.customerService = {
     const rows = items.map(i => ({ order_id: order.id, product_id: i.id, quantity: i.qty, price: i.price }));
     const { error: iErr } = await window._sb.from('order_items').insert(rows);
     if (iErr) throw iErr;
+    // decrement stock — best effort, לא מפיל הזמנה אם נכשל
     await Promise.all(items.map(i =>
-      window._sb.rpc('decrement_stock', { p_product_id: i.id, p_qty: i.qty })
+      window._sb.rpc('decrement_stock', { p_product_id: i.id, p_qty: i.qty }).catch(() => {})
     ));
     return order;
   },

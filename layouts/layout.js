@@ -323,7 +323,7 @@ window.renderLayout = function(activeId) {
       <div class="hh-emoji">💃</div>
       <div class="hh-title">חוגי<br>היפ הופ</div>
       <div class="hh-divider"></div>
-      <div class="hh-sub">לבנות ונשים<br><strong>שנת תשפ"ו</strong> ✨<br>מקומות מוגבלים!</div>
+      <div class="hh-sub">לבנות ונשים<br><strong>שנת תשפ"ז</strong> ✨<br>מקומות מוגבלים!</div>
       <a class="hh-cta" href="../../hip-hop.html" target="_blank">🎀 השאירי פרטים</a>
       <a class="hh-cta2" href="../../hip-hop.html" target="_blank">לפרטים נוספים ←</a>
     </div>

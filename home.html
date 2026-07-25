@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <link rel="icon" type="image/png" href="/assets/icons/icon.png">
+  <link rel="icon" type="image/png" href="assets/icons/icon.png">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FitBalance | חוגי ספורט ברמה</title>
@@ -183,7 +183,7 @@
 
 
 .flip-back {
-  background: linear-gradient(135deg,#ec4899,#8b5cf6);
+  background: linear-gradient(135deg,#ec4899,#db2777);
   color: white;
   transform: rotateY(180deg);
   pointer-events: none;
@@ -198,25 +198,16 @@
 .flip-card:hover .flip-back {
   pointer-events: auto;
 }
-#schedule-modal .btn-blue { background:#ec4899; color:white; }
-#schedule-modal .btn-blue:hover { background:#db2777; }
-#schedule-modal .btn-outline-blue { border:2px solid #ec4899; color:#ec4899; background:white; }
-#schedule-modal .btn-outline-blue:hover { background:#fdf2f8; }
-#schedule-modal input:focus { border-color:#ec4899 !important; }
-#schedule-modal strong { color:#ec4899; }
-#schedule-modal .text-\[\#1e40af\], #schedule-modal .text-purple-500 { color:#ec4899 !important; }
-#schedule-modal .bg-\[\#eff6ff\] { background:#fdf2f8 !important; }
-#schedule-modal .border-\[\#bfdbfe\] { border-color:#f9a8d4 !important; }
   </style>
 </head>
 <body class="bg-white">
 
   <!-- Top Announcement Banner -->
-  <div class="fixed top-0 right-0 left-0 z-50 py-2.5 px-4 text-center" style="background:linear-gradient(90deg,#ec4899,#8b5cf6,#ec4899);background-size:200% 100%;animation:banner-slide 4s ease infinite;">
+  <div class="fixed top-0 right-0 left-0 z-50 py-2.5 px-4 text-center" style="background:linear-gradient(90deg,#be185d,#7c3aed,#be185d);background-size:200% 100%;animation:banner-slide 4s ease infinite;">
     <a href="hip-hop.html" class="inline-flex items-center justify-center gap-3 text-white font-bold text-sm hover:opacity-90 transition-opacity">
       <span class="text-base">🎤</span>
-      <span>חדש! חוגי היפ הופ נפתחים ב-FitBalance לשנת התשפ"ו</span>
-      <span class="bg-white text-pink-600 text-xs font-black px-3 py-1 rounded-full shadow">להרשמה ←</span>
+      <span>חדש! חוגי היפ הופ נפתחים ב-FitBalance לשנת התשפ"ז</span>
+      <span class="bg-white text-pink-700 text-xs font-black px-3 py-1 rounded-full shadow">להרשמה ←</span>
     </a>
   </div>
 
@@ -224,7 +215,7 @@
   <header id="main-header" class="fixed top-8 right-0 left-0 bg-white z-40 h-16 flex items-center px-6 justify-between transition-shadow duration-300">
     <div class="flex items-center gap-3">
       <img src="assets/icons/logo.jpg" alt="FitBalance" class="h-14" onerror="this.style.display='none'" />
-      <span class="text-xl font-bold gradient-text">FitBalance</span>
+      <span class="text-xשבl font-bold gradient-text">FitBalance</span>
     </div>
     <nav class="hidden md:flex items-center gap-8 text-gray-700 font-medium">
       <a href="#home" class="nav-link hover:text-pink-600">דף הבית</a>
@@ -264,9 +255,6 @@
         <button onclick="openViewScheduleModal()" class="bg-pink-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-pink-700 transition-all shadow-lg hover:shadow-xl">
           <i class="fas fa-calendar-alt ml-2"></i>מערכת שעות
         </button>
-        <button onclick="openScheduleModal()" class="border-2 border-purple-600 text-purple-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-purple-50 transition-all">
-          <i class="fas fa-user-plus ml-2"></i>שיבוץ לחוג
-        </button>
         <a href="login.html" class="border-2 border-pink-600 text-pink-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-pink-50 transition-all">
           <i class="fas fa-user ml-2"></i>כניסה לאזור אישי
         </a>
@@ -274,104 +262,26 @@
       <!-- Stats -->
       <div class="mt-16 grid grid-cols-3 gap-6 max-w-lg mx-auto">
         <div class="text-center">
-          <div class="text-3xl font-bold text-[#1e40af] counter" data-target="150">0</div>
+          <div class="text-3xl font-bold text-pink-600 counter" data-target="150">0</div>
           <div class="text-sm text-gray-500 mt-1">מתאמנות</div>
         </div>
         <div class="text-center">
-          <div class="text-3xl font-bold text-[#1e40af] counter" data-target="10">0</div>
+          <div class="text-3xl font-bold text-purple-600 counter" data-target="10">0</div>
           <div class="text-sm text-gray-500 mt-1">שנות ניסיון</div>
         </div>
         <div class="text-center">
-          <div class="text-3xl font-bold text-[#1e40af] counter" data-target="8">0</div>
+          <div class="text-3xl font-bold text-pink-600 counter" data-target="8">0</div>
           <div class="text-sm text-gray-500 mt-1">סוגי שיעורים</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Trial Lesson Section - For New Girls -->
-  <section id="trial" class="py-16 px-6 bg-white">
-    <div class="max-w-2xl mx-auto text-center fade-in">
-      <div class="text-5xl mb-4">✨</div>
-      <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3">
-        מעולם לא התאמנת אצלנו?
-      </h2>
-      <p class="text-gray-500 text-lg mb-8 leading-relaxed">
-        מגיע לך שיעור ניסיון מתנה 🎁<br/>
-        מלאי פרטים ונחזור אלייך לתיאום – בלי התחייבות, רק כיף!
-      </p>
-      <form id="trial-form" class="bg-gradient-to-br from-pink-50 to-purple-100 rounded-3xl p-8 shadow-lg text-right" onsubmit="submitTrialForm(event)">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">שם פרטי *</label>
-            <input type="text" id="trial-first" required placeholder="שם פרטי" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 bg-white" />
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">שם משפחה *</label>
-            <input type="text" id="trial-last" required placeholder="שם משפחה" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 bg-white" />
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">נייד *</label>
-            <input type="tel" id="trial-phone" required placeholder="050-0000000" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 bg-white"
-              oninput="clearPhoneError()" onblur="checkPhoneError()" />
-            <p id="trial-phone-error" class="hidden text-red-500 text-xs mt-1"></p>
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">אימייל</label>
-            <input type="email" id="trial-email" placeholder="אופציונלי" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 bg-white" />
-          </div>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">תוכנית</label>
-            <select id="trial-program" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 bg-white">
-              <option value="">בחרי תוכנית...</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">קבוצה</label>
-            <select id="trial-group" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 bg-white" disabled>
-              <option value="">בחרי קבוצה...</option>
-            </select>
-          </div>
-        </div>
-        <button type="submit" class="w-full bg-pink-600 text-white py-4 rounded-full font-bold text-lg hover:bg-pink-700 transition-all shadow-md hover:shadow-xl">
-          🎉 אני רוצה שיעור ניסיון!
-        </button>
-        <p id="trial-success" class="hidden mt-4 text-green-600 font-semibold text-center">✅ קיבלנו! נחזור אלייך בהקדם 💕</p>
-      </form>
-    </div>
-  </section>
-
-  <!-- Registration Open Section - For Community -->
-  <section id="registration" class="py-16 px-6 bg-gradient-to-br from-pink-600 to-purple-600 text-white text-center">
-    <div class="max-w-2xl mx-auto fade-in">
-      <div class="text-5xl mb-4">🎊</div>
-      <h2 class="text-3xl md:text-4xl font-bold mb-3">
-        קהילת FitBalance – ההרשמה נפתחה!
-      </h2>
-      <p class="text-xl opacity-90 mb-2 leading-relaxed">
-        החוגים יחלו ב־<strong>1.9.2026</strong>
-      </p>
-      <p class="text-lg opacity-80 mb-8">
-        הבטיחי את מקומך עכשיו – המקומות מוגבלים 🔒
-      </p>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <button onclick="openScheduleModal()" class="bg-white text-pink-600 px-8 py-4 rounded-full text-lg font-bold hover:bg-pink-50 transition-all shadow-lg">
-          📅 לשיבוץ במערכת השעות
-        </button>
-        <a href="login.html" class="border-2 border-white text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-white hover:text-pink-600 transition-all">
-          כניסה לאזור אישי
-        </a>
-      </div>
-    </div>
-  </section>
-
   <!-- Hip Hop Banner -->
-  <div class="bg-gradient-to-r from-pink-500 via-purple-500 to-pink-600 py-4 px-6 text-center">
+  <div class="bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 py-4 px-6 text-center">
     <a href="hip-hop.html" class="inline-flex items-center gap-3 text-white font-bold text-lg hover:opacity-90 transition-opacity">
       <span class="text-2xl">🎤</span>
-      <span>חדש! חוגי היפ הופ נשים ונערות לשנת התשפ"ו נפתחים – לפרטים והרשמה</span>
+      <span>חדש! חוגי היפ הופ נשים ונערות לשנת התשפ"ז נפתחים – לפרטים והרשמה</span>
       <span class="bg-white text-pink-600 text-xs font-bold px-3 py-1 rounded-full">חדש</span>
       <i class="fas fa-arrow-left"></i>
     </a>
@@ -406,14 +316,14 @@
             bg-gradient-to-r from-pink-500 to-purple-500
             text-white text-xs font-bold
             px-3 py-1 rounded-full shadow">
-            🔥 הרשמה לשנת התשפ"ו החלה
+            🔥 הרשמה לשנת התשפ"ז החלה
           </span>
   
   
           <div class="flip-inner">
   
   
-            <div class="flip-front border-2 border-purple-500 shadow-xl">
+            <div class="flip-front border-2 border-pink-400 shadow-xl">
   
   
               <div class="text-5xl mb-5">
@@ -504,8 +414,8 @@
               </p>
   
   
-              <button onclick="openViewScheduleModal()"
-              class="mt-5 text-[#1e40af] font-semibold">
+              <button onclick="openScheduleModal()"
+              class="mt-5 text-pink-600 font-semibold">
               </button>
   
   
@@ -563,8 +473,8 @@
               </p>
   
   
-              <button onclick="openViewScheduleModal()"
-              class="mt-5 text-[#1e40af] font-semibold">
+              <button onclick="openScheduleModal()"
+              class="mt-5 text-pink-600 font-semibold">
               </button>
   
             </div>
@@ -619,8 +529,8 @@
               </p>
   
   
-              <button onclick="openViewScheduleModal()"
-              class="mt-5 text-[#1e40af] font-semibold">
+              <button onclick="openScheduleModal()"
+              class="mt-5 text-pink-600 font-semibold">
               </button>
   
             </div>
@@ -676,8 +586,8 @@
               </p>
   
   
-              <button onclick="openViewScheduleModal()"
-              class="mt-5 text-[#1e40af] font-semibold">
+              <button onclick="openScheduleModal()"
+              class="mt-5 text-pink-600 font-semibold">
               </button>
   
   
@@ -733,8 +643,8 @@
               </p>
   
   
-              <button onclick="openViewScheduleModal()"
-              class="mt-5 text-[#1e40af] font-semibold">
+              <button onclick="openScheduleModal()"
+              class="mt-5 text-pink-600 font-semibold">
               </button>
   
   
@@ -773,7 +683,7 @@
   
       <div class="text-center mt-14">
   
-        <button onclick="openViewScheduleModal()"
+        <button onclick="openScheduleModal()"
         class="bg-pink-600 text-white px-10 py-4
         rounded-full font-bold shadow-lg
         hover:bg-pink-700 transition">
@@ -797,24 +707,32 @@
         <p class="text-gray-500 text-lg">מוצרי בריאות וכושר במחירים מיוחדים</p>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 fade-in">
-        <div class="card bg-[#eff6ff] rounded-2xl p-8 text-center">
-          <div class="mb-4"><img src="assets/icons/unnamed.webp" alt="FitBalance" class="w-40 h-40 object-contain mx-auto"></div>
-          <h3 class="text-lg font-bold text-[#1e40af] mb-1">בריאות טבעית</h3>
+        <div class="card bg-pink-50 rounded-2xl p-8 text-center">
+          <div class="mb-4">
+            <img src="assets/icons/unnamed.webp" alt="FitBalance" class="w-40 h-40 object-contain mx-auto">
+          </div>
+          <h3 class="text-lg font-bold text-pink-700 mb-1">בריאות טבעית</h3>
           <p class="text-gray-500 text-sm">מוצרי FOREVER</p>
         </div>
-        <div class="card bg-[#eff6ff] rounded-2xl p-8 text-center">
-          <div class="mb-4"><img src="assets/icons/6.png" alt="FitBalance" class="w-40 h-40 object-contain mx-auto"></div>
+        <div class="card bg-purple-50 rounded-2xl p-8 text-center">
+          <div class="mb-4">
+            <img src="assets/icons/6.png" alt="FitBalance" class="w-40 h-40 object-contain mx-auto">
+          </div>
           <h3 class="text-lg font-bold text-purple-700 mb-1">ציוד ספורט</h3>
           <p class="text-gray-500 text-sm">משקולות, קוביות ועוד..</p>
         </div>
-        <div class="card bg-[#f0fdf4] rounded-2xl p-8 text-center">
-          <div class="mb-4"><img src="assets/icons/7.png" alt="FitBalance" class="w-40 h-40 object-contain mx-auto"></div>
-          <h3 class="text-lg font-bold text-[#15803d] mb-1">ביגוד ספורט</h3>
+        <div class="card bg-green-50 rounded-2xl p-8 text-center">
+          <div class="mb-4">
+            <img src="assets/icons/7.png" alt="FitBalance" class="w-40 h-40 object-contain mx-auto">
+          </div>
+          <h3 class="text-lg font-bold text-green-700 mb-1">ביגוד ספורט</h3>
           <p class="text-gray-500 text-sm">בגדי ספורט נוחים ואיכותיים</p>
         </div>
       </div>
       <div class="text-center mt-10 fade-in">
-        <a href="pages/customer/shop.html" class="border-2 border-[#1e40af] text-[#1e40af] px-8 py-3 rounded-full font-semibold hover:bg-[#eff6ff] transition-all">לכל החנות 🛍️</a>
+        <a href="login/catalog.html" class="border-2 border-pink-600 text-pink-600 px-8 py-3 rounded-full font-semibold hover:bg-pink-50 transition-all">
+          לכל החנות 🛍️
+        </a>
       </div>
     </div>
   </section>
@@ -828,10 +746,10 @@
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="testimonials-container">
         <div class="testimonial-card fade-in">
-          <div class="text-[#b45309] text-xl mb-3">★★★★★</div>
+          <div class="text-yellow-400 text-xl mb-3">★★★★★</div>
           <p class="text-gray-600 mb-4">"הצטרפתי לפני שנה ולא מאמינה לשינוי. המדריכות מדהימות והאווירה משפחתית!"</p>
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-[#bfdbfe] rounded-full flex items-center justify-center font-bold text-[#1e40af]">מ</div>
+            <div class="w-10 h-10 bg-pink-200 rounded-full flex items-center justify-center font-bold text-pink-600">מ</div>
             <div>
               <div class="font-semibold text-gray-800">מיכל כהן</div>
               <div class="text-xs text-gray-400">מתאמנת פילאטיס</div>
@@ -839,10 +757,10 @@
           </div>
         </div>
         <div class="testimonial-card fade-in">
-          <div class="text-[#b45309] text-xl mb-3">★★★★★</div>
+          <div class="text-yellow-400 text-xl mb-3">★★★★★</div>
           <p class="text-gray-600 mb-4">"שיעורי היפ הופ שינו לי את החיים! כיף, אנרגיה ומוזיקה מעולה בכל שיעור."</p>
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-[#bfdbfe] rounded-full flex items-center justify-center font-bold text-[#1e40af]">ש</div>
+            <div class="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center font-bold text-purple-600">ש</div>
             <div>
               <div class="font-semibold text-gray-800">שירה לוי</div>
               <div class="text-xs text-gray-400">מתאמנת היפ הופ</div>
@@ -850,7 +768,7 @@
           </div>
         </div>
         <div class="testimonial-card fade-in">
-          <div class="text-[#b45309] text-xl mb-3">★★★★★</div>
+          <div class="text-yellow-400 text-xl mb-3">★★★★★</div>
           <p class="text-gray-600 mb-4">"האזור האישי נוח מאוד, רואה הכל בלחיצה אחת. ממליצה לכל אחת!"</p>
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center font-bold text-green-600">ר</div>
@@ -865,7 +783,7 @@
   </section>
 
   <!-- About CTA -->
-  <section id="about" class="py-20 px-6 text-white text-center" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)">
+  <section id="about" class="py-20 px-6 bg-gradient-to-r from-pink-600 to-purple-600 text-white text-center">
     <div class="max-w-2xl mx-auto fade-in">
       <h2 class="text-4xl font-bold mb-4">רוצה לדעת עוד?</h2>
       <p class="text-xl mb-8 opacity-90">הכירי את הצוות שלנו, הערכים שלנו ואיך אנחנו עושות את זה</p>
@@ -885,19 +803,19 @@
       <div>
         <h4 class="text-white font-bold text-lg mb-3">ניווט מהיר</h4>
         <div class="flex flex-col gap-2 text-sm">
-          <button onclick="openViewScheduleModal()" class="hover:text-purple-500">מערכת שעות</button>
-          <a href="hip-hop.html" class="hover:text-purple-500">חוגי היפ הופ ✨</a>
-          <a href="login/catalog.html" class="hover:text-purple-500">חנות</a>
-          <a href="about.html" class="hover:text-purple-500">אודות</a>
-          <a href="login.html" class="hover:text-purple-500">כניסה לאזור אישי</a>
+          <button onclick="openScheduleModal()" class="hover:text-pink-400">מערכת שעות</button>
+          <a href="hip-hop.html" class="hover:text-pink-400">חוגי היפ הופ ✨</a>
+          <a href="login/catalog.html" class="hover:text-pink-400">חנות</a>
+          <a href="about.html" class="hover:text-pink-400">אודות</a>
+          <a href="login.html" class="hover:text-pink-400">כניסה לאזור אישי</a>
         </div>
       </div>
       <div>
         <h4 class="text-white font-bold text-lg mb-3">צור קשר</h4>
         <div class="flex flex-col gap-2 text-sm">
-          <a href="tel:052-717-3841" class="hover:text-purple-500"><i class="fas fa-phone ml-1"></i>052-717-3841</a>
-          <a href="mailto:efrathugim@gmail.com" class="hover:text-purple-500"><i class="fas fa-envelope ml-1"></i>efrathugim@gmail.com</a>
-          <a href="https://wa.me/972527173841" target="_blank" class="hover:text-purple-500"><i class="fab fa-whatsapp ml-1"></i>055-270-4596</a>
+          <a href="tel:052-717-3841" class="hover:text-pink-400"><i class="fas fa-phone ml-1"></i>052-717-3841</a>
+          <a href="mailto:efrathugim@gmail.com" class="hover:text-pink-400"><i class="fas fa-envelope ml-1"></i>efrathugim@gmail.com</a>
+          <a href="https://wa.me/972527173841" target="_blank" class="hover:text-pink-400"><i class="fab fa-whatsapp ml-1"></i>055-270-4596</a>
         </div>
       </div>
     </div>
@@ -906,261 +824,55 @@
     </div>
   </footer>
 
-  <!-- View Schedule Modal -->
-  <div id="view-schedule-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" onclick="closeViewScheduleModal()"></div>
-    <div class="relative bg-white rounded-3xl shadow-2xl w-full flex flex-col" style="max-width:900px;max-height:92vh;">
-
-      <!-- Header -->
-      <div class="bg-gradient-to-r from-[#1e40af] to-[#3b82f6] p-5 text-white flex items-center justify-between flex-shrink-0 rounded-t-3xl">
-        <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-calendar-alt"></i> <span id="vs-title">מערכת שעות</span></h2>
-        <div class="flex items-center gap-2">
-          <button onclick="vsPrint()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1"><i class="fas fa-print"></i> הדפסה</button>
-          <button onclick="vsDownload()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1"><i class="fas fa-download"></i> הורדה</button>
-          <button onclick="closeViewScheduleModal()" class="bg-white bg-opacity-20 hover:bg-opacity-30 w-9 h-9 rounded-full flex items-center justify-center text-lg">✕</button>
-        </div>
-      </div>
-
-      <!-- View toggle + nav -->
-      <div class="flex items-center justify-between px-5 py-3 border-b flex-shrink-0 gap-3 flex-wrap">
-        <div class="flex gap-1 bg-gray-100 rounded-xl p-1">
-          <button onclick="vsSetView('weekly')" id="vs-btn-weekly" class="vs-view-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-all bg-white shadow text-[#1e40af]">שבועי</button>
-          <button onclick="vsSetView('daily')"  id="vs-btn-daily"  class="vs-view-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-all text-gray-500">יומי</button>
-          <button onclick="vsSetView('monthly')" id="vs-btn-monthly" class="vs-view-btn px-4 py-1.5 rounded-lg text-sm font-semibold transition-all text-gray-500">חודשי</button>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="vsNav(-1)" class="w-8 h-8 rounded-full border-2 border-gray-200 flex items-center justify-center hover:border-purple-500 hover:text-purple-500 font-bold">‹</button>
-          <span id="vs-period-label" class="text-sm font-semibold text-gray-700 min-w-[120px] text-center"></span>
-          <button onclick="vsNav(1)"  class="w-8 h-8 rounded-full border-2 border-gray-200 flex items-center justify-center hover:border-purple-500 hover:text-purple-500 font-bold">›</button>
-          <button onclick="vsGoToday()" class="text-xs text-[#1e40af] font-semibold border border-purple-500 px-3 py-1 rounded-full hover:bg-[#eff6ff]">היום</button>
-        </div>
-      </div>
-
-      <!-- Content -->
-      <div id="vs-content" class="flex-1 overflow-auto p-4"></div>
-
-    </div>
-  </div>
-
-  <!-- Assign Modal (שיבוץ) -->
+  <!-- Schedule Modal -->
   <div id="schedule-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" id="modal-backdrop"></div>
-    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col" style="max-height:92vh">
-
-      <!-- Header -->
-      <div style="background:linear-gradient(135deg,#ec4899,#8b5cf6)" class="p-5 text-white flex items-center justify-between flex-shrink-0 rounded-t-3xl">
-        <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-calendar-alt"></i> שיבוץ לחוגים</h2>
-        <button id="close-modal" class="bg-white bg-opacity-20 hover:bg-opacity-30 w-9 h-9 rounded-full flex items-center justify-center text-lg transition-all">✕</button>
-      </div>
-
-      <!-- Step: loading -->
-      <div id="step-loading" class="hidden flex-1 flex items-center justify-center py-16 text-gray-400">
-        <div class="text-center"><div class="text-4xl mb-3">⏳</div><p>טוען...</p></div>
-      </div>
-
-      <!-- Step: error -->
-      <div id="step-error" class="hidden flex-1 flex items-center justify-center py-16 text-red-400">
-        <div class="text-center"><div class="text-4xl mb-3">⚠️</div><p>שגיאה בטעינת הנתונים</p></div>
-      </div>
-
-      <!-- Step: id-lookup -->
-      <div id="step-id-lookup" class="hidden flex-1 flex flex-col items-center justify-center p-8 gap-6">
-        <div class="text-center">
-          <div class="text-5xl mb-3">🔍</div>
-          <h3 class="text-xl font-bold text-gray-800 mb-1">שיבוץ לחוגים</h3>
-          <p class="text-gray-500 text-sm">הזיני את מספר תעודת הזהות שלך</p>
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-3xl flex flex-col" style="max-height:90vh">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-pink-600 to-purple-600 p-6 text-white flex items-center justify-between flex-shrink-0">
+        <div>
+          <h2 class="text-2xl font-bold flex items-center gap-2"><i class="fas fa-calendar-alt"></i> מערכת שעות</h2>
+          <p class="text-pink-100 text-sm mt-1">שיעורי השבוע</p>
         </div>
-        <div class="w-full max-w-xs">
-          <input id="lookup-id" type="text" inputmode="numeric" placeholder="מספר ת.ז"
-            class="w-full border-2 border-gray-200 rounded-2xl px-5 py-4 text-center text-lg font-semibold focus:outline-none focus:border-purple-500 transition-all"
-            onkeydown="if(event.key==='Enter') lookupCustomer()" />
-        </div>
-        <button id="lookup-btn" onclick="lookupCustomer()"
-          class="btn-blue px-10 py-4 rounded-full font-bold text-lg transition-all shadow-md">
-          אישור
-        </button>
-      </div>
-
-      <!-- Step: sessions -->
-      <div id="step-sessions" class="hidden flex flex-col flex-1 overflow-hidden">
-        <div class="px-6 pt-5 pb-2 flex-shrink-0">
-          <p id="customer-greeting" class="text-gray-700 font-semibold text-sm"></p>
-          <p class="text-xs text-gray-400 mt-1">לחצי על שיעור כדי לבחור אותו</p>
-        </div>
-        <div id="sessions-table-wrap" class="overflow-auto flex-1 px-4 pb-4"></div>
-
-        <!-- Assign bar -->
-        <div id="assign-bar" class="hidden flex-shrink-0 px-6 py-4 border-t bg-white flex items-center justify-between gap-4">
-          <span class="text-sm text-gray-600">בחרת <strong id="assign-count" class="text-[#1e40af]">0</strong> חוגים</span>
-          <div class="flex gap-2">
-            <button id="trial-btn" onclick="assignTrial()"
-              class="btn-outline-blue px-5 py-2.5 rounded-full font-bold transition-all text-sm">
-              שיבוץ ניסיון
-            </button>
-            <button id="assign-btn" onclick="assignSelected()"
-              class="btn-blue px-8 py-2.5 rounded-full font-bold transition-all shadow-md text-sm">
-              שבצי אותי ✓
-            </button>
-          </div>
-        </div>
-
-        <!-- Cancellation notice -->
-        <div class="flex-shrink-0 px-6 py-3 bg-gray-50 border-t text-center text-xs text-gray-400 rounded-b-3xl">
-          ניתן להודיע על ביטול עד שבוע לפני סוף אוגוסט
+        <div class="flex items-center gap-3">
+          <button onclick="printSchedule()" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2"><i class="fas fa-print"></i> הדפסה</button>
+          <button onclick="downloadSchedule()" class="bg-white text-pink-600 px-4 py-2 rounded-full text-sm font-semibold hover:bg-pink-50 transition-all flex items-center gap-2"><i class="fas fa-download"></i> הורדה</button>
+          <button id="close-modal" class="bg-white bg-opacity-20 hover:bg-opacity-30 w-9 h-9 rounded-full flex items-center justify-center text-lg transition-all">✕</button>
         </div>
       </div>
-
-      <!-- Step: register-form -->
-      <div id="step-register-form" class="hidden flex-1 overflow-y-auto p-6">
-        <button onclick="backToLookup()" class="text-sm text-[#1e40af] hover:underline mb-4 flex items-center gap-1"><i class="fas fa-arrow-right text-xs"></i> חזרה</button>
-        <div class="bg-[#eff6ff] border border-[#bfdbfe] rounded-2xl p-4 mb-5 text-center">
-          <p class="text-[#1e40af] font-semibold text-sm">לצורך שיבוץ נא הזיני פרטים</p>
-          <p class="text-purple-500 text-xs mt-1">לא נמצאת במערכת – נרשמי ונשבץ אותך מיד 💜</p>
+      <!-- View Controls -->
+      <div class="flex items-center justify-between px-6 py-3 bg-gray-50 border-b flex-shrink-0 gap-3">
+        <!-- View Toggle -->
+        <div class="flex bg-white border border-gray-200 rounded-xl overflow-hidden text-sm font-semibold">
+          <button id="view-daily" onclick="setView('daily')" class="view-btn px-4 py-2 transition-all">יומי</button>
+          <button id="view-weekly" onclick="setView('weekly')" class="view-btn px-4 py-2 transition-all">שבועי</button>
+          <button id="view-monthly" onclick="setView('monthly')" class="view-btn px-4 py-2 transition-all">חודשי</button>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">שם פרטי *</label>
-            <input id="reg-first" type="text" placeholder="שם פרטי" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">שם משפחה *</label>
-            <input id="reg-last" type="text" placeholder="שם משפחה" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">טלפון *</label>
-            <input id="reg-mobile" type="tel" placeholder="050-0000000" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">אימייל</label>
-            <input id="reg-email" type="email" placeholder="אופציונלי" class="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500" />
-          </div>
+        <!-- Nav -->
+        <div class="flex items-center gap-2">
+          <button onclick="navPrev()" class="w-8 h-8 rounded-full bg-white border border-gray-200 hover:border-pink-400 flex items-center justify-center text-gray-600 transition-all">‹</button>
+          <span id="nav-label" class="text-sm font-semibold text-gray-700 min-w-max"></span>
+          <button onclick="navNext()" class="w-8 h-8 rounded-full bg-white border border-gray-200 hover:border-pink-400 flex items-center justify-center text-gray-600 transition-all">›</button>
+          <button onclick="navToday()" class="px-3 py-1 text-xs font-semibold bg-pink-100 text-pink-600 rounded-full hover:bg-pink-200 transition-all">היום</button>
         </div>
-        <input id="reg-id" type="hidden" />
-
-        <p class="text-xs font-semibold text-gray-600 mb-2">בחרי חוגים (אופציונלי – ניתן לבחור גם אחרי):</p>
-        <div id="reg-table-wrap" class="mb-5"></div>
-
-        <button id="reg-submit-btn" onclick="submitRegistration()"
-          class="w-full btn-blue py-4 rounded-full font-bold text-lg transition-all shadow-md">
-          אישור ושיבוץ
-        </button>
-        <p class="text-center text-xs text-gray-400 mt-3">ניתן להודיע על ביטול עד שבוע לפני סוף אוגוסט</p>
       </div>
-
-      <!-- Step: success -->
-      <div id="step-success" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center gap-4">
-        <div class="text-6xl">🎉</div>
-        <h3 class="text-2xl font-bold text-gray-800"><span id="success-name"></span>, <span id="success-type">שובצת בהצלחה!</span></h3>
-        <p class="text-gray-500">נרשמת לחוגים הבאים:</p>
-        <ul id="success-classes" class="text-right text-sm text-gray-700 bg-[#eff6ff] rounded-2xl px-6 py-4 w-full space-y-1 list-disc list-inside"></ul>
-        <p class="text-[#1e40af] font-semibold text-sm">ניצור איתך קשר לתשלום 💜</p>
-        <button onclick="closeScheduleModal()" class="mt-2 btn-blue px-8 py-3 rounded-full font-bold transition-all">
-          סגירה
-        </button>
+      <!-- Classes List -->
+      <div class="overflow-y-auto flex-1 p-6" id="modal-classes">
+        <div class="text-center py-12 text-gray-400"><div class="text-4xl mb-3">⏳</div><p>טוען שיעורים...</p></div>
       </div>
-
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="services/supabaseClient.js"></script>
-  <script src="utils/validation.js"></script>
   <script src="utils/constants.js"></script>
   <script src="utils/storage.js"></script>
   <script src="utils/formatter.js"></script>
-  <script src="utils/cart.js"></script>
-  <script src="utils/popup.js"></script>
   <script src="services/attendanceService.js"></script>
   <script src="assets/js/pages/home.js"></script>
   <script>
     function toggleFlip(card) { card.classList.toggle('flipped'); }
-
-    function showPhoneError(msg) {
-      const el = document.getElementById('trial-phone-error');
-      const input = document.getElementById('trial-phone');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-      input.classList.add('border-red-400');
-    }
-    function clearPhoneError() {
-      document.getElementById('trial-phone-error').classList.add('hidden');
-      document.getElementById('trial-phone').classList.remove('border-red-400');
-    }
-    function checkPhoneError() {
-      const err = validateIsraeliPhone(document.getElementById('trial-phone').value.trim());
-      if (err) showPhoneError(err);
-    }
-
-    // טעינת תוכניות וקבוצות לטופס ניסיון
-    (async () => {
-      const today = new Date().toISOString().split('T')[0];
-      const { data: programs } = await window._sb
-        .from('programs')
-        .select('name')
-        .gte('end_date', today)
-        .order('name');
-
-      const programSel = document.getElementById('trial-program');
-      const seen = new Set();
-      (programs || []).forEach(p => {
-        if (seen.has(p.name)) return;
-        seen.add(p.name);
-        const o = document.createElement('option');
-        o.value = p.name; o.textContent = p.name;
-        programSel.appendChild(o);
-      });
-
-      const groupSel = document.getElementById('trial-group');
-      const GROUPS = [{ code: 1, label: 'נשים' }, { code: 2, label: 'ילדות ונערות' }];
-
-      document.getElementById('trial-program').addEventListener('change', () => {
-        groupSel.innerHTML = '<option value="">בחרי קבוצה...</option>';
-        if (!programSel.value) { groupSel.disabled = true; return; }
-        GROUPS.forEach(g => {
-          const o = document.createElement('option');
-          o.value = g.code; o.textContent = g.label;
-          groupSel.appendChild(o);
-        });
-        groupSel.disabled = false;
-      });
-    })();
-
-    async function submitTrialForm(e) {
-      e.preventDefault();
-      const btn = e.target.querySelector('button[type=submit]');
-      btn.disabled = true;
-      try {
-        const programSel = document.getElementById('trial-program');
-        const groupSel   = document.getElementById('trial-group');
-        const phoneErr = validateIsraeliPhone(document.getElementById('trial-phone').value.trim());
-        if (phoneErr) { showPhoneError(phoneErr); btn.disabled = false; return; }
-        const { error } = await window._sb.from('inquiries').insert({
-          child_name:   document.getElementById('trial-first').value.trim(),
-          last_name:    document.getElementById('trial-last').value.trim(),
-          phone:        document.getElementById('trial-phone').value.trim(),
-          email:        document.getElementById('trial-email').value.trim() || null,
-          program_name: programSel.value || null,
-          group_code:   groupSel.value ? Number(groupSel.value) : null,
-          note:         'ניסיון',
-          source:       1
-        });
-        if (error) throw error;
-        document.getElementById('trial-success').classList.remove('hidden');
-        e.target.reset();
-        document.getElementById('trial-group').disabled = true;
-      } catch (err) {
-        alert('שגיאה בשמירה, נסי שוב');
-        console.error(err);
-      } finally {
-        btn.disabled = false;
-      }
-    }
   </script>
   
 </body>
 </html>
-
-
-
-
-

@@ -62,7 +62,7 @@ window.customerService = {
   async getOrders(customerId) {
     const { data, error } = await window._sb
       .from('orders')
-      .select('*, order_items(*, products(*))')
+      .select('*, order_items(quantity, price, products(name))')
       .eq('customer_id', customerId)
       .order('created_at', { ascending: false });
     if (error) throw error;
@@ -91,8 +91,8 @@ window.customerService = {
     if (iErr) throw iErr;
     // decrement stock — best effort, לא מפיל הזמנה אם נכשל
     await Promise.all(items.map(i =>
-      window._sb.rpc('decrement_stock', { p_product_id: i.id, p_qty: i.qty }).catch(() => {})
-    ));
+      window._sb.rpc('decrement_stock', { p_product_id: i.id, p_qty: i.qty }).then(() => {}).catch(() => {})
+    )).catch(() => {});
     return order;
   },
 };

@@ -187,6 +187,10 @@
 <script src="../../services/authService.js"></script>
 <script src="../../services/customerService.js"></script>
 <script src="../../middleware/auth.js"></script>
+<script>
+  // override requireAuth לחנות — אורחים מותרים
+  window.authMiddleware.requireAuth = async () => window.storageUtil?.load() || null;
+</script>
 <script src="../../layouts/layout.js"></script>
 <script src="../../assets/js/pages/customer/shop.js"></script>
 </body>

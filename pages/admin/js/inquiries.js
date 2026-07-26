@@ -68,7 +68,7 @@ function render() {
       <td style="padding:12px 16px;color:#374151;">${r.mother_name || '—'}</td>
       <td style="padding:12px 16px;"><a href="tel:${r.phone}" style="color:#7c3aed;text-decoration:none;">${r.phone || '—'}</a></td>
       <td style="padding:12px 16px;color:#374151;">${r.grade || '—'}</td>
-      <td style="padding:12px 16px;color:#374151;">${prog}</td>
+      <td style="padding:12px 16px;color:#374151;">${r.program_name || prog}</td>
       <td style="padding:12px 16px;"><span class="status-badge ${STATUS_CLASS[status]}">${STATUS_LABELS[status]}</span></td>
       <td style="padding:12px 16px;display:flex;gap:6px;">
         <button onclick="openView(${r.id})" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">צפייה</button>

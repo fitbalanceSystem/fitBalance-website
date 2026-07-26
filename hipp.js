@@ -93,6 +93,7 @@ formKids.addEventListener('submit', async e => {
     phone, email,
     group_code:   2,
     program_code,
+    program_name: program_code === 1 ? 'היפ הופ (ילדות)' : 'היפ הופ (נערות)',
     grade,
     source:       1,
     note:         _kidsNote || null,
@@ -118,6 +119,7 @@ formWomen.addEventListener('submit', async e => {
     phone, email,
     group_code:   1,
     program_code: 3,
+    program_name: 'היפ הופ (נשים)',
     source:       1,
   }, btnWomen, 'women');
   formWomen.reset();

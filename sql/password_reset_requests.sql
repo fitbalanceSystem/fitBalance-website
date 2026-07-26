@@ -8,3 +8,9 @@ CREATE TABLE IF NOT EXISTS password_reset_requests (
 
 GRANT INSERT ON password_reset_requests TO anon;
 GRANT USAGE, SELECT ON SEQUENCE password_reset_requests_id_seq TO anon;
+
+-- RLS
+ALTER TABLE password_reset_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "allow anon insert" ON password_reset_requests
+  FOR INSERT TO anon WITH CHECK (true);

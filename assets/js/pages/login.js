@@ -19,10 +19,10 @@ function setRole(r) {
   document.getElementById('role-employee').classList.toggle('active', isEmp);
   document.getElementById('label-email').textContent = isEmp ? 'שם משתמש' : 'כתובת אימייל';
   document.getElementById('icon-email').className    = isEmp ? 'fas fa-user' : 'fas fa-envelope';
-  document.getElementById('label-pass').textContent  = isEmp ? 'סיסמה' : 'תעודת זהות';
-  document.getElementById('icon-pass').className     = isEmp ? 'fas fa-lock' : 'fas fa-id-card';
+  document.getElementById('label-pass').textContent  = isEmp ? 'סיסמה' : 'סיסמה';
+  document.getElementById('icon-pass').className     = isEmp ? 'fas fa-lock' : 'fas fa-lock';
   emailInput.placeholder = isEmp ? 'שם משתמש' : 'your@email.com';
-  passInput.placeholder  = isEmp ? '••••••••' : 'מספר ת.ז';
+  passInput.placeholder  = isEmp ? '••••••••' : '••••••••';
   // איפוס
   emailInput.value = '';
   passInput.value  = '';
@@ -134,11 +134,6 @@ form.addEventListener('submit', async (e) => {
   if (role === 'customer') {
     if (field1.includes('@') && !/^[^@]+@[^@]+\.[^@]+$/.test(field1)) {
       showError('כתובת אימייל לא תקינה');
-      return;
-    }
-
-    if (!isValidIsraeliId(field2)) {
-      showError('מספר ת.ז אינו תקין');
       return;
     }
   }

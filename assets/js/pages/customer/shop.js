@@ -282,7 +282,8 @@
       closeCart();
       showConfirmModal();
       if (customerId) renderOrders(await window.customerService.getOrders(customerId));
-    } catch {
+    } catch (err) {
+      console.error('submitOrder error:', err);
       window.popup.toast('שגיאה בשליחת ההזמנה', 'error');
     }
   }

@@ -1,5 +1,8 @@
 const supabaseClient = window._sb;
 
+const DAY_NAMES = {1:'ראשון',2:'שני',3:'שלישי',4:'רביעי',5:'חמישי',6:'שישי',7:'שבת'};
+const DB_DAY_TO_JS = {1:0,2:1,3:2,4:3,5:4,6:5,7:6};
+
 const STATUS_LABELS = {
   active: '✓ פעילה', future: '📅 שיבוץ עתידי', trial_set: 'נקבע ניסיון',
   missing_assignment: 'חסר שיבוץ', expired: 'פג תוקף', interested: 'מתעניינת',
@@ -128,23 +131,73 @@ async function loadProgramsReport() {
   const tbody = document.getElementById('programsBody');
   const [{ data: programs }, { data: enrollments }] = await Promise.all([
     supabaseClient.from('programs').select('id, name, day, time, start_date, end_date, price').order('start_date', { ascending: false }),
-    supabaseClient.from('program_enrollments').select('program_id'),
+    supabaseClient.from('program_enrollments').select('program_id, customer_id, start_date, end_date, customers!inner(id, firstName, lastName, mobile)'),
   ]);
   tbody.innerHTML = '';
   (programs||[]).forEach(p => {
-    const count = (enrollments||[]).filter(e => e.program_id === p.id).length;
+    const progEnrollments = (enrollments||[]).filter(e => e.program_id === p.id);
+    const count = progEnrollments.length;
     const expected = (p.price||0) * count;
-    tbody.innerHTML += `<tr class="hover:bg-gray-50">
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-50 cursor-pointer';
+    tr.title = 'לחצי פעמיים לצפייה ברשומות';
+    tr.innerHTML = `
       <td class="p-3 border font-medium">${p.name||''}</td>
-      <td class="p-3 border">${p.day||''}</td>
+      <td class="p-3 border">${DAY_NAMES[p.day]||p.day||''}</td>
       <td class="p-3 border">${p.time||''}</td>
       <td class="p-3 border">${p.start_date||''}</td>
       <td class="p-3 border">${p.end_date||''}</td>
       <td class="p-3 border">${p.price ? p.price+' ₪' : '-'}</td>
       <td class="p-3 border font-bold text-blue-700">${count}</td>
-      <td class="p-3 border font-bold text-green-700">${expected ? expected.toLocaleString()+' ₪' : '-'}</td>
-    </tr>`;
+      <td class="p-3 border font-bold text-green-700">${expected ? expected.toLocaleString()+' ₪' : '-'}</td>`;
+    tr.addEventListener('dblclick', () => openProgramStudentsModal(p, progEnrollments));
+    tbody.appendChild(tr);
   });
+}
+
+function openProgramStudentsModal(program, enrollments) {
+  const existing = document.getElementById('_prog_modal');
+  if (existing) existing.remove();
+
+  const rows = enrollments.map((e, i) => {
+    const c = e.customers;
+    return `<tr class="hover:bg-gray-50">
+      <td class="p-2 border text-center text-gray-400">${i+1}</td>
+      <td class="p-2 border"><a href="customer-form.html?id=${c.id}" class="text-blue-600 hover:underline">${c.firstName||''} ${c.lastName||''}</a></td>
+      <td class="p-2 border">${c.mobile||'-'}</td>
+      <td class="p-2 border text-gray-500 text-xs">${e.start_date||''} – ${e.end_date||''}</td>
+    </tr>`;
+  }).join('');
+
+  const modal = document.createElement('div');
+  modal.id = '_prog_modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,10,40,.6);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:20px;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.25);overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#1a1035,#3b1f7a);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <div>
+          <div style="color:white;font-size:17px;font-weight:800;">${program.name}</div>
+          <div style="color:rgba(255,255,255,.55);font-size:12px;margin-top:3px;">${DAY_NAMES[program.day]||program.day||''} ${program.time||''}} • ${enrollments.length} רשומות</div>
+        </div>
+        <button id="_prog_modal_close" style="background:rgba(255,255,255,.15);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;">✕</button>
+      </div>
+      <div style="overflow-y:auto;flex:1;padding:16px;">
+        ${enrollments.length ? `
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead><tr style="background:#f8f7ff;">
+            <th class="p-2 border text-center" style="width:36px;">#</th>
+            <th class="p-2 border text-right">שם</th>
+            <th class="p-2 border text-right">טלפון</th>
+            <th class="p-2 border text-right">תקופה</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>` : '<p style="text-align:center;color:#9ca3af;padding:32px 0;">אין רשומות לתוכנית זו</p>'}
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+  document.getElementById('_prog_modal_close').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 // ===== דוח 4: תשלומים =====
@@ -659,8 +712,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ===== דוח 10: נוכחות PDF =====
 // במסד: day 1=ראשון, 2=שני, ... 7=שבת | JS getDay: 0=ראשון, 1=שני, ... 6=שבת
-const DAY_NAMES = {1:'ראשון',2:'שני',3:'שלישי',4:'רביעי',5:'חמישי',6:'שישי',7:'שבת'};
-const DB_DAY_TO_JS = {1:0,2:1,3:2,4:3,5:4,6:5,7:6};
 
 function getDatesForDayInMonth(year, month, dbDay) {
   const jsDay = DB_DAY_TO_JS[dbDay];

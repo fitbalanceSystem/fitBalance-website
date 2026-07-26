@@ -6,14 +6,12 @@ window.authMiddleware = {
     const user = window.storageUtil.load();
     if (!user) { window.location.href = window.ROUTES.LOGIN; return null; }
 
-    // עובדים בלבד — ודא שה-Supabase Auth session עדיין פעיל
-    if (user.role !== 'customer') {
-      const { data: { session } } = await window._sb.auth.getSession();
-      if (!session) {
-        window.storageUtil.clear();
-        window.location.href = window.ROUTES.LOGIN;
-        return null;
-      }
+    // כל המשתמשים (לקוחות ועובדים) — ודא שה-Supabase Auth session פעיל
+    const { data: { session } } = await window._sb.auth.getSession();
+    if (!session) {
+      window.storageUtil.clear();
+      window.location.href = window.ROUTES.LOGIN;
+      return null;
     }
 
     return user;

@@ -69,10 +69,12 @@ function render() {
       <td style="padding:12px 16px;"><a href="tel:${r.phone}" style="color:#7c3aed;text-decoration:none;">${r.phone || '—'}</a></td>
       <td style="padding:12px 16px;color:#374151;">${r.grade || '—'}</td>
       <td style="padding:12px 16px;color:#374151;">${r.program_name || prog}</td>
+      <td style="padding:12px 16px;color:#374151;">${r.note || '—'}</td>
       <td style="padding:12px 16px;"><span class="status-badge ${STATUS_CLASS[status]}">${STATUS_LABELS[status]}</span></td>
       <td style="padding:12px 16px;display:flex;gap:6px;">
         <button onclick="openView(${r.id})" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">צפייה</button>
         <button onclick="convertToCustomer(${r.id})" style="background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">+ לקוחה</button>
+        <button onclick="deleteInquiry(${r.id})" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">מחיקה</button>
       </td>
     </tr>`;
   }).join('');
@@ -129,8 +131,18 @@ function convertToCustomer(id) {
 }
 window.convertToCustomer = convertToCustomer;
 
+async function deleteInquiry(id) {
+  if (!confirm('למחוק את הרשומה?')) return;
+  const { error } = await window._sb.from('inquiries').delete().eq('id', id);
+  if (error) { alert('שגיאה במחיקה'); return; }
+  allRows = allRows.filter(r => r.id !== id);
+  updateKPIs();
+  applyFilters();
+  closeView();
+}
+window.deleteInquiry = deleteInquiry;
+
 function exportCSV() {
-  const headers = ['תאריך','שם ילדה','שם משפחה','שם הורה','טלפון','מייל','כיתה','תוכנית','סטטוס','הערה','הערות'];
   const rows = filtered.map(r => [
     r.created_at ? new Date(r.created_at).toLocaleDateString('he-IL') : '',
     r.child_name || '', r.last_name || '', r.mother_name || '',
@@ -155,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('nextPage').addEventListener('click', () => { page++; render(); });
   document.getElementById('vmSaveBtn').addEventListener('click', saveStatus);
   document.getElementById('vmConvertBtn').addEventListener('click', () => { if (currentId) convertToCustomer(currentId); });
+  document.getElementById('vmDeleteBtn').addEventListener('click', () => { if (currentId) deleteInquiry(currentId); });
   document.getElementById('exportBtn').addEventListener('click', exportCSV);
   document.getElementById('viewModal').addEventListener('click', e => { if (e.target === document.getElementById('viewModal')) closeView(); });
 });

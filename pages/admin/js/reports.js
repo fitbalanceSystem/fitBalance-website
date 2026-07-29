@@ -702,6 +702,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     selAtt.innerHTML += opt;
   });
 
+  // פתיחת טאב לפי hash בURL
+  const hash = location.hash.replace('#', '');
+  if (hash) {
+    const btn = document.querySelector(`[onclick="showReport('${hash}',this)"]`);
+    if (btn) { showReport(hash, btn); }
+  }
+
   loadStatusReport();
   loadDebtReport();
   loadProgramsReport();

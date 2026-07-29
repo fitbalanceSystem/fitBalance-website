@@ -112,7 +112,7 @@ window.renderLayout = function(activeId) {
         font-size:20px;color:#6b7280;cursor:pointer;padding:4px;
       }
 
-      .page-content{margin-top:64px;margin-right:260px;margin-left:192px;padding:32px 40px;min-height:calc(100vh - 64px);max-width:none;font-size:16px}
+      .page-content{margin-top:64px;margin-right:260px;padding:32px 40px;min-height:calc(100vh - 64px);max-width:none;font-size:16px}
       .page-content .max-w-3xl,.page-content .max-w-4xl,.page-content .max-w-5xl{max-width:none !important;width:100%}
       .page-content h1{font-size:1.75rem !important}
       .page-content h2{font-size:1.4rem !important}
@@ -159,9 +159,15 @@ window.renderLayout = function(activeId) {
         #_sidebar{transform:translateX(100%)}
         #_sidebar.open{transform:translateX(0)}
         #_topbar{right:0 !important}
-        .page-content{margin-right:0;margin-left:0;padding:16px}
+        .page-content{margin-right:0;margin-left:0;padding:16px;padding-bottom:70px}
         #_sidebar_toggle{display:block !important}
         #_hh_panel{display:none}
+        #_bottom_nav{display:flex !important}
+      }
+      @media(min-width:769px){
+        .page-content{margin-left:192px}
+        #_hh_panel{display:flex !important}
+        #_bottom_nav{display:none !important}
       }
     </style>
 
@@ -195,7 +201,15 @@ window.renderLayout = function(activeId) {
     </header>
 
     <div id="_sidebar_overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35"></div>
+
+    <a id="_bottom_nav" href="../../hip-hop.html" style="display:none;position:fixed;bottom:0;left:0;right:0;height:48px;z-index:30;text-decoration:none;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#2d0a3a,#1a0a3a);border-top:1px solid rgba(236,72,153,.3);box-shadow:0 -2px 16px rgba(139,92,246,.2);">
+        <span style="font-size:20px;">💃</span>
+        <span style="color:white;font-size:13px;font-weight:700;">חוגי היפ הופ</span>
+        <span style="background:rgba(236,72,153,.25);border:1px solid rgba(236,72,153,.5);color:#fda4af;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;">הרשמה פתוחה</span>
+        <span style="color:rgba(255,255,255,.5);font-size:12px;">← לפרטים</span>
+    </a>
   `);
+
 
   document.getElementById('_logout_btn').addEventListener('click', () => window.authMiddleware?.logout());
   const sidebar = document.getElementById('_sidebar');
@@ -208,6 +222,17 @@ window.renderLayout = function(activeId) {
     sidebar.classList.remove('open');
     overlay.style.display = 'none';
   });
+
+  // bottom nav + hh panel לפי רוחב מסך
+  function applyResponsive() {
+    const isMobile = window.innerWidth <= 768;
+    const hhPanel = document.getElementById('_hh_panel');
+    const bottomNav = document.getElementById('_bottom_nav');
+    if (hhPanel)  hhPanel.style.display  = isMobile ? 'none' : 'flex';
+    if (bottomNav) bottomNav.style.display = isMobile ? 'flex' : 'none';
+  }
+  applyResponsive();
+  window.addEventListener('resize', applyResponsive);
 
   // עדכון badge עגלה
   if (window.cartService && user?.id) window.cartService.init(user.id);
@@ -306,7 +331,7 @@ window.renderLayout = function(activeId) {
       }
       #_hh_panel .hh-cta2:hover{background:rgba(255,255,255,.15);color:white;transform:translateY(-1px)}
     </style>
-    <div id="_hh_panel">
+    <div id="_hh_panel" style="display:none">
       <div class="hh-stars">
         <div class="hh-star" style="top:10%;left:15%;animation-delay:0s"></div>
         <div class="hh-star" style="top:20%;left:75%;animation-delay:.4s"></div>

@@ -2,7 +2,6 @@
   let user   = window.storageUtil?.load() || null;
   let userId = user?.id ? String(user.id) : 'guest';
 
-  // אם הגיע מ-login עם עגלה שמורה — העבר עגלת guest ל-userId
   if (user?.id) {
     const guestCart = window.cartService.load('guest');
     if (Object.keys(guestCart).length) {
@@ -15,43 +14,128 @@
     }
   }
 
-  // layout: אם יש renderLayout (אזור אישי) — השתמש בו, אחרת public
   if (typeof window.renderLayout === 'function' && user) {
     window.renderLayout('shop');
   } else {
     window.renderPublicShopLayout?.();
   }
 
-  let products    = [];
-  let cart        = window.cartService.load(userId);
+  let products     = [];
+  let filteredProds = [];
+  let shopCats = { tree: [], flat: [] };
+  let activeCatPath = []; // [rootNode, child, grandchild, ...]
+  let cart         = window.cartService.load(userId);
   let activeCoupon = null;
+  let activeCategory    = 'הכל';
+  let activeSubcategory = 'הכל';
+  let activeSort   = 'default';
+
   const COUPONS = {
     'FIT10':  { type: 'percent', value: 10,  label: '10% הנחה' },
     'FIT20':  { type: 'percent', value: 20,  label: '20% הנחה' },
     'SAVE30': { type: 'fixed',   value: 30,  label: '₪30 הנחה' },
   };
 
-  const [prods, orders] = await Promise.all([
+  const [prods, orders, catsRows] = await Promise.all([
     window.customerService.getProducts(),
     userId !== 'guest' ? window.customerService.getOrders(userId) : Promise.resolve([]),
+    window._sb.from('shop_categories').select('*').order('sort_order').then(r => r.data || []).catch(() => []),
   ]);
   products = prods;
-  renderCategories(prods);
-  renderProducts(prods);
+
+  function buildTree(nodes, parentId = null) {
+    return nodes
+      .filter(n => (n.parent_id ?? null) === parentId)
+      .sort((a,b) => a.sort_order - b.sort_order)
+      .map(n => ({ ...n, children: buildTree(nodes, n.id) }));
+  }
+  shopCats = { tree: buildTree(catsRows), flat: catsRows };
+  renderCategories();
+  applyFilters();
   renderOrders(orders);
   updateCartUI();
 
-  function renderCategories(prods) {
-    const cats = ['הכל', ...new Set(prods.map(p => p.category).filter(Boolean))];
-    const bar  = document.getElementById('cat-filters');
-    bar.innerHTML = cats.map((c, i) => `
-      <button class="cat-btn ${i === 0 ? 'active' : ''}" data-cat="${c}">${c}</button>`).join('');
+  // ---- Sort ----
+  document.getElementById('sort-select').addEventListener('change', e => {
+    activeSort = e.target.value;
+    applyFilters();
+  });
+
+  function applyFilters() {
+    const activeCat = activeCatPath.length ? activeCatPath[activeCatPath.length - 1] : null;
+    let list;
+    if (!activeCat) {
+      list = [...products];
+    } else if (activeCat.id !== null) {
+      // סינון לפי category_id רקורסיבי
+      function collectIds(node) { return [node.id, ...node.children.flatMap(collectIds)]; }
+      const ids = new Set(collectIds(activeCat));
+      list = products.filter(p => ids.has(p.category_id));
+    } else {
+      // fallback — סינון לפי שם קטגוריה טקסטואלי
+      list = products.filter(p => p.category === activeCat.name);
+    }
+    switch (activeSort) {
+      case 'price-asc':  list.sort((a,b) => a.price - b.price); break;
+      case 'price-desc': list.sort((a,b) => b.price - a.price); break;
+      case 'name-asc':   list.sort((a,b) => a.name.localeCompare(b.name, 'he')); break;
+      case 'name-desc':  list.sort((a,b) => b.name.localeCompare(a.name, 'he')); break;
+      case 'newest':     list.sort((a,b) => new Date(b.created_at||0) - new Date(a.created_at||0)); break;
+    }
+    filteredProds = list;
+    renderProducts(list);
+  }
+
+  function renderCategories() {
+    // אם יש עץ מה-DB — שימוש בשורשים. אחרת — fallback לקטגוריות המוצרים
+    const roots = shopCats.tree.length
+      ? shopCats.tree
+      : [...new Set(products.map(p => p.category).filter(Boolean))]
+          .map(c => ({ id: null, name: c, children: [] }));
+    const bar = document.getElementById('cat-filters');
+    bar.innerHTML = `<button class="cat-btn active" data-idx="-1">הכל</button>` +
+      roots.map((n, i) => `<button class="cat-btn" data-idx="${i}">${n.name}</button>`).join('');
     bar.querySelectorAll('.cat-btn').forEach(btn =>
       btn.addEventListener('click', () => {
         bar.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const cat = btn.dataset.cat;
-        renderProducts(cat === 'הכל' ? products : products.filter(p => p.category === cat));
+        const idx = +btn.dataset.idx;
+        activeCatPath = idx === -1 ? [] : [roots[idx]];
+        renderSubcategories();
+        applyFilters();
+      })
+    );
+  }
+
+  function renderSubcategories() {
+    const row = document.getElementById('subcat-row');
+    const bar = document.getElementById('subcat-filters');
+    // הצומת הנוכחית — ילדים של האחרון בנתיב
+    const current = activeCatPath.length ? activeCatPath[activeCatPath.length - 1] : null;
+    const children = current?.children || [];
+    if (!children.length) { row.style.display = 'none'; return; }
+    row.style.display = '';
+    // breadcrumb + ילדים
+    const breadcrumb = activeCatPath.length > 1
+      ? `<button class="cat-btn" data-back="1">← חזרה</button>` : '';
+    bar.innerHTML = breadcrumb +
+      `<button class="cat-btn active" data-sub="-1">הכל</button>` +
+      children.map((n, i) => `<button class="cat-btn" data-sub="${i}">${n.name}</button>`).join('');
+    bar.querySelectorAll('[data-back]').forEach(btn =>
+      btn.addEventListener('click', () => {
+        activeCatPath.pop();
+        renderSubcategories();
+        applyFilters();
+      })
+    );
+    bar.querySelectorAll('[data-sub]').forEach(btn =>
+      btn.addEventListener('click', () => {
+        bar.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const idx = +btn.dataset.sub;
+        if (idx >= 0) activeCatPath.push(children[idx]);
+        renderSubcategories();
+        applyFilters();
       })
     );
   }
@@ -83,19 +167,103 @@
     );
   }
 
+  let galleryMedia = [];
+  let galleryIndex  = 0;
+
+  function buildGallery(p) {
+    // image_url תמיד ראשון, אחריו images[], אחריו videos[]
+    const mainImg = p.image_url ? [p.image_url] : [];
+    const extraImgs = Array.isArray(p.images) ? p.images.filter(u => u && u !== p.image_url) : [];
+    const vids = Array.isArray(p.videos) ? p.videos.filter(Boolean) : [];
+    galleryMedia = [
+      ...mainImg.map(src => ({ kind: 'img', src })),
+      ...extraImgs.map(src => ({ kind: 'img', src })),
+      ...vids.map(src => ({ kind: isYT(src) ? 'embed' : 'video', src })),
+    ];
+    galleryIndex = 0;
+
+    if (!galleryMedia.length) {
+      document.getElementById('pm-main').innerHTML =
+        `<div class="pm-emoji-big">${p.emoji ?? '\uD83D\uDCE6'}</div>`;
+      document.getElementById('pm-zoom-btn').style.display = 'none';
+      document.getElementById('pm-thumbs').innerHTML = '';
+      return;
+    }
+
+    renderThumbs();
+    showMedia(0);
+  }
+
+  function stopAllMedia() {
+    const main = document.getElementById('pm-main');
+    main.querySelectorAll('video').forEach(v => { v.pause(); v.currentTime = 0; });
+    main.querySelectorAll('iframe').forEach(f => { f.src = f.src; }); // reset YT
+  }
+
+  window.showMedia = function(i) {
+    stopAllMedia();
+    galleryIndex = i;
+    const m = galleryMedia[i];
+    const main = document.getElementById('pm-main');
+    const zoomBtn = document.getElementById('pm-zoom-btn');
+
+    if (m.kind === 'img') {
+      main.innerHTML = `<img src="${m.src}" alt="" style="cursor:zoom-in" onclick="zoomCurrent()" />`;
+      zoomBtn.style.display = 'block';
+    } else if (m.kind === 'embed') {
+      main.innerHTML = `<iframe src="${ytEmbed(m.src)}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+      zoomBtn.style.display = 'none';
+    } else {
+      main.innerHTML = `<video src="${m.src}" controls autoplay></video>`;
+      zoomBtn.style.display = 'none';
+    }
+
+    // עדכון thumb פעיל
+    document.querySelectorAll('.pm-thumb').forEach((t, idx) =>
+      t.classList.toggle('active', idx === i)
+    );
+  }
+
+  function renderThumbs() {
+    const bar = document.getElementById('pm-thumbs');
+    bar.innerHTML = galleryMedia.map((m, i) => {
+      const inner = m.kind === 'img'
+        ? `<img src="${m.src}" />`
+        : m.kind === 'embed'
+          ? `<div style="width:100%;height:100%;background:#1a1a2e;display:flex;align-items:center;justify-content:center"><i class="fab fa-youtube" style="color:#f00;font-size:22px"></i></div>`
+          : `<video src="${m.src}" muted></video>`;
+      const play = m.kind !== 'img' ? `<div class="pm-thumb-play">&#9654;</div>` : '';
+      return `<div class="pm-thumb ${i===0?'active':''}" onclick="showMedia(${i})">${inner}${play}</div>`;
+    }).join('');
+  }
+
+  window.zoomCurrent = function() {
+    const m = galleryMedia[galleryIndex];
+    if (!m || m.kind !== 'img') return;
+    document.getElementById('zoom-img').src = m.src;
+    document.getElementById('zoom-overlay').classList.add('open');
+  }
+
+  function isYT(url) { return url && (url.includes('youtube') || url.includes('youtu.be')); }
+  function ytEmbed(url) {
+    const m = url.match(/(?:v=|youtu\.be\/|embed\/)([-\w]{11})/);
+    return m ? `https://www.youtube.com/embed/${m[1]}` : url;
+  }
+
   function openProductModal(id) {
     const p = products.find(x => String(x.id) === String(id));
     if (!p) return;
     let qty = 1;
-    document.getElementById('pm-media').innerHTML = p.image_url
-      ? `<img src="${p.image_url}" alt="${p.name}" style="width:100%;max-height:320px;object-fit:contain;border-radius:16px;margin-bottom:16px;background:#f8f7ff;" />`
-      : `<div style="font-size:72px;height:220px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fdf2f8,#f5f3ff);border-radius:16px;margin-bottom:16px;">${p.emoji ?? '📦'}</div>`;
+
+    buildGallery(p);
+
     document.getElementById('pm-name').textContent     = p.name;
     document.getElementById('pm-category').textContent = p.category ?? '';
     document.getElementById('pm-desc').textContent     = p.description ?? '';
     document.getElementById('pm-price').textContent    = window.fmt.currency(p.price);
     document.getElementById('pm-stock').textContent    = p.stock != null ? `מלאי: ${p.stock}` : '';
     document.getElementById('pm-qty').textContent      = qty;
+
     const setQty = n => { qty = Math.max(1, n); document.getElementById('pm-qty').textContent = qty; };
     document.getElementById('pm-minus').onclick = () => setQty(qty - 1);
     document.getElementById('pm-plus').onclick  = () => setQty(qty + 1);
@@ -105,6 +273,15 @@
     };
     document.getElementById('product-modal').classList.add('open');
   }
+
+  document.getElementById('product-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('product-modal')) {
+      stopAllMedia();
+      document.getElementById('product-modal').classList.remove('open');
+    }
+  });
+
+  document.querySelector('#product-modal button[onclick]').addEventListener('click', stopAllMedia);
 
   function addToCart(id) {
     const p = products.find(x => String(x.id) === String(id));
@@ -204,12 +381,9 @@
   document.getElementById('checkout-btn').addEventListener('click', async () => {
     const items = Object.values(cart);
     if (!items.length) { window.popup.toast('העגלה ריקה', 'warning'); return; }
-
     if (userId !== 'guest') {
-      // משתמש מחובר — שלח ישירות
       await submitOrder(userId, items, null);
     } else {
-      // אורח — הצג מודאל פרטים
       showGuestCheckoutModal(items);
     }
   });
@@ -246,7 +420,6 @@
       const name  = modal.querySelector('#_g-name').value.trim();
       const phone = modal.querySelector('#_g-phone').value.trim();
       const email = modal.querySelector('#_g-email').value.trim();
-
       if (!name)  { window.popup.toast('שם מלא הוא שדה חובה', 'warning'); return; }
       if (!phone) { window.popup.toast('טלפון הוא שדה חובה', 'warning'); return; }
       if (!/^0[0-9]{8,9}$/.test(phone.replace(/[-\s]/g, ''))) {
@@ -255,7 +428,6 @@
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         window.popup.toast('כתובת מייל לא תקינה', 'warning'); return;
       }
-
       const guestInfo = {
         name,
         phone: phone.replace(/[-\s]/g, ''),

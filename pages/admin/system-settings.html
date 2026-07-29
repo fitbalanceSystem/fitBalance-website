@@ -1,88 +1,747 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>הגדרות מערכת</title>
-
-
-  <link rel="stylesheet" href="css/system_settings.css">
+  <link rel="icon" type="image/png" href="../../assets/icons/icon.png">
+  <title>הגדרות מערכת | FitBalance</title>
+  <link rel="stylesheet" href="css/admin-theme.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/system-settings.js" defer></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../../services/supabaseClient.js"></script>
+  <style>
+    .section-card { background:white; border-radius:16px; border:1px solid #f3f0ff; box-shadow:0 2px 12px rgba(139,92,246,.07); padding:24px; margin-bottom:20px; }
+    .section-title { font-size:15px; font-weight:800; color:#1f2937; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+    .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .field-grid.single { grid-template-columns:1fr; }
+    .field { display:flex; flex-direction:column; gap:6px; }
+    .field label { font-size:12px; font-weight:700; color:#6b7280; }
+    .field input, .field textarea, .field select {
+      border:1.5px solid #e5e7eb; border-radius:10px; padding:9px 12px;
+      font-size:13px; font-family:inherit; outline:none; transition:border-color .2s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.1); }
+    .field textarea { resize:vertical; }
+    .save-section-btn {
+      background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border:none;
+      border-radius:10px; padding:10px 24px; font-size:13px; font-weight:700;
+      cursor:pointer; font-family:inherit; margin-top:16px;
+    }
+    .save-section-btn:hover { opacity:.9; }
+    .saved-msg { margin-right:12px; font-size:12px; color:#16a34a; display:none; }
+    .hint { font-size:11px; color:#9ca3af; font-weight:400; margin-right:4px; }
+    .tab-nav { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+    .tab-nav button { border-radius:10px; border:1.5px solid #ede9fe; background:white; color:#6b7280; font-size:13px; font-weight:600; padding:8px 16px; font-family:inherit; cursor:pointer; transition:all .2s; }
+    .tab-nav button.active { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border-color:transparent; box-shadow:0 4px 14px rgba(236,72,153,.3); }
+    .tab-nav button:hover:not(.active) { background:#f3f0ff; color:#7c3aed; }
+    .tab-pane { display:none; }
+    .tab-pane.active { display:block; }
+    .color-row { display:flex; align-items:center; gap:10px; }
+    .color-row input[type=color] { width:40px; height:36px; border-radius:8px; border:1.5px solid #e5e7eb; cursor:pointer; padding:2px; }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <div class="sidebar">
-      <a href="index.html">
-        <img src="images/logo.png" alt="לוגו" class="logo" />
-      </a>
-      <div class="sidebar-actions">
-        <button onclick="refreshCache()">🔄 רענן Cache</button>
-        <button onclick="openAddModal()">➕ הוסף הגדרה</button>
-        <button onclick="deleteSelected()">🗑️ מחק נבחרים</button>
+<div class="container">
+  <div id="sidebar-placeholder"></div>
+  <script src="utilities/sidebar.js"></script>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h1>⚙️ הגדרות מערכת</h1>
+    </header>
+
+    <div class="tab-nav">
+      <button class="active" onclick="switchTab('business',this)">🏢 פרטי עסק</button>
+      <button onclick="switchTab('emails',this)">✉️ תבניות מיילים</button>
+      <button onclick="switchTab('dashboard',this)">🏠 דשבורד</button>
+      <button onclick="switchTab('programs',this)">💃 תוכניות</button>
+      <button onclick="switchTab('payments',this)">💳 תשלומים</button>
+      <button onclick="switchTab('codetables',this)">🗂️ טבלאות קוד</button>
+      <button onclick="switchTab('shopcats',this)">🛍️ קטגוריות חנות</button>
+      <button onclick="switchTab('users',this)">👥 משתמשים והרשאות</button>
+    </div>
+
+    <!-- פרטי עסק -->
+    <div id="tab-business" class="tab-pane active">
+      <div class="section-card">
+        <div class="section-title">🏢 פרטי העסק</div>
+        <div class="field-grid">
+          <div class="field"><label>שם העסק</label><input id="biz-name" type="text" /></div>
+          <div class="field"><label>טלפון</label><input id="biz-phone" type="text" /></div>
+          <div class="field"><label>אימייל</label><input id="biz-email" type="email" /></div>
+          <div class="field"><label>כתובת</label><input id="biz-address" type="text" /></div>
+          <div class="field"><label>עיר</label><input id="biz-city" type="text" /></div>
+          <div class="field"><label>אתר אינטרנט</label><input id="biz-website" type="text" /></div>
+        </div>
+        <div class="field single" style="margin-top:14px;">
+          <label>חתימה לסוף מיילים</label>
+          <textarea id="biz-signature" rows="3"></textarea>
+        </div>
+        <button class="save-section-btn" onclick="saveSection('business')">💾 שמור פרטי עסק</button>
+        <span class="saved-msg" id="saved-business">✓ נשמר!</span>
       </div>
     </div>
 
-    <div class="main-content">
-      <div class="page-header">
-        <h1>הגדרות מערכת</h1>
-      </div>
-      <div id="settings-container"></div>
-    </div>
-  </div>
+    <!-- תבניות מיילים -->
+    <div id="tab-emails" class="tab-pane">
 
-  <!-- מודאל הוספה/עריכה -->
-  <div class="modal" id="settingModal">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <h2 id="modalTitle">הוספת הגדרה</h2>
-      <input id="modal-category" placeholder="קטגוריה">
-      <input id="modal-key" placeholder="מפתח">
-      <textarea id="modal-value" placeholder='JSON ערך'></textarea>
-      <input id="modal-type" placeholder="סוג קלט (text, boolean, list)">
-      <input id="modal-description" placeholder="תיאור">
-      <button onclick="saveModalSetting()">💾 שמירה</button>
+      <div class="section-card">
+        <div class="section-title">🎂 מייל יום הולדת</div>
+        <div class="field-grid single">
+          <div class="field">
+            <label>נושא <span class="hint">({שם} = שם הלקוחה)</span></label>
+            <input id="tmpl-birthday-subject" type="text" />
+          </div>
+          <div class="field">
+            <label>גוף המייל <span class="hint">({שם} = שם הלקוחה)</span></label>
+            <textarea id="tmpl-birthday-body" rows="6"></textarea>
+          </div>
+        </div>
+        <button class="save-section-btn" onclick="saveSection('emails-birthday')">💾 שמור תבנית יום הולדת</button>
+        <span class="saved-msg" id="saved-emails-birthday">✓ נשמר!</span>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title">💳 מייל תזכורת חוב</div>
+        <div class="field-grid single">
+          <div class="field">
+            <label>נושא <span class="hint">({שם}, {סכום})</span></label>
+            <input id="tmpl-debt-subject" type="text" />
+          </div>
+          <div class="field">
+            <label>גוף המייל <span class="hint">({שם}, {סכום})</span></label>
+            <textarea id="tmpl-debt-body" rows="6"></textarea>
+          </div>
+        </div>
+        <button class="save-section-btn" onclick="saveSection('emails-debt')">💾 שמור תבנית חוב</button>
+        <span class="saved-msg" id="saved-emails-debt">✓ נשמר!</span>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title">🎀 מייל ברוכה הבאה (לקוחה חדשה)</div>
+        <div class="field-grid single">
+          <div class="field">
+            <label>נושא <span class="hint">({שם})</span></label>
+            <input id="tmpl-welcome-subject" type="text" />
+          </div>
+          <div class="field">
+            <label>גוף המייל <span class="hint">({שם})</span></label>
+            <textarea id="tmpl-welcome-body" rows="6"></textarea>
+          </div>
+        </div>
+        <button class="save-section-btn" onclick="saveSection('emails-welcome')">💾 שמור תבנית ברוכה הבאה</button>
+        <span class="saved-msg" id="saved-emails-welcome">✓ נשמר!</span>
+      </div>
     </div>
-  </div>
-<!-- מודאל עריכת JSON -->
-<div class="modal" id="jsonEditModal">
-  <div class="modal-content json-editor-modal">
-    <span class="close" onclick="closeJsonModal()">&times;</span>
-    <h2>עריכת ערך JSON</h2>
-    <textarea id="json-editor" placeholder="JSON ערך" oninput="validateJsonEditor()"></textarea>
-    <div id="json-error" class="error-message"></div>
-    <button onclick="saveJsonValue()">💾 שמירה</button>
+
+    <!-- הגדרות דשבורד -->
+    <div id="tab-dashboard" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title">🏠 הגדרות דשבורד</div>
+        <div class="field-grid">
+          <div class="field">
+            <label>ימי הולדת – כמה ימים קדימה להציג</label>
+            <input id="dash-birthday-days" type="number" min="1" max="90" />
+          </div>
+          <div class="field">
+            <label>מקסימום שורות בכל ווידג'ט</label>
+            <input id="dash-widget-rows" type="number" min="3" max="20" />
+          </div>
+        </div>
+        <button class="save-section-btn" onclick="saveSection('dashboard')">💾 שמור הגדרות דשבורד</button>
+        <span class="saved-msg" id="saved-dashboard">✓ נשמר!</span>
+      </div>
+    </div>
+
+    <!-- הגדרות תוכניות -->
+    <div id="tab-programs" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title">💃 הגדרות תוכניות</div>
+        <div class="field-grid">
+          <div class="field">
+            <label>מספר שיעורים מינימלי לחודש</label>
+            <input id="prog-min-lessons" type="number" min="1" />
+          </div>
+          <div class="field">
+            <label>מספר ימי ניסיון מותרים</label>
+            <input id="prog-trial-days" type="number" min="1" />
+          </div>
+          <div class="field">
+            <label>תחילת שנת לימודים (חודש)</label>
+            <select id="prog-year-start">
+              <option value="9">ספטמבר</option>
+              <option value="10">אוקטובר</option>
+              <option value="1">ינואר</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>סוף שנת לימודים (חודש)</label>
+            <select id="prog-year-end">
+              <option value="6">יוני</option>
+              <option value="7">יולי</option>
+              <option value="8">אוגוסט</option>
+            </select>
+          </div>
+        </div>
+        <button class="save-section-btn" onclick="saveSection('programs')">💾 שמור הגדרות תוכניות</button>
+        <span class="saved-msg" id="saved-programs">✓ נשמר!</span>
+      </div>
+    </div>
+
+    <!-- טבלאות קוד -->
+    <div id="tab-codetables" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title" style="justify-content:space-between">
+          <span>🗂️ טבלאות קוד</span>
+          <button class="save-section-btn" style="margin-top:0" onclick="openAddTableModal()">+ טבלה חדשה</button>
+        </div>
+        <div id="ct-loading" class="text-gray-400 text-sm">טוען...</div>
+        <div style="display:flex;gap:10px;margin-bottom:14px">
+          <input id="ct-search" type="text" placeholder="חיפוש..." oninput="renderCodeTables()" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:7px 12px;font-size:13px;font-family:inherit;outline:none;flex:1" />
+          <select id="ct-sort" onchange="renderCodeTables()" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:7px 12px;font-size:13px;font-family:inherit;outline:none;cursor:pointer">
+            <option value="name">מיון לפי שם</option>
+            <option value="desc">מיון לפי תיאור</option>
+            <option value="count">מיון לפי כמות ערכים</option>
+          </select>
+        </div>
+        <div id="ct-list"></div>
+      </div>
+    </div>
+
+    <!-- קטגוריות חנות -->
+    <div id="tab-shopcats" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title" style="justify-content:space-between">
+          <span>🛍️ קטגוריות ותת-קטגוריות חנות</span>
+          <button class="save-section-btn" style="margin-top:0" onclick="openAddScModal(null)">+ קטגוריה ראשית</button>
+        </div>
+        <div id="sc-loading" class="text-gray-400 text-sm">טוען...</div>
+        <div id="sc-list"></div>
+      </div>
+    </div>
+
+    <!-- משתמשים והרשאות -->
+    <div id="tab-users" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title">👥 משתמשים והרשאות</div>
+        <div id="users-loading" class="text-gray-400 text-sm">טוען...</div>
+        <div style="overflow-x:auto">
+          <table id="users-table" style="width:100%;border-collapse:collapse;display:none">
+            <thead>
+              <tr style="background:#f9fafb;font-size:12px;color:#6b7280">
+                <th style="padding:10px 12px;text-align:right;font-weight:700">שם</th>
+                <th style="padding:10px 12px;text-align:right;font-weight:700">אימייל</th>
+                <th style="padding:10px 12px;text-align:right;font-weight:700">תפקיד</th>
+                <th style="padding:10px 12px;text-align:right;font-weight:700">פעולות</th>
+              </tr>
+            </thead>
+            <tbody id="users-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- הגדרות תשלומים -->
+    <div id="tab-payments" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title">💳 הגדרות תשלומים</div>
+        <div class="field-grid">
+          <div class="field">
+            <label>מטבע</label>
+            <select id="pay-currency">
+              <option value="ILS">₪ שקל (ILS)</option>
+              <option value="USD">$ דולר (USD)</option>
+              <option value="EUR">€ יורו (EUR)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>ימי איחור עד התראה</label>
+            <input id="pay-overdue-days" type="number" min="1" />
+          </div>
+          <div class="field">
+            <label>אמצעי תשלום מועדף</label>
+            <select id="pay-default-method">
+              <option value="cash">מזומן</option>
+              <option value="bit">ביט</option>
+              <option value="transfer">העברה בנקאית</option>
+              <option value="paybox">פייבוקס</option>
+              <option value="standing_order">הוראת קבע</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>הנחה ברירת מחדל (%)</label>
+            <input id="pay-default-discount" type="number" min="0" max="100" />
+          </div>
+        </div>
+        <button class="save-section-btn" onclick="saveSection('payments')">💾 שמור הגדרות תשלומים</button>
+        <span class="saved-msg" id="saved-payments">✓ נשמר!</span>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- מודאל עריכת טבלת קוד -->
+<div id="ct-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:24px;width:560px;max-width:95vw;max-height:85vh;overflow-y:auto;direction:rtl">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 id="ct-modal-title" style="font-size:15px;font-weight:800;color:#1f2937"></h3>
+      <button onclick="closeCTModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#9ca3af">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:#f9fafb;border-radius:10px">
+      <div style="flex:1">
+        <div style="font-size:11px;font-weight:700;color:#9ca3af;margin-bottom:4px">שם טבלה (לא ניתן לעריכה)</div>
+        <div id="ct-name-display" style="font-size:13px;font-weight:700;color:#374151;font-family:monospace"></div>
+      </div>
+      <div style="flex:2">
+        <div style="font-size:11px;font-weight:700;color:#9ca3af;margin-bottom:4px">תיאור טבלה</div>
+        <input id="ct-desc-name" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;font-size:13px;width:100%;font-family:inherit" placeholder="תיאור בעברית" />
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px" id="ct-edit-table">
+      <thead>
+        <tr style="background:#f9fafb">
+          <th style="padding:8px;text-align:right;font-weight:700;color:#6b7280">קוד</th>
+          <th style="padding:8px;text-align:right;font-weight:700;color:#6b7280">תיאור קוד</th>
+          <th style="padding:8px;width:40px"></th>
+        </tr>
+      </thead>
+      <tbody id="ct-edit-body"></tbody>
+    </table>
+    <button onclick="addCTRow()" style="margin-top:10px;background:none;border:1.5px dashed #d1d5db;border-radius:8px;padding:6px 16px;font-size:12px;color:#6b7280;cursor:pointer;width:100%">+ הוסף שורה</button>
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+      <button onclick="closeCTModal()" style="padding:8px 20px;border:1.5px solid #e5e7eb;border-radius:8px;background:white;font-size:13px;cursor:pointer">ביטול</button>
+      <button onclick="saveCTModal()" style="padding:8px 20px;background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">💾 שמור</button>
+    </div>
   </div>
 </div>
 
-<style>
-  .json-editor-modal {
-    width: 80%;
-    max-width: 800px;
+<!-- מודאל הוספת טבלת קוד חדשה -->
+<div id="ct-add-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:24px;width:400px;max-width:95vw;direction:rtl">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:15px;font-weight:800;color:#1f2937">טבלה חדשה</h3>
+      <button onclick="document.getElementById('ct-add-modal').style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;color:#9ca3af">✕</button>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>שם הטבלה (אנגלית)</label>
+      <input id="ct-new-name" type="text" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:monospace;outline:none;width:100%" placeholder="לדוגמה: payment_methods" />
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>תיאור בעברית</label>
+      <input id="ct-new-desc" type="text" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;width:100%" placeholder="לדוגמה: אמצעי תשלום" />
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="document.getElementById('ct-add-modal').style.display='none'" style="padding:8px 20px;border:1.5px solid #e5e7eb;border-radius:8px;background:white;font-size:13px;cursor:pointer">ביטול</button>
+      <button onclick="createNewTable()" style="padding:8px 20px;background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">צור טבלה</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULTS = {
+  'biz-name': 'FitBalance',
+  'biz-phone': '',
+  'biz-email': '',
+  'biz-address': '',
+  'biz-city': '',
+  'biz-website': '',
+  'biz-signature': 'בברכה,\nצוות FitBalance',
+  'tmpl-birthday-subject': 'יום הולדת שמח {שם}! 🎂',
+  'tmpl-birthday-body': 'שלום {שם},\n\nמאחלים לך יום הולדת שמח ומלא שמחה! 🎉\n\nבאהבה,\nצוות FitBalance',
+  'tmpl-debt-subject': 'תזכורת תשלום – {שם}',
+  'tmpl-debt-body': 'שלום {שם},\n\nרצינו להזכיר שיש יתרת חוב בסך {סכום} ₪.\nנשמח לסדר זאת בהקדם.\n\nבברכה,\nצוות FitBalance',
+  'tmpl-welcome-subject': 'ברוכה הבאה ל-FitBalance! 🎀',
+  'tmpl-welcome-body': 'שלום {שם},\n\nשמחים לקבל אותך אלינו! 🎉\nמחכים לראותך בשיעורים.\n\nבאהבה,\nצוות FitBalance',
+  'dash-birthday-days': '30',
+  'dash-widget-rows': '8',
+  'prog-min-lessons': '4',
+  'prog-trial-days': '2',
+  'prog-year-start': '9',
+  'prog-year-end': '6',
+  'pay-currency': 'ILS',
+  'pay-overdue-days': '7',
+  'pay-default-method': 'bit',
+  'pay-default-discount': '0',
+};
+
+const SECTION_FIELDS = {
+  'business':       ['biz-name','biz-phone','biz-email','biz-address','biz-city','biz-website','biz-signature'],
+  'emails-birthday':['tmpl-birthday-subject','tmpl-birthday-body'],
+  'emails-debt':    ['tmpl-debt-subject','tmpl-debt-body'],
+  'emails-welcome': ['tmpl-welcome-subject','tmpl-welcome-body'],
+  'dashboard':      ['dash-birthday-days','dash-widget-rows'],
+  'programs':       ['prog-min-lessons','prog-trial-days','prog-year-start','prog-year-end'],
+  'payments':       ['pay-currency','pay-overdue-days','pay-default-method','pay-default-discount'],
+};
+
+function loadAll() {
+  Object.keys(DEFAULTS).forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = localStorage.getItem('sys_' + id) ?? DEFAULTS[id];
+  });
+}
+
+function saveSection(section) {
+  (SECTION_FIELDS[section] || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) localStorage.setItem('sys_' + id, el.value);
+  });
+  const msg = document.getElementById('saved-' + section);
+  if (msg) { msg.style.display = 'inline'; setTimeout(() => msg.style.display = 'none', 2000); }
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+window.getSetting = id => localStorage.getItem('sys_' + id) ?? DEFAULTS[id];
+
+document.addEventListener('DOMContentLoaded', loadAll);
+</script>
+
+<script>
+// ===================== טבלאות קוד =====================
+const sb = window._sb;
+let ctData = {}; // { tableName: [{id, code, descriptionCode}] }
+let ctCurrentTable = null;
+
+async function loadCodeTables() {
+  const { data, error } = await sb.from('codetables').select('*').order('name').order('code');
+  if (error) { document.getElementById('ct-loading').textContent = 'שגיאה בטעינה'; return; }
+  ctData = {};
+  data.forEach(r => { if (!ctData[r.name]) ctData[r.name] = []; ctData[r.name].push(r); });
+  renderCodeTables();
+}
+
+function renderCodeTables() {
+  const loading = document.getElementById('ct-loading');
+  const list = document.getElementById('ct-list');
+  loading.style.display = 'none';
+  list.innerHTML = '';
+
+  const search = (document.getElementById('ct-search')?.value || '').toLowerCase();
+  const sort = document.getElementById('ct-sort')?.value || 'name';
+
+  let entries = Object.entries(ctData);
+
+  if (search) {
+    entries = entries.filter(([name, rows]) =>
+      name.toLowerCase().includes(search) ||
+      (rows[0]?.descriptionName || '').toLowerCase().includes(search)
+    );
   }
 
-  #json-editor {
-    width: 100%;
-    height: 300px;
-    font-family: monospace;
-    font-size: 14px;
-    direction: ltr;
+  entries.sort(([an, ar], [bn, br]) => {
+    if (sort === 'desc') return (ar[0]?.descriptionName||'').localeCompare(br[0]?.descriptionName||'');
+    if (sort === 'count') return br.length - ar.length;
+    return an.localeCompare(bn);
+  });
+
+  if (!entries.length) {
+    list.innerHTML = '<div style="color:#9ca3af;font-size:13px;padding:12px 0">לא נמצאו תוצאות</div>';
+    return;
   }
 
-  .error-message {
-    color: red;
-    font-size: 0.9em;
-    margin-top: 4px;
+  entries.forEach(([name, rows]) => {
+    const descName = rows[0]?.descriptionName || '';
+    const card = document.createElement('div');
+    card.style.cssText = 'border:1.5px solid #ede9fe;border-radius:12px;margin-bottom:10px;overflow:hidden';
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#faf5ff;cursor:pointer" onclick="openCTModal('${name}')">
+        <div>
+          <span style="font-weight:700;font-size:13px;color:#1f2937;font-family:monospace">${name}</span>
+          ${descName ? `<span style="font-size:12px;color:#6b7280;margin-right:10px">${descName}</span>` : ''}
+        </div>
+        <span style="font-size:12px;color:#9ca3af;white-space:nowrap">${rows.length} ערכים <i class="fas fa-pencil-alt" style="margin-right:6px;color:#8b5cf6"></i></span>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function openCTModal(name) {
+  ctCurrentTable = name;
+  const rows = ctData[name] || [];
+  const descName = rows[0]?.descriptionName || '';
+  document.getElementById('ct-modal-title').textContent = 'עריכת טבלה';
+  document.getElementById('ct-name-display').textContent = name;
+  document.getElementById('ct-desc-name').value = descName;
+  const tbody = document.getElementById('ct-edit-body');
+  tbody.innerHTML = '';
+  rows.forEach(r => tbody.appendChild(buildCTRow(r.id, r.code, r.descriptionCode)));
+  document.getElementById('ct-modal').style.display = 'flex';
+}
+
+function buildCTRow(id, code, descCode) {
+  const tr = document.createElement('tr');
+  tr.dataset.id = id || '';
+  const inp = (val, ph) => `<input value="${String(val??'').replace(/"/g,'&quot;')}" placeholder="${ph}" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 8px;font-size:13px;width:100%;font-family:inherit" />`;
+  tr.innerHTML = `
+    <td style="padding:6px 8px">${inp(code,'קוד')}</td>
+    <td style="padding:6px 8px">${inp(descCode,'תיאור')}</td>
+    <td style="padding:6px 8px;text-align:center"><button onclick="this.closest('tr').remove()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px">✕</button></td>`;
+  return tr;
+}
+
+function addCTRow() {
+  document.getElementById('ct-edit-body').appendChild(buildCTRow(null, '', ''));
+}
+
+function closeCTModal() {
+  document.getElementById('ct-modal').style.display = 'none';
+  ctCurrentTable = null;
+}
+
+async function saveCTModal() {
+  if (!ctCurrentTable) return;
+  const rows = document.querySelectorAll('#ct-edit-body tr');
+  const existing = ctData[ctCurrentTable] || [];
+  const existingIds = new Set(existing.map(r => r.id));
+
+  const toUpsert = [];
+  const seenIds = new Set();
+
+  const descriptionName = document.getElementById('ct-desc-name').value.trim();
+
+  rows.forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    const code = inputs[0].value.trim();
+    const descriptionCode = inputs[1].value.trim();
+    if (!code) return;
+    const id = tr.dataset.id || null;
+    if (id) seenIds.add(Number(id));
+    toUpsert.push({ ...(id ? { id: Number(id) } : {}), name: ctCurrentTable, code, descriptionCode, descriptionName });
+  });
+
+  // מחיקת שורות שהוסרו
+  const toDelete = [...existingIds].filter(id => !seenIds.has(id));
+  if (toDelete.length) await sb.from('codetables').delete().in('id', toDelete);
+
+  // upsert שורות קיימות וחדשות
+  if (toUpsert.length) {
+    const { error } = await sb.from('codetables').upsert(toUpsert, { onConflict: 'id' });
+    if (error) { alert('שגיאה בשמירה: ' + error.message); return; }
   }
 
-  #json-editor.invalid {
-    border: 2px solid red;
-    background-color: #ffe5e5;
-  }
-</style>
+  closeCTModal();
+  await loadCodeTables();
+}
 
+function openAddTableModal() {
+  document.getElementById('ct-new-name').value = '';
+  document.getElementById('ct-add-modal').style.display = 'flex';
+}
+
+async function createNewTable() {
+  const name = document.getElementById('ct-new-name').value.trim();
+  const descName = document.getElementById('ct-new-desc').value.trim();
+  if (!name) return alert('יש להזין שם לטבלה');
+  if (ctData[name]) return alert('טבלה בשם אנגלי זה כבר קיימת');
+  const descExists = descName && Object.values(ctData).some(rows => (rows[0]?.descriptionName||'').trim() === descName);
+  if (descExists) return alert('טבלה בתיאור עברי זה כבר קיימת');
+  ctData[name] = [];
+  document.getElementById('ct-add-modal').style.display = 'none';
+  renderCodeTables();
+  openCTModal(name);
+  document.getElementById('ct-desc-name').value = descName;
+}
+
+// ===================== משתמשים והרשאות =====================
+const ROLES_LIST = ['customer', 'instructor', 'attendance', 'manager', 'admin'];
+const ROLE_LABELS = { customer: 'לקוחה', instructor: 'מדריכ/ה', attendance: 'נוכחות', manager: 'מנהל/ת', admin: 'אדמין' };
+
+async function loadUsers() {
+  const { data, error } = await sb.from('user_profiles')
+    .select('id, auth_id, role, linked_table, linked_id, created_at');
+  if (error) {
+    const msg = document.getElementById('users-loading');
+    msg.innerHTML = `<span style="color:#ef4444">שגיאה בטעינה — יש להוסיף RLS policy לאדמין:</span><br><code style="font-size:11px;background:#f9fafb;padding:4px 8px;border-radius:6px;display:inline-block;margin-top:6px">create policy "admin read profiles" on public.user_profiles for select to authenticated using (auth.uid() in (select auth_id from user_profiles where role='admin'));</code>`;
+    return;
+  }
+
+  // שליפת שמות בנפרד (linked_id אינו FK אמיתי)
+  const custIds = data.filter(u => u.linked_table === 'customers').map(u => u.linked_id);
+  const instIds = data.filter(u => u.linked_table === 'instructors').map(u => u.linked_id);
+
+  const [{ data: custs }, { data: insts }] = await Promise.all([
+    custIds.length ? sb.from('customers').select('id,firstName,lastName,email').in('id', custIds) : { data: [] },
+    instIds.length ? sb.from('instructors').select('id,firstName,lastName,email').in('id', instIds) : { data: [] },
+  ]);
+
+  const custMap = Object.fromEntries((custs||[]).map(c => [c.id, c]));
+  const instMap = Object.fromEntries((insts||[]).map(i => [i.id, i]));
+
+  renderUsers(data, custMap, instMap);
+}
+
+function renderUsers(users, custMap = {}, instMap = {}) {
+  document.getElementById('users-loading').style.display = 'none';
+  const table = document.getElementById('users-table');
+  const tbody = document.getElementById('users-body');
+  table.style.display = '';
+  tbody.innerHTML = '';
+
+  users.forEach(u => {
+    const linked = u.linked_table === 'customers' ? custMap[u.linked_id] : instMap[u.linked_id];
+    const name = linked ? `${linked.firstName||''} ${linked.lastName||''}`.trim() : '—';
+    const email = linked?.email || '—';
+    const tr = document.createElement('tr');
+    tr.style.cssText = 'border-bottom:1px solid #f3f4f6;font-size:13px';
+    tr.innerHTML = `
+      <td style="padding:10px 12px;color:#374151;font-weight:600">${name}</td>
+      <td style="padding:10px 12px;color:#6b7280;font-size:12px">${email}</td>
+      <td style="padding:10px 12px">
+        <select data-id="${u.id}" data-prev="${u.role}" onchange="updateRole(this)" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:4px 8px;font-size:12px;font-family:inherit;cursor:pointer">
+          ${ROLES_LIST.map(r => `<option value="${r}" ${r === u.role ? 'selected' : ''}>${ROLE_LABELS[r]}</option>`).join('')}
+        </select>
+      </td>
+      <td style="padding:10px 12px">
+        <button onclick="deleteUser('${u.id}', this)" style="background:none;border:1.5px solid #fecaca;border-radius:8px;padding:4px 10px;font-size:12px;color:#ef4444;cursor:pointer">מחק</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function updateRole(select) {
+  const id = select.dataset.id;
+  const role = select.value;
+  const { error } = await sb.from('user_profiles').update({ role }).eq('id', id);
+  if (error) { alert('שגיאה בעדכון הרשאה'); select.value = select.dataset.prev; return; }
+  select.dataset.prev = role;
+}
+
+async function deleteUser(id, btn) {
+  if (!confirm('למחוק משתמש זה? הפעולה תנתק אותו מהמערכת.')) return;
+  const { error } = await sb.from('user_profiles').delete().eq('id', id);
+  if (error) { alert('שגיאה במחיקה'); return; }
+  btn.closest('tr').remove();
+}
+
+// ===================== טעינה לפי טאב =====================
+const _origSwitchTab = switchTab;
+window.switchTab = function(name, btn) {
+  _origSwitchTab(name, btn);
+  if (name === 'codetables' && !Object.keys(ctData).length) loadCodeTables();
+  if (name === 'users') loadUsers();
+  if (name === 'shopcats') loadShopCats();
+};
+</script>
+<script>
+// ===================== קטגוריות חנות — עץ היררכי =====================
+let scData = [], scEditId = null, scParentId = null;
+
+async function loadShopCats() {
+  const { data, error } = await sb.from('shop_categories').select('*').order('sort_order');
+  document.getElementById('sc-loading').style.display = 'none';
+  if (error) { document.getElementById('sc-loading').textContent = 'שגיאה בטעינה'; return; }
+  scData = data || [];
+  renderShopCats();
+}
+
+function buildTree(nodes, parentId = null) {
+  return nodes
+    .filter(n => (n.parent_id ?? null) === parentId)
+    .sort((a,b) => a.sort_order - b.sort_order)
+    .map(n => ({ ...n, children: buildTree(nodes, n.id) }));
+}
+
+function renderShopCats() {
+  const list = document.getElementById('sc-list');
+  const tree = buildTree(scData);
+  if (!tree.length) {
+    list.innerHTML = '<p style="color:#9ca3af;font-size:13px">אין קטגוריות. לחצי על כפתור הוספה לעיל.</p>';
+    return;
+  }
+  list.innerHTML = `<div style="font-family:monospace;font-size:13px;line-height:1.8">${tree.map((n,i) => renderTreeNode(n, '', i === tree.length-1)).join('')}</div>`;
+}
+
+function renderTreeNode(node, prefix, isLast) {
+  const connector = isLast ? '└─ ' : '├─ ';
+  const childPrefix = prefix + (isLast ? '   ' : '│  ');
+  const childrenHtml = node.children.map((c,i) => renderTreeNode(c, childPrefix, i === node.children.length-1)).join('');
+  const depth = (prefix.match(/[├└│]/g)||[]).length;
+  const colors = ['#7c3aed','#ec4899','#0891b2','#059669','#d97706'];
+  const color = colors[depth % colors.length];
+  return `
+    <div style="display:flex;align-items:center;gap:0;white-space:pre">
+      <span style="color:#d1d5db">${prefix}${connector}</span>
+      <span style="color:${color};font-weight:${depth===0?800:600};background:${depth===0?'#faf5ff':'transparent'};padding:2px 8px;border-radius:6px">${node.name}</span>
+      <span style="color:#9ca3af;font-size:11px;margin-right:6px">${node.children.length ? `(${node.children.length})` : ''}</span>
+      <button onclick="openAddScModal(${node.id})" title="הוסף תת" style="background:none;border:none;color:#8b5cf6;cursor:pointer;font-size:12px;padding:0 4px">✚</button>
+      <button onclick="openEditScModal(${node.id})" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:12px;padding:0 4px">✏️</button>
+      <button onclick="deleteShopCat(${node.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px;padding:0 4px">×</button>
+    </div>
+    ${childrenHtml}`;
+}
+
+function openAddScModal(parentId = null) {
+  scEditId = null; scParentId = parentId;
+  const parent = parentId ? scData.find(x => x.id === parentId) : null;
+  document.getElementById('sc-modal-title').textContent = parent
+    ? `הוסף תת תחת “${parent.name}”` : 'הוסף קטגוריה ראשית';
+  document.getElementById('sc-name').value = '';
+  document.getElementById('sc-ord').value  = '0';
+  document.getElementById('sc-modal').style.display = 'flex';
+}
+
+function openEditScModal(id) {
+  const r = scData.find(x => x.id === id);
+  if (!r) return;
+  scEditId = id; scParentId = r.parent_id;
+  document.getElementById('sc-modal-title').textContent = `עריכת “${r.name}”`;
+  document.getElementById('sc-name').value = r.name;
+  document.getElementById('sc-ord').value  = r.sort_order;
+  document.getElementById('sc-modal').style.display = 'flex';
+}
+
+async function saveShopCat() {
+  const name       = document.getElementById('sc-name').value.trim();
+  const sort_order = parseInt(document.getElementById('sc-ord').value) || 0;
+  if (!name) return alert('יש להזין שם');
+  const payload = { name, sort_order, parent_id: scParentId ?? null };
+  const { error } = scEditId
+    ? await sb.from('shop_categories').update(payload).eq('id', scEditId)
+    : await sb.from('shop_categories').insert(payload);
+  if (error) return alert('שגיאה: ' + error.message);
+  document.getElementById('sc-modal').style.display = 'none';
+  await loadShopCats();
+}
+
+async function deleteShopCat(id) {
+  const node = scData.find(x => x.id === id);
+  const hasKids = scData.some(x => x.parent_id === id);
+  if (!confirm(hasKids ? `למחוק “${node?.name}” וכל הצאאצאים שלה?` : `למחוק “${node?.name}”?`)) return;
+  const { error } = await sb.from('shop_categories').delete().eq('id', id);
+  if (error) return alert('שגיאה: ' + error.message);
+  await loadShopCats();
+}
+</script>
+
+<!-- מודאל קטגוריות -->
+<div id="sc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:24px;width:320px;max-width:95vw;direction:rtl">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 id="sc-modal-title" style="font-size:14px;font-weight:800;color:#1f2937"></h3>
+      <button onclick="document.getElementById('sc-modal').style.display='none'" style="background:none;border:none;font-size:18px;cursor:pointer;color:#9ca3af">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="field"><label>שם</label>
+        <input id="sc-name" type="text" placeholder="שם הקטגוריה" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;width:100%" /></div>
+      <div class="field"><label>סדר תצוגה</label>
+        <input id="sc-ord" type="number" value="0" min="0" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;width:100%" /></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button onclick="document.getElementById('sc-modal').style.display='none'" style="padding:8px 20px;border:1.5px solid #e5e7eb;border-radius:8px;background:white;font-size:13px;cursor:pointer">ביטול</button>
+      <button onclick="saveShopCat()" style="padding:8px 20px;background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">💾 שמור</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

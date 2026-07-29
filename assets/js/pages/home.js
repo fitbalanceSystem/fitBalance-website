@@ -59,7 +59,7 @@ async function loadAllData() {
   if (sErr) throw sErr;
 
   (codes ?? []).forEach(r => { branchMap[r.code] = r.descriptionCode; });
-  (instructors ?? []).forEach(r => { instructorMap[r.id] = `${r.firstName || ''} ${r.lastName || ''}`.trim(); });
+  (instructors ?? []).forEach(r => { instructorMap[r.id] = r.firstName || ''; });
 
   schedulePrograms = {};
   (sessions ?? []).forEach(s => {
@@ -624,39 +624,69 @@ function vsRender() {
 
 // ── Print / Download ──────────────────────────────────────────────
 window.vsPrint = function () {
-  const content = document.getElementById('vs-content')?.innerHTML || '';
-  const label = document.getElementById('vs-period-label')?.textContent || '';
   const w = window.open('', '_blank');
-  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-    <title>מערכת שעות – ${label}</title>
-    <style>
-      body { font-family: Arial, sans-serif; direction: rtl; padding: 20px; }
-      table { width: 100%; border-collapse: collapse; }
-      th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: right; font-size: 12px; }
-      th { background: #f9f9f9; font-weight: bold; }
-      h2 { color: #db2777; }
-    </style></head><body>
-    <h2>מערכת שעות FitBalance – ${label}</h2>
-    ${content}
-    </body></html>`);
+  w.document.write(vsBuildPrintHTML());
   w.document.close();
+  w.focus();
   w.print();
 };
 
 window.vsDownload = function () {
+  const blob = new Blob([vsBuildPrintHTML()], { type: 'text/html;charset=utf-8' });
   const label = document.getElementById('vs-period-label')?.textContent || 'schedule';
-  const progs = Object.values(schedulePrograms || {});
-  if (!progs.length) return;
-
-  let csv = '\uFEFFשיעור,יום,שעה,סניף,מדריכה\n';
-  progs.forEach(p => {
-    const instr = p.instructor || '';
-    csv += `"${p.name}","${DAYS[(parseInt(p.day)||1)-1]||''}","${fmt(p.time)}","${p.branch}","${instr}"\n`;
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob),
+    download: `מערכת-שעות-${label.replace(/\s/g,'_')}.html`
   });
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `מערכת_שעות_${label.replace(/\s/g,'_')}.csv`;
   a.click();
 };
+
+function vsBuildPrintHTML() {
+  const label = document.getElementById('vs-period-label')?.textContent || '';
+  const ws = vsGetWeekStart(vsDate);
+  const weekDates = Array.from({length:6}, (_,i) => {
+    const d = new Date(ws); d.setDate(d.getDate()+i);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  });
+
+  const headerCols = weekDates.map(ds => {
+    const d = new Date(ds+'T00:00:00');
+    return `<th>יום ${DAYS[d.getDay()]}<br/><small>${d.getDate()}/${d.getMonth()+1}</small></th>`;
+  }).join('');
+
+  const allTimes = [...new Set(
+    weekDates.flatMap(ds => vsGetProgsByDate(ds).map(p => fmt(p.session?.time || p.time)))
+  )].sort();
+
+  const bodyRows = allTimes.map(time => {
+    const cells = weekDates.map(ds => {
+      const progs = vsGetProgsByDate(ds).filter(p => fmt(p.session?.time || p.time) === time);
+      return `<td>${progs.map(p => {
+        const instr = p.session?.instructor || p.instructor || '';
+        const branch = p.session?.branch || p.branch || '';
+        return `<div><strong>${p.name}</strong><br/><small>${branch}${instr ? ' | ' + instr : ''}</small></div>`;
+      }).join('') || ''}</td>`;
+    }).join('');
+    return `<tr><td class="time-col">${time}</td>${cells}</tr>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="UTF-8"/>
+    <title>מערכת שעות – FitBalance</title>
+    <style>
+      body{font-family:'Segoe UI',sans-serif;padding:24px;color:#1f2937;direction:rtl}
+      h1{color:#ec4899;margin-bottom:4px}h2{color:#7c3aed;margin-bottom:16px;font-size:1rem;font-weight:normal}
+      table{width:100%;border-collapse:collapse;font-size:.85rem}
+      th{background:#f3f4f6;padding:8px;text-align:center;border:1px solid #e5e7eb}
+      td{padding:8px;border:1px solid #e5e7eb;vertical-align:top;text-align:center}
+      td.time-col{background:#f9fafb;font-weight:bold;color:#6b7280;width:60px}
+      td div{margin-bottom:4px}td small{color:#9ca3af;font-size:.75rem}
+      @media print{body{padding:0}}
+    </style></head><body>
+    <h1>📅 מערכת שעות – FitBalance</h1>
+    <h2>${label}</h2>
+    <table>
+      <thead><tr><th>שעה</th>${headerCols}</tr></thead>
+      <tbody>${bodyRows || '<tr><td colspan="7">אין שיעורים בשבוע זה</td></tr>'}</tbody>
+    </table>
+  </body></html>`;
+}

@@ -181,9 +181,17 @@
         <td><span class="${badge}">${label}</span></td>
         <td>
           <button onclick="openOrder(${o.id})" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;">👁️ פרטים</button>
+          <button onclick="deleteOrder(${o.id})" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;margin-right:4px;">🗑️ מחק</button>
         </td>
       </tr>`;
     }).join('') : '<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:40px;">אין הזמנות</td></tr>';
+  }
+
+  async function deleteOrder(id) {
+    if (!confirm(`למחוק הזמנה #${id}?`)) return;
+    const { error } = await window._sb.from('orders').delete().eq('id', id);
+    if (error) { alert('שגיאה במחיקה: ' + error.message); return; }
+    await load();
   }
 
   function openOrder(id) {

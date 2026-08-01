@@ -49,14 +49,25 @@ window.customerService = {
   },
 
   async getProducts() {
-    const { data, error } = await window._sb
+    // נסה עם product_variants, אם הטבלה לא קיימת — fallback ללאה
+    let { data, error } = await window._sb
       .from('products')
-      .select('*')
+      .select('*, product_variants(*)')
       .eq('is_active', true)
-      .or('stock.is.null,stock.gt.0')
       .order('category');
+    if (error?.code === 'PGRST200') {
+      ({ data, error } = await window._sb
+        .from('products')
+        .select('*')
+        .eq('is_active', true)
+        .order('category'));
+    }
     if (error) throw error;
-    return data ?? [];
+    // הסתר מוצרים ללא מלאי — אלא אם יש וריאנטים עם מלאי
+    return (data ?? []).filter(p => {
+      if (p.stock == null || p.stock > 0) return true;
+      return (p.product_variants || []).some(v => v.stock == null || v.stock > 0);
+    });
   },
 
   async getOrders(customerId) {
@@ -69,30 +80,62 @@ window.customerService = {
     return data ?? [];
   },
 
-  async createOrder(customerId, items, total, guestInfo = null) {
-    const payload = { total, status: 'pending' };
-    if (customerId) {
-      payload.customer_id = customerId;
-    } else if (guestInfo) {
-      payload.guest_name    = guestInfo.name    || null;
-      payload.guest_phone   = guestInfo.phone   || null;
-      payload.guest_email   = guestInfo.email   || null;
-      payload.guest_address = guestInfo.address || null;
-      payload.guest_notes   = guestInfo.notes   || null;
+  async createOrder(customerId, items, total, guestInfo = null, couponCode = null) {
+    const numericId = customerId && customerId !== 'guest' ? Number(customerId) : null;
+
+    // שלב 1: גלה אילו עמודות קיימות בטבלת orders
+    const { data: sampleRow } = await window._sb.from('orders').select('*').limit(1).maybeSingle();
+    const existingCols = sampleRow ? new Set(Object.keys(sampleRow)) : new Set();
+
+    const payload = { total, status: 'new' };
+    if (numericId) {
+      payload.customer_id = numericId;
     }
+    if (couponCode && existingCols.has('coupon_code'))  payload.coupon_code   = couponCode;
+    if (existingCols.has('notes')) {
+      if (numericId && guestInfo?.notes)  payload.notes = guestInfo.notes;
+      if (!numericId && guestInfo?.notes) payload.notes = guestInfo.notes;
+    }
+    if (!numericId && guestInfo) {
+      if (existingCols.has('guest_name'))    payload.guest_name    = guestInfo.name    || null;
+      if (existingCols.has('guest_phone'))   payload.guest_phone   = guestInfo.phone   || null;
+      if (existingCols.has('guest_email'))   payload.guest_email   = guestInfo.email   || null;
+      if (existingCols.has('guest_address')) payload.guest_address = guestInfo.address || null;
+    }
+
     const { data: order, error: oErr } = await window._sb
       .from('orders')
       .insert(payload)
       .select()
       .single();
     if (oErr) throw oErr;
-    const rows = items.map(i => ({ order_id: order.id, product_id: i.id, quantity: i.qty, price: i.price }));
+    const { data: sampleItem } = await window._sb.from('order_items').select('*').limit(1).maybeSingle();
+    const itemCols = sampleItem ? new Set(Object.keys(sampleItem)) : new Set();
+    const rows = items.map(i => {
+      const row = {
+        order_id:   order.id,
+        product_id: i.id,
+        quantity:   i.qty,
+        price:      i.price,
+      };
+      if (itemCols.has('variant_id'))    row.variant_id    = i.variantId    || null;
+      if (itemCols.has('variant_label')) row.variant_label = i.variantLabel || null;
+      return row;
+    });
     const { error: iErr } = await window._sb.from('order_items').insert(rows);
     if (iErr) throw iErr;
-    // decrement stock — best effort, לא מפיל הזמנה אם נכשל
-    await Promise.all(items.map(i =>
-      window._sb.rpc('decrement_stock', { p_product_id: i.id, p_qty: i.qty }).then(() => {}).catch(() => {})
-    )).catch(() => {});
+    // הורדת מלאי — לפי וריאנט אם קיים, אחרת לפי מוצר
+    await Promise.all(items.map(async i => {
+      try {
+        if (i.variantId) {
+          const { error } = await window._sb.rpc('decrement_variant_stock', { p_variant_id: i.variantId, p_qty: i.qty });
+          if (error) console.warn('decrement_variant_stock error:', error.message);
+        } else {
+          const { error } = await window._sb.rpc('decrement_stock', { p_product_id: i.id, p_qty: i.qty });
+          if (error) console.warn('decrement_stock error:', error.message);
+        }
+      } catch (_) {}
+    })).catch(() => {});
     return order;
   },
 };

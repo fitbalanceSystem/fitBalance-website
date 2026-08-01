@@ -10,9 +10,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <script src="../../services/supabaseClient.js"></script>
   <style>
-    .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 14px; margin-bottom: 24px; }
     .kpi-card { background: white; border-radius: 16px; padding: 18px 22px; border: 1px solid #f3f0ff; box-shadow: 0 2px 12px rgba(139,92,246,.07); }
     .kpi-label { font-size: 11px; color: #9ca3af; margin-bottom: 6px; font-weight: 600; }
     .kpi-value { font-size: 28px; font-weight: 800; }
@@ -79,6 +80,11 @@
           <div class="kpi-label">הזמנות ממתינות</div>
           <div class="kpi-value" style="color:#d97706" id="kpiOrders">—</div>
         </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🛒</div>
+          <div class="kpi-label">הכנסות חנות (החודש)</div>
+          <div class="kpi-value" style="color:#059669" id="kpiShopRevenue">—</div>
+        </div>
       </div>
 
       <!-- שורה עליונה: עדכונים + ימי הולדת -->
@@ -95,6 +101,25 @@
             <a href="customers.html" class="widget-link">ראה הכל ←</a>
           </div>
           <div class="widget-body" id="birthdayList"><div class="empty-msg">טוען...</div></div>
+        </div>
+      </div>
+
+      <!-- אנליטיקס חנות -->
+      <div class="dash-grid" style="margin-bottom:16px;">
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title">📈 מכירות חנות — 6 חודשים אחרונים</div>
+            <a href="orders.html" class="widget-link">לכל ההזמנות ←</a>
+          </div>
+          <div class="widget-body" style="padding:16px 18px;" id="shopChartWrap">
+            <canvas id="shopChart" height="120"></canvas>
+          </div>
+        </div>
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title">🏆 מוצרים מובילים</div>
+          </div>
+          <div class="widget-body" id="topProductsList"><div class="empty-msg">טוען...</div></div>
         </div>
       </div>
 
@@ -132,6 +157,8 @@
     document.getElementById('dateBanner').textContent =
       `יום ${days[now.getDay()]}, ${now.getDate()} ב${months[now.getMonth()]} ${now.getFullYear()}`;
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>emailjs.init('3OeAsX8ImAoqype7f');</script>
   <script src="js/dashboard.js" defer></script>
 
   <!-- מודאל עריכת מייל לפני שליחה -->
@@ -142,33 +169,47 @@
         <button onclick="document.getElementById('mailModal').style.display='none'" style="background:rgba(255,255,255,.2);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;">×</button>
       </div>
       <div style="padding:24px;display:grid;gap:14px;">
+        <input id="mailFirstName" type="hidden" />
+        <input id="mailGiftLink" type="hidden" />
+        <input id="mailCustomerId" type="hidden" />
         <div>
           <label style="font-size:12px;font-weight:700;color:#6b7280;display:block;margin-bottom:6px;">נמען</label>
           <input id="mailTo" type="text" readonly style="width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;background:#f9fafb;outline:none;" />
         </div>
-        <div>
-          <label style="font-size:12px;font-weight:700;color:#6b7280;display:block;margin-bottom:6px;">נושא</label>
-          <input id="mailSubject" type="text" style="width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;" />
-        </div>
-        <div>
-          <label style="font-size:12px;font-weight:700;color:#6b7280;display:block;margin-bottom:6px;">גוף המייל</label>
-          <textarea id="mailBody" rows="6" style="width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;resize:vertical;"></textarea>
-        </div>
         <div style="display:flex;justify-content:flex-end;gap:10px;">
           <button onclick="document.getElementById('mailModal').style.display='none'" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">ביטול</button>
-          <button onclick="sendMailFromModal()" style="background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:10px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">שלח ב-Gmail →</button>
+          <button onclick="sendMailFromModal()" id="sendMailBtn" style="background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:10px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">שלח מייל ✉️</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    function sendMailFromModal() {
+    async function sendMailFromModal() {
+      const btn = document.getElementById('sendMailBtn');
       const to = document.getElementById('mailTo').value;
-      const subject = encodeURIComponent(document.getElementById('mailSubject').value);
-      const body = encodeURIComponent(document.getElementById('mailBody').value);
-      window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to)}&su=${subject}&body=${body}`, '_blank');
-      document.getElementById('mailModal').style.display = 'none';
+      const firstName = document.getElementById('mailFirstName').value;
+      const customerId = document.getElementById('mailCustomerId').value;
+      console.log('sending customer_id:', customerId);
+      btn.disabled = true;
+      btn.textContent = 'שולח...';
+      try {
+        await emailjs.send('service_eum98de', 'template_elsg6w1', {
+          to_email: to,
+          first_name: firstName,
+          gift_link: document.getElementById('mailGiftLink').value,
+          customer_id: customerId,
+        });
+        await window._sb.from('customers').update({ birthday_email_sent_at: new Date().toISOString() }).eq('id', customerId);
+        document.getElementById('mailModal').style.display = 'none';
+        alert('המייל נשלח בהצלחה! 🎉');
+        loadBirthdays();
+      } catch(e) {
+        alert('שגיאה בשליחת המייל: ' + (e?.text || e?.message || JSON.stringify(e)));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'שלח מייל ✉️';
+      }
     }
   </script>
 </body>

@@ -1,0 +1,687 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Amazon Q
+Did you know?
+MCP is available in Amazon Q!
+Select code & ask me to explain, debug or optimize it, or type / for quick actions.
+The next phase is to upgrade the Admin Management System into a complete Store CMS.
+
+The goal:
+As a store owner, I should be able to manage everything from the admin panel without touching code.
+
+Implement a full content and product management system.
+
+Include:
+
+PRODUCT MANAGEMENT
+
+Admin can create and edit products:
+
+Basic information:
+
+Product name
+
+Short description
+
+Full description
+
+Category
+
+Subcategory
+
+Brand
+
+SKU
+
+Tags
+
+Pricing:
+
+Regular price
+
+Sale price
+
+Discount percentage
+
+Sale start date
+
+Sale end date
+
+Inventory:
+
+Stock quantity
+
+Low stock threshold
+
+Out of stock status
+
+Images:
+
+Upload multiple product images
+
+Change main image
+
+Delete images
+
+Reorder images
+
+PRODUCT VARIATIONS
+
+Support products with options:
+
+Colors:
+
+Add colors
+
+Edit colors
+
+Remove colors
+
+Sizes:
+
+Add sizes
+
+Edit sizes
+
+Remove sizes
+
+Each variation should support:
+
+Separate stock quantity
+
+Separate SKU
+
+Separate price if needed
+
+Separate image if needed
+
+Examples:
+A shirt:
+Colors:
+
+Black
+
+White
+
+Pink
+
+Sizes:
+
+S
+
+M
+
+L
+
+XL
+
+PROMOTIONS MANAGEMENT
+
+Admin can create promotions:
+
+Discount percentage
+
+Fixed amount discount
+
+Sale products
+
+Category discounts
+
+Coupon codes
+
+Limited time offers
+
+Admin can control:
+
+Start date
+
+End date
+
+Active/inactive
+
+HOMEPAGE CONTENT MANAGEMENT
+
+Admin can update:
+
+Hero banners
+
+Images
+
+Texts
+
+Featured products
+
+Recommended products
+
+Categories shown on homepage
+
+CATEGORY MANAGEMENT
+
+Admin can:
+
+Create categories
+
+Edit categories
+
+Upload category images
+
+Change order
+
+Hide/show categories
+
+CUSTOMER MANAGEMENT
+
+Admin can view:
+
+Customers
+
+Orders history
+
+Total purchases
+
+Notes
+
+Customer status
+
+STORE SETTINGS
+
+Admin can manage:
+
+Store logo
+
+Colors/theme
+
+Contact details
+
+Shipping settings
+
+Payment settings
+
+Social links
+
+ADMIN UX
+
+Create a clear management interface:
+
+Left/right navigation:
+
+Dashboard
+
+Products
+
+Categories
+
+Orders
+
+Customers
+
+Promotions
+
+Homepage
+
+Settings
+
+Make it simple enough for a non-technical store owner.
+
+Before coding:
+Review the current admin system and implement only missing functionality.
+
+
+Context
+Let me start by reviewing the current admin system before implementing anything.
+
+1 directory listed
+fitBalance_website
+9 files read
+products.html
+product-form.html
+product-form.js
+orders.html
+settings.html
+customers.html
+index.html
+sidebar.html
+admin-theme.css
+Now let me check the existing SQL files and the system-settings page to understand what's already in the DB:
+
+4 files read
+products.sql
+shop_categories.sql
+system-settings.html
+system-settings.js
+Now I have a thorough understanding of the existing system. Let me analyze what exists vs. what's missing:
+
+Already exists:
+
+Products page with variants, images, videos, categories ✅
+
+Orders management ✅
+
+Customers page ✅
+
+Shop categories (in system-settings) ✅
+
+Basic sidebar with navigation ✅
+
+Missing / needs building:
+
+Products: sale price, discount %, SKU, brand, tags, full description, low stock threshold, sale dates
+
+Promotions management page (entirely new)
+
+Homepage content management page (entirely new)
+
+Store settings tab (logo, theme colors, social links, shipping)
+
+Sidebar: add Promotions, Homepage, Store Settings links
+
+Customer management: orders history, total purchases, notes view
+
+Let me build these now:
+
+1 file read
+customers.js
+Now I have a complete picture. Let me build all the missing pieces. Here's my plan:
+
+SQL migration — add missing product columns (SKU, brand, tags, sale_price, discount_pct, sale_start/end, low_stock_threshold) + promotions table + store_settings table + homepage_content table
+
+Upgrade products.html — add the missing fields to the modal
+
+New promotions.html — full promotions management
+
+New homepage.html — homepage content management
+
+Upgrade system-settings.html — add Store Settings tab (logo, colors, social links, shipping)
+
+Update component/sidebar.html — add new nav links
+
+Upgrade customers.html — add orders history + total purchases panel in view modal
+
+store_cms.sql
++74
+-0
+
+Undo
+Now upgrade the products modal to include all missing fields:
+
+products.html
++141
+-45
+
+Undo
+Now create the Promotions management page:
+
+promotions.html
++314
+-0
+
+Undo
+Now create the Homepage Content Management page:
+
+homepage.html
++308
+-0
+
+Undo
+Now create the Store Settings page:
+
+store-settings.html
++338
+-0
+
+Undo
+Now update the sidebar to add the new navigation links:
+
+sidebar.html
++17
+-0
+
+Undo
+Now upgrade the customers view modal to show orders history and total purchases. I'll update the customers.html and customers.js:
+
+customers.html
++8
+-0
+
+Undo
+Now update customers.js to load and display orders in the view modal:
+
+customers.js
++35
+-0
+
+Undo
+Now update the utilities/sidebar.js to also load the new sidebar component (it currently loads component/sidebar.html). Let me check how it works:
+
+1 file read
+sidebar.js
+Good — the sidebar loads from component/sidebar.html which I've already updated. Now let me also add the exportCSV function that's referenced in orders.html but missing, and verify the products.html modal still has the variants section after my edits:
+
+1 file read
+orders.html
+The exportCSV function is referenced but missing. Let me add it to orders.html:
+
+orders.html
++27
+-0
+
+Undo
+Now let me also update the system-settings.html to add a "קטגוריות" tab that includes the image and visibility fields for categories (since we added those columns):
+
+system-settings.html
+Error
+An unexpected error occurred, check the logs for more information.

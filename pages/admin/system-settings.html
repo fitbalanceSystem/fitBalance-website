@@ -61,6 +61,7 @@
       <button onclick="switchTab('codetables',this)">🗂️ טבלאות קוד</button>
       <button onclick="switchTab('shopcats',this)">🛍️ קטגוריות חנות</button>
       <button onclick="switchTab('users',this)">👥 משתמשים והרשאות</button>
+      <button onclick="switchTab('gifts',this)">🎁 מתנות יום הולדת</button>
     </div>
 
     <!-- פרטי עסק -->
@@ -148,6 +149,13 @@
           <div class="field">
             <label>מקסימום שורות בכל ווידג'ט</label>
             <input id="dash-widget-rows" type="number" min="3" max="20" />
+          </div>
+          <div class="field">
+            <label>לוח ימי הולדת</label>
+            <select id="dash-birthday-calendar">
+              <option value="gregorian">לועזי</option>
+              <option value="hebrew">עברי</option>
+            </select>
           </div>
         </div>
         <button class="save-section-btn" onclick="saveSection('dashboard')">💾 שמור הגדרות דשבורד</button>
@@ -240,6 +248,18 @@
             <tbody id="users-body"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- מתנות יום הולדת -->
+    <div id="tab-gifts" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title" style="justify-content:space-between">
+          <span>🎁 מתנות יום הולדת</span>
+          <button class="save-section-btn" style="margin-top:0" onclick="openGiftModal(null)">+ מתנה חדשה</button>
+        </div>
+        <div id="gifts-loading" style="color:#9ca3af;font-size:13px">טוען...</div>
+        <div id="gifts-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:8px"></div>
       </div>
     </div>
 
@@ -357,6 +377,7 @@ const DEFAULTS = {
   'tmpl-welcome-body': 'שלום {שם},\n\nשמחים לקבל אותך אלינו! 🎉\nמחכים לראותך בשיעורים.\n\nבאהבה,\nצוות FitBalance',
   'dash-birthday-days': '30',
   'dash-widget-rows': '8',
+  'dash-birthday-calendar': 'gregorian',
   'prog-min-lessons': '4',
   'prog-trial-days': '2',
   'prog-year-start': '9',
@@ -372,7 +393,7 @@ const SECTION_FIELDS = {
   'emails-birthday':['tmpl-birthday-subject','tmpl-birthday-body'],
   'emails-debt':    ['tmpl-debt-subject','tmpl-debt-body'],
   'emails-welcome': ['tmpl-welcome-subject','tmpl-welcome-body'],
-  'dashboard':      ['dash-birthday-days','dash-widget-rows'],
+  'dashboard':      ['dash-birthday-days','dash-widget-rows','dash-birthday-calendar'],
   'programs':       ['prog-min-lessons','prog-trial-days','prog-year-start','prog-year-end'],
   'payments':       ['pay-currency','pay-overdue-days','pay-default-method','pay-default-discount'],
 };
@@ -673,6 +694,8 @@ function renderTreeNode(node, prefix, isLast) {
       <span style="color:#d1d5db">${prefix}${connector}</span>
       <span style="color:${color};font-weight:${depth===0?800:600};background:${depth===0?'#faf5ff':'transparent'};padding:2px 8px;border-radius:6px">${node.name}</span>
       <span style="color:#9ca3af;font-size:11px;margin-right:6px">${node.children.length ? `(${node.children.length})` : ''}</span>
+      ${node.is_visible === false ? '<span style="font-size:10px;background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 6px;margin-right:4px;">hidden</span>' : ''}
+      <button onclick="toggleScVisible(${node.id},${node.is_visible !== false})" title="toggle visibility" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 3px;opacity:.7;">${node.is_visible === false ? '👁️‍🗨️' : '👁️'}</button>
       <button onclick="openAddScModal(${node.id})" title="הוסף תת" style="background:none;border:none;color:#8b5cf6;cursor:pointer;font-size:12px;padding:0 4px">✚</button>
       <button onclick="openEditScModal(${node.id})" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:12px;padding:0 4px">✏️</button>
       <button onclick="deleteShopCat(${node.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:12px;padding:0 4px">×</button>
@@ -687,6 +710,8 @@ function openAddScModal(parentId = null) {
     ? `הוסף תת תחת “${parent.name}”` : 'הוסף קטגוריה ראשית';
   document.getElementById('sc-name').value = '';
   document.getElementById('sc-ord').value  = '0';
+  document.getElementById('sc-img-url').value = '';
+  document.getElementById('sc-visible').checked = true;
   document.getElementById('sc-modal').style.display = 'flex';
 }
 
@@ -697,6 +722,8 @@ function openEditScModal(id) {
   document.getElementById('sc-modal-title').textContent = `עריכת “${r.name}”`;
   document.getElementById('sc-name').value = r.name;
   document.getElementById('sc-ord').value  = r.sort_order;
+  document.getElementById('sc-img-url').value = r.image_url ?? '';
+  document.getElementById('sc-visible').checked = r.is_visible ?? true;
   document.getElementById('sc-modal').style.display = 'flex';
 }
 
@@ -704,12 +731,20 @@ async function saveShopCat() {
   const name       = document.getElementById('sc-name').value.trim();
   const sort_order = parseInt(document.getElementById('sc-ord').value) || 0;
   if (!name) return alert('יש להזין שם');
-  const payload = { name, sort_order, parent_id: scParentId ?? null };
+  const is_visible = document.getElementById('sc-visible').checked;
+  const image_url   = document.getElementById('sc-img-url').value.trim() || null;
+  const payload = { name, sort_order, parent_id: scParentId ?? null, is_visible, image_url };
   const { error } = scEditId
     ? await sb.from('shop_categories').update(payload).eq('id', scEditId)
     : await sb.from('shop_categories').insert(payload);
   if (error) return alert('שגיאה: ' + error.message);
   document.getElementById('sc-modal').style.display = 'none';
+  await loadShopCats();
+}
+
+async function toggleScVisible(id, currentlyVisible) {
+  const { error } = await sb.from('shop_categories').update({ is_visible: !currentlyVisible }).eq('id', id);
+  if (error) return alert('error: ' + error.message);
   await loadShopCats();
 }
 
@@ -735,6 +770,12 @@ async function deleteShopCat(id) {
         <input id="sc-name" type="text" placeholder="שם הקטגוריה" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;width:100%" /></div>
       <div class="field"><label>סדר תצוגה</label>
         <input id="sc-ord" type="number" value="0" min="0" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;width:100%" /></div>
+      <div class="field"><label>Image URL</label>
+        <input id="sc-img-url" type="text" placeholder="https://..." style="border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;width:100%" /></div>
+      <div style="display:flex;align-items:center;gap:8px;padding-top:4px;">
+        <input type="checkbox" id="sc-visible" checked style="width:16px;height:16px;accent-color:#8b5cf6;cursor:pointer;" />
+        <label for="sc-visible" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer;">visible</label>
+      </div>
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
       <button onclick="document.getElementById('sc-modal').style.display='none'" style="padding:8px 20px;border:1.5px solid #e5e7eb;border-radius:8px;background:white;font-size:13px;cursor:pointer">ביטול</button>
@@ -742,6 +783,113 @@ async function deleteShopCat(id) {
     </div>
   </div>
 </div>
+
+<!-- מודאל מתנה -->
+<div id="gift-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:24px;width:420px;max-width:95vw;direction:rtl">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 id="gift-modal-title" style="font-size:15px;font-weight:800;color:#1f2937"></h3>
+      <button onclick="closeGiftModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#9ca3af">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="field"><label>שם המתנה</label><input id="gift-name" type="text" placeholder="לדוגמא: שיעור חינם" /></div>
+      <div class="field"><label>תיאור</label><textarea id="gift-desc" rows="3" placeholder="תיאור קצר של המתנה"></textarea></div>
+      <div class="field"><label>URL תמונה</label><input id="gift-img" type="text" placeholder="https://..." /></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="gift-active" checked style="width:16px;height:16px;accent-color:#ec4899;cursor:pointer" />
+        <label for="gift-active" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer">פעילה</label>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button onclick="closeGiftModal()" style="padding:8px 20px;border:1.5px solid #e5e7eb;border-radius:8px;background:white;font-size:13px;cursor:pointer">ביטול</button>
+      <button onclick="saveGift()" style="padding:8px 20px;background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">💾 שמור</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== מתנות יום הולדת =====================
+let giftsData = [], giftEditId = null;
+
+async function loadGifts() {
+  const { data, error } = await sb.from('birthday_gifts').select('*').order('sort_order').order('id');
+  document.getElementById('gifts-loading').style.display = 'none';
+  if (error) { document.getElementById('gifts-loading').textContent = 'שגיאה בטעינה'; return; }
+  giftsData = data || [];
+  renderGifts();
+}
+
+function renderGifts() {
+  const list = document.getElementById('gifts-list');
+  if (!giftsData.length) {
+    list.innerHTML = '<p style="color:#9ca3af;font-size:13px">אין מתנות. לחצי על כפתור הוספה לעיל.</p>';
+    return;
+  }
+  list.innerHTML = giftsData.map(g => `
+    <div style="border:1.5px solid ${g.is_active ? '#ede9fe' : '#e5e7eb'};border-radius:14px;overflow:hidden;background:white;box-shadow:0 2px 8px rgba(139,92,246,.06);opacity:${g.is_active ? 1 : .55}">
+      <div style="height:140px;background:${g.image_url ? `url('${g.image_url}') center/cover` : 'linear-gradient(135deg,#fce7f3,#ede9fe)'};display:flex;align-items:center;justify-content:center;font-size:48px">
+        ${g.image_url ? '' : '🎁'}
+      </div>
+      <div style="padding:12px">
+        <div style="font-size:14px;font-weight:800;color:#1f2937;margin-bottom:4px">${g.name}</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:10px;min-height:32px">${g.description || ''}</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="openGiftModal(${g.id})" style="flex:1;padding:6px;background:#f3f0ff;color:#7c3aed;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">✏️ ערוך</button>
+          <button onclick="deleteGift(${g.id})" style="padding:6px 10px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-size:12px;cursor:pointer">✕</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function openGiftModal(id) {
+  giftEditId = id;
+  const g = id ? giftsData.find(x => x.id === id) : null;
+  document.getElementById('gift-modal-title').textContent = g ? 'עריכת מתנה' : 'מתנה חדשה';
+  document.getElementById('gift-name').value = g?.name || '';
+  document.getElementById('gift-desc').value = g?.description || '';
+  document.getElementById('gift-img').value  = g?.image_url || '';
+  document.getElementById('gift-active').checked = g ? (g.is_active ?? true) : true;
+  document.getElementById('gift-modal').style.display = 'flex';
+}
+
+function closeGiftModal() {
+  document.getElementById('gift-modal').style.display = 'none';
+  giftEditId = null;
+}
+
+async function saveGift() {
+  const name = document.getElementById('gift-name').value.trim();
+  if (!name) return alert('יש להזין שם מתנה');
+  const payload = {
+    name,
+    description: document.getElementById('gift-desc').value.trim() || null,
+    image_url:   document.getElementById('gift-img').value.trim()  || null,
+    is_active:   document.getElementById('gift-active').checked,
+    sort_order:  giftEditId ? (giftsData.find(g => g.id === giftEditId)?.sort_order ?? 0) : giftsData.length,
+  };
+  const { error } = giftEditId
+    ? await sb.from('birthday_gifts').update(payload).eq('id', giftEditId)
+    : await sb.from('birthday_gifts').insert(payload);
+  if (error) return alert('שגיאה: ' + error.message);
+  closeGiftModal();
+  await loadGifts();
+}
+
+async function deleteGift(id) {
+  const g = giftsData.find(x => x.id === id);
+  if (!confirm(`למחוק את המתנה "${g?.name}"?`)) return;
+  const { error } = await sb.from('birthday_gifts').delete().eq('id', id);
+  if (error) return alert('שגיאה: ' + error.message);
+  await loadGifts();
+}
+
+// טעינה כשנפתח הטאב
+ const _origSwitchTab2 = window.switchTab;
+window.switchTab = function(name, btn) {
+  _origSwitchTab2(name, btn);
+  if (name === 'gifts' && !giftsData.length) loadGifts();
+};
+</script>
 
 </body>
 </html>

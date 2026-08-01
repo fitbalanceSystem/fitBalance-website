@@ -18,6 +18,8 @@ function showReport(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('report-' + name).classList.add('active');
   btn.classList.add('active');
+  if (name === 'inventory') loadInventoryReport();
+  if (name === 'gifts') loadGiftsReport();
 }
 
 function kpiCard(label, value, color) {
@@ -716,6 +718,159 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
+
+// ===== דוח מתנות יום הולדת =====
+async function loadGiftsReport() {
+  const tbody = document.getElementById('giftsBody');
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-gray-400">טוען...</td></tr>';
+
+  const { data, error } = await supabaseClient
+    .from('birthday_gift_selections')
+    .select(`
+      selected_at,
+      customers!inner(id, firstName, lastName, mobile, birthDate),
+      birthday_gifts!inner(name)
+    `)
+    .order('selected_at', { ascending: false });
+
+  if (error) { tbody.innerHTML = `<tr><td colspan="6" class="text-center p-4 text-red-500">שגיאה: ${error.message}</td></tr>`; return; }
+
+  if (!data?.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-gray-400">אין בחירות עדיין</td></tr>';
+    document.getElementById('giftsKpi').innerHTML = '';
+    return;
+  }
+
+  // ספירה לפי מתנה
+  const giftCount = {};
+  data.forEach(r => {
+    const name = r.birthday_gifts?.name || '—';
+    giftCount[name] = (giftCount[name] || 0) + 1;
+  });
+  const topGift = Object.entries(giftCount).sort((a,b) => b[1]-a[1])[0];
+
+  document.getElementById('giftsKpi').innerHTML =
+    kpiCard('סה"כ בחירות', data.length, '#7c3aed') +
+    kpiCard('מתנה פופולרית', topGift ? `${topGift[0]} (${topGift[1]})` : '—', '#ec4899');
+
+  tbody.innerHTML = data.map(r => {
+    const c = r.customers;
+    const date = r.selected_at?.split('T')[0] || '';
+    return `<tr class="hover:bg-gray-50">
+      <td class="p-3 border"><a href="customer-form.html?id=${c.id}" class="text-blue-600 hover:underline">${c.firstName} ${c.lastName}</a></td>
+      <td class="p-3 border">${c.mobile || ''}</td>
+      <td class="p-3 border">${c.birthDate || ''}</td>
+      <td class="p-3 border font-medium text-purple-700">${r.birthday_gifts?.name || '—'}</td>
+      <td class="p-3 border">${date}</td>
+      <td class="p-3 border text-center">
+        <a href="../customer/birthday-gift.html?id=${c.id}" target="_blank" style="font-size:11px;color:#8b5cf6">🔗 קישור</a>
+        <button onclick="deleteGiftSelection(${c.id}, this)" style="margin-right:8px;background:none;border:none;color:#ef4444;cursor:pointer;font-size:11px;font-weight:600">✕ מחק</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function deleteGiftSelection(customerId, btn) {
+  if (!confirm('למחוק את בחירת המתנה? הלקוחה תוכל לבחור מחדש.')) return;
+  const { error } = await supabaseClient.from('birthday_gift_selections').delete().eq('customer_id', customerId);
+  if (error) return alert('שגיאה: ' + error.message);
+  btn.closest('tr').remove();
+}
+window.deleteGiftSelection = deleteGiftSelection;
+
+// ===== דוח מלאי =====
+let _invData = [], _invFilter = 'all';
+
+function setInvFilter(filter, btn) {
+  _invFilter = filter;
+  document.querySelectorAll('._inv-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderInventoryTable();
+}
+window.setInvFilter = setInvFilter;
+
+function renderInventoryTable() {
+  const tbody = document.getElementById('inventoryBody');
+  const rows = _invFilter === 'out'  ? _invData.filter(r => r.stock === 0)
+             : _invFilter === 'low'  ? _invData.filter(r => r.stock > 0 && r.stock <= r.threshold)
+             : _invData;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-gray-400">אין נתונים</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const statusHtml = r.stock === 0
+      ? '<span class="text-red-600 font-bold">🔴 אזל</span>'
+      : r.stock <= r.threshold
+      ? '<span class="text-orange-500 font-bold">⚠️ נמוך</span>'
+      : '<span class="text-green-600">✓ תקין</span>';
+    return `<tr class="hover:bg-gray-50">
+      <td class="p-3 border font-medium">${r.productName}</td>
+      <td class="p-3 border">${r.category}</td>
+      <td class="p-3 border">${r.variant}</td>
+      <td class="p-3 border text-gray-500 text-xs">${r.sku}</td>
+      <td class="p-3 border">₪${Number(r.price).toFixed(2)}</td>
+      <td class="p-3 border font-bold ${r.stock === 0 ? 'text-red-600' : r.stock <= r.threshold ? 'text-orange-500' : ''}">${
+        r.stock == null ? '—' : r.stock}</td>
+      <td class="p-3 border">${r.stock != null ? '₪' + (r.stock * r.price).toLocaleString() : '—'}</td>
+      <td class="p-3 border">${statusHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadInventoryReport() {
+  const tbody = document.getElementById('inventoryBody');
+  tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-gray-400">טוען...</td></tr>';
+
+  const [{ data: products }, { data: variants }] = await Promise.all([
+    supabaseClient.from('products').select('id, name, category, category_id, price, stock, low_stock_threshold, sku, is_active').eq('is_active', true).order('name'),
+    supabaseClient.from('product_variants').select('product_id, option_type, option_value, price_modifier, stock, sku'),
+  ]);
+
+  _invData = [];
+
+  (products || []).forEach(p => {
+    const pVariants = (variants || []).filter(v => v.product_id === p.id);
+    const threshold = p.low_stock_threshold ?? 5;
+    if (pVariants.length) {
+      pVariants.forEach(v => {
+        _invData.push({
+          productName: p.name,
+          category:    p.category || '—',
+          variant:     v.option_value || '—',
+          sku:         v.sku || p.sku || '—',
+          price:       v.price_modifier > 0 ? v.price_modifier : (p.price || 0),
+          stock:       v.stock ?? 0,
+          threshold,
+        });
+      });
+    } else {
+      _invData.push({
+        productName: p.name,
+        category:    p.category || '—',
+        variant:     '—',
+        sku:         p.sku || '—',
+        price:       p.price || 0,
+        stock:       p.stock ?? 0,
+        threshold,
+      });
+    }
+  });
+
+  const totalValue  = _invData.reduce((s, r) => s + (r.stock != null ? r.stock * r.price : 0), 0);
+  const outOfStock  = _invData.filter(r => r.stock === 0).length;
+  const lowStock    = _invData.filter(r => r.stock > 0 && r.stock <= r.threshold).length;
+
+  document.getElementById('inventoryKpi').innerHTML =
+    kpiCard('סה"כ SKU', _invData.length, '#374151') +
+    kpiCard('שווי מלאי', '₪' + totalValue.toLocaleString(), '#2563eb') +
+    kpiCard('אזלו מהמלאי', outOfStock, '#dc2626') +
+    kpiCard('מלאי נמוך', lowStock, '#d97706');
+
+  _invFilter = 'all';
+  document.querySelectorAll('._inv-filter-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+  renderInventoryTable();
+}
 
 // ===== דוח 10: נוכחות PDF =====
 // במסד: day 1=ראשון, 2=שני, ... 7=שבת | JS getDay: 0=ראשון, 1=שני, ... 6=שבת

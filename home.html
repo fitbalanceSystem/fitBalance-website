@@ -210,6 +210,7 @@
       <span class="bg-white text-pink-700 text-xs font-black px-3 py-1 rounded-full shadow">להרשמה ←</span>
     </a>
   </div>
+  
 
   <!-- Header -->
   <header id="main-header" class="fixed top-12 md:top-8 right-0 left-0 bg-white z-40 h-16 flex items-center px-6 justify-between transition-shadow duration-300">
@@ -780,41 +781,109 @@
   
   </section>
 
-  <!-- Shop -->
-  <section id="shop" class="py-20 px-6 bg-white">
-    <div class="max-w-5xl mx-auto">
-      <div class="text-center mb-12 fade-in">
-        <h2 class="text-4xl font-bold text-gray-800 mb-3">החנות שלנו</h2>
-        <p class="text-gray-500 text-lg">מוצרי בריאות וכושר במחירים מיוחדים</p>
+  <!-- Shop Premium -->
+  <section id="shop" class="py-24 px-6 relative overflow-hidden" style="background:linear-gradient(160deg,#fdf2f8 0%,#f5f3ff 50%,#fdf2f8 100%);">
+    <!-- Decorative blobs -->
+    <div style="position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(236,72,153,.08) 0%,transparent 70%);top:-100px;right:-100px;pointer-events:none;"></div>
+    <div style="position:absolute;width:400px;height:400px;background:radial-gradient(circle,rgba(139,92,246,.08) 0%,transparent 70%);bottom:-80px;left:-80px;pointer-events:none;"></div>
+
+    <div class="max-w-6xl mx-auto relative">
+
+      <!-- Header -->
+      <div class="text-center mb-16 fade-in">
+        <span class="inline-block bg-gradient-to-r from-pink-100 to-purple-100 text-pink-700 text-sm font-bold px-5 py-2 rounded-full mb-4">🛍️ החנות שלנו</span>
+        <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+          מוצרים <span class="gradient-text">פרמיום</span> לאימון מושלם
+        </h2>
+        <p class="text-gray-500 text-lg max-w-xl mx-auto">ציוד ספורט איכותי, ביגוד מקצועי ומוצרי בריאות – הכל במקום אחד</p>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 fade-in">
-        <div class="card bg-pink-50 rounded-2xl p-8 text-center">
-          <div class="mb-4">
-            <img src="assets/icons/unnamed.webp" alt="FitBalance" class="w-40 h-40 object-contain mx-auto">
+
+      <!-- Category Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-12 fade-in">
+
+        <!-- בריאות טבעית -->
+        <div class="group relative bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer" onclick="location.href='pages/customer/shop.html'">
+          <div class="absolute inset-0 bg-gradient-to-br from-pink-500 to-rose-400 opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
+          <div class="h-2 bg-gradient-to-r from-pink-400 to-rose-400"></div>
+          <div class="p-8 text-center">
+            <div class="w-24 h-24 mx-auto mb-5 rounded-2xl bg-pink-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <img src="assets/icons/unnamed.webp" alt="בריאות טבעית" class="w-16 h-16 object-contain">
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">בריאות טבעית</h3>
+            <p class="text-gray-500 text-sm mb-4">מוצרי FOREVER לחיים בריאים ומאוזנים</p>
+            <span class="inline-flex items-center gap-1 text-pink-600 text-sm font-semibold group-hover:gap-2 transition-all">
+              לצפייה במוצרים <i class="fas fa-arrow-left text-xs"></i>
+            </span>
           </div>
-          <h3 class="text-lg font-bold text-pink-700 mb-1">בריאות טבעית</h3>
-          <p class="text-gray-500 text-sm">מוצרי FOREVER</p>
         </div>
-        <div class="card bg-purple-50 rounded-2xl p-8 text-center">
-          <div class="mb-4">
-            <img src="assets/icons/6.png" alt="FitBalance" class="w-40 h-40 object-contain mx-auto">
+
+        <!-- ציוד ספורט -->
+        <div class="group relative bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer" onclick="location.href='pages/customer/shop.html'">
+          <div class="h-2 bg-gradient-to-r from-purple-400 to-violet-500"></div>
+          <div class="p-8 text-center">
+            <div class="w-24 h-24 mx-auto mb-5 rounded-2xl bg-purple-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <img src="assets/icons/6.png" alt="ציוד ספורט" class="w-16 h-16 object-contain">
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">ציוד ספורט</h3>
+            <p class="text-gray-500 text-sm mb-4">משקולות, קוביות, גומיות ועוד ציוד מקצועי</p>
+            <span class="inline-flex items-center gap-1 text-purple-600 text-sm font-semibold group-hover:gap-2 transition-all">
+              לצפייה במוצרים <i class="fas fa-arrow-left text-xs"></i>
+            </span>
           </div>
-          <h3 class="text-lg font-bold text-purple-700 mb-1">ציוד ספורט</h3>
-          <p class="text-gray-500 text-sm">משקולות, קוביות ועוד..</p>
         </div>
-        <div class="card bg-green-50 rounded-2xl p-8 text-center">
-          <div class="mb-4">
-            <img src="assets/icons/7.png" alt="FitBalance" class="w-40 h-40 object-contain mx-auto">
+
+        <!-- ביגוד ספורט -->
+        <div class="group relative bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer" onclick="location.href='pages/customer/shop.html'">
+          <div class="h-2 bg-gradient-to-r from-emerald-400 to-teal-400"></div>
+          <div class="p-8 text-center">
+            <div class="w-24 h-24 mx-auto mb-5 rounded-2xl bg-green-50 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <img src="assets/icons/7.png" alt="ביגוד ספורט" class="w-16 h-16 object-contain">
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">ביגוד ספורט</h3>
+            <p class="text-gray-500 text-sm mb-4">בגדי ספורט נוחים ואיכותיים לכל אימון</p>
+            <span class="inline-flex items-center gap-1 text-emerald-600 text-sm font-semibold group-hover:gap-2 transition-all">
+              לצפייה במוצרים <i class="fas fa-arrow-left text-xs"></i>
+            </span>
           </div>
-          <h3 class="text-lg font-bold text-green-700 mb-1">ביגוד ספורט</h3>
-          <p class="text-gray-500 text-sm">בגדי ספורט נוחים ואיכותיים</p>
+        </div>
+
+      </div>
+
+      <!-- Perks strip -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 fade-in">
+        <div class="bg-white rounded-2xl p-4 text-center shadow-sm">
+          <div class="text-2xl mb-1">🚚</div>
+          <div class="text-xs font-bold text-gray-700">משלוח מהיר</div>
+          <div class="text-xs text-gray-400">עד הבית</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 text-center shadow-sm">
+          <div class="text-2xl mb-1">✅</div>
+          <div class="text-xs font-bold text-gray-700">מוצרים מאושרים</div>
+          <div class="text-xs text-gray-400">איכות מובטחת</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 text-center shadow-sm">
+          <div class="text-2xl mb-1">💜</div>
+          <div class="text-xs font-bold text-gray-700">מחירים מיוחדים</div>
+          <div class="text-xs text-gray-400">לחברות המועדון</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 text-center shadow-sm">
+          <div class="text-2xl mb-1">🎁</div>
+          <div class="text-xs font-bold text-gray-700">מתנות והפתעות</div>
+          <div class="text-xs text-gray-400">בהזמנות מיוחדות</div>
         </div>
       </div>
-      <div class="text-center mt-10 fade-in">
-        <a href="pages/customer/shop.html" class="border-2 border-pink-600 text-pink-600 px-8 py-3 rounded-full font-semibold hover:bg-pink-50 transition-all">
-          לכל החנות 🛍️
+
+      <!-- CTA -->
+      <div class="text-center fade-in">
+        <a href="pages/customer/shop.html"
+           class="inline-flex items-center gap-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white px-10 py-4 rounded-full text-lg font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
+          <i class="fas fa-shopping-bag"></i>
+          לכל החנות
+          <i class="fas fa-arrow-left text-sm"></i>
         </a>
+        <p class="text-gray-400 text-sm mt-3">מאות מוצרים · מחירים מיוחדים לחברות</p>
       </div>
+
     </div>
   </section>
 

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../../assets/icons/icon.png">
+  <title>מבצעים</title>
+  <link rel="stylesheet" href="css/admin-theme.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../../services/supabaseClient.js"></script>
+  <style>
+    #promoModal { display:none; position:fixed; inset:0; background:rgba(15,10,40,.65); z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+    #promoModal.open { display:flex; }
+    .type-badge { border-radius:999px; padding:2px 10px; font-size:11px; font-weight:700; white-space:nowrap; }
+    .type-percent  { background:#d1fae5; color:#065f46; }
+    .type-fixed    { background:#dbeafe; color:#1e40af; }
+    .type-coupon   { background:#fce7f3; color:#9d174d; }
+    .type-category { background:#ede9fe; color:#5b21b6; }
+    .type-product  { background:#fef3c7; color:#92400e; }
+    .status-active   { background:#d1fae5; color:#065f46; border-radius:999px; padding:2px 10px; font-size:11px; font-weight:700; }
+    .status-inactive { background:#fee2e2; color:#991b1b; border-radius:999px; padding:2px 10px; font-size:11px; font-weight:700; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h1>🎁 מבצעים</h1>
+      <button id="addBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm">+ מבצע חדש</button>
+    </header>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="חיפוש לפי שם מבצע..." />
+      <select id="typeFilter">
+        <option value="">כל הסוגים</option>
+        <option value="percent">אחוז הנחה</option>
+        <option value="fixed">סכום קבוע</option>
+        <option value="coupon">קוד קופון</option>
+        <option value="category">הנחת קטגוריה</option>
+        <option value="product">הנחת מוצר</option>
+      </select>
+      <select id="statusFilter">
+        <option value="">כל הסטטוסים</option>
+        <option value="true">פעיל</option>
+        <option value="false">לא פעיל</option>
+      </select>
+      <i class="fas fa-search"></i>
+    </div>
+
+    <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+      <span style="color:#555;font-size:14px;">מוצגים:</span>
+      <span id="countBadge">0</span>
+      <span style="color:#555;font-size:14px;">מבצעים</span>
+    </div>
+
+    <div class="table-section">
+      <table class="customers-table">
+        <thead>
+          <tr>
+            <th>שם מבצע</th>
+            <th>סוג</th>
+            <th>ערך</th>
+            <th>קוד קופון</th>
+            <th>תאריכים</th>
+            <th>סטטוס</th>
+            <th>פעולות</th>
+          </tr>
+        </thead>
+        <tbody id="promosBody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- מודאל הוספה/עריכה -->
+<div id="promoModal">
+  <div style="background:white;border-radius:20px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.2);">
+    <div style="background:linear-gradient(135deg,#ec4899,#8b5cf6);padding:20px 24px;border-radius:20px 20px 0 0;display:flex;justify-content:space-between;align-items:center;">
+      <h2 id="modalTitle" style="color:white;font-size:18px;font-weight:800;margin:0;">מבצע חדש</h2>
+      <button onclick="closeModal()" style="background:rgba(255,255,255,.2);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:24px;">
+      <div class="form-grid">
+        <div class="form-group" style="grid-column:span 2;">
+          <label>שם המבצע *</label>
+          <input type="text" id="f-name" placeholder="לדוגמה: מבצע קיץ 20%" />
+        </div>
+        <div class="form-group" style="grid-column:span 2;">
+          <label>תיאור</label>
+          <textarea id="f-desc" rows="2" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;resize:vertical;outline:none;" placeholder="תיאור קצר..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>סוג מבצע *</label>
+          <select id="f-type" onchange="onTypeChange()">
+            <option value="percent">אחוז הנחה</option>
+            <option value="fixed">סכום קבוע</option>
+            <option value="coupon">קוד קופון</option>
+            <option value="category">הנחת קטגוריה</option>
+            <option value="product">הנחת מוצר</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label id="value-label">ערך הנחה *</label>
+          <input type="number" id="f-value" min="0" step="0.01" placeholder="0" />
+        </div>
+        <div class="form-group" id="coupon-row" style="grid-column:span 2;display:none;">
+          <label>קוד קופון</label>
+          <input type="text" id="f-coupon" placeholder="SUMMER20" style="text-transform:uppercase;" />
+        </div>
+        <div class="form-group" id="category-row" style="grid-column:span 2;display:none;">
+          <label>קטגוריה</label>
+          <select id="f-category">
+            <option value="">בחר קטגוריה...</option>
+          </select>
+        </div>
+        <div class="form-group" id="product-row" style="grid-column:span 2;display:none;">
+          <label>מוצר</label>
+          <select id="f-product">
+            <option value="">בחר מוצר...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>מינימום הזמנה (₪)</label>
+          <input type="number" id="f-min-order" min="0" step="0.01" placeholder="0" />
+        </div>
+        <div class="form-group"></div>
+        <div class="form-group">
+          <label>תאריך התחלה</label>
+          <input type="date" id="f-start" />
+        </div>
+        <div class="form-group">
+          <label>תאריך סיום</label>
+          <input type="date" id="f-end" />
+        </div>
+        <div class="form-group" style="grid-column:span 2;flex-direction:row;align-items:center;gap:10px;">
+          <input type="checkbox" id="f-active" style="width:16px;height:16px;accent-color:#8b5cf6;cursor:pointer;" checked />
+          <label for="f-active" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer;">מבצע פעיל</label>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
+        <button onclick="closeModal()" class="bg-gray-100">ביטול</button>
+        <button id="saveBtn" onclick="savePromo()" class="submit-btn">שמור</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="utilities/sidebar.js"></script>
+<script>
+  let promos = [], editId = null, shopCats = [], products = [];
+
+  async function load() {
+    const [{ data: p }, { data: c }, { data: pr }] = await Promise.all([
+      window._sb.from('promotions').select('*').order('created_at', { ascending: false }),
+      window._sb.from('shop_categories').select('*').order('sort_order'),
+      window._sb.from('products').select('id,name').eq('is_active', true).order('name'),
+    ]);
+    promos = p ?? []; shopCats = c ?? []; products = pr ?? [];
+    populateCatSelect(); populateProductSelect();
+    render();
+  }
+
+  function populateCatSelect() {
+    const sel = document.getElementById('f-category');
+    sel.innerHTML = '<option value="">בחר קטגוריה...</option>';
+    function addNodes(parentId, prefix) {
+      shopCats.filter(n => (n.parent_id ?? null) === parentId).sort((a,b) => a.sort_order - b.sort_order).forEach(n => {
+        const opt = document.createElement('option'); opt.value = n.id; opt.textContent = prefix + n.name; sel.appendChild(opt);
+        addNodes(n.id, prefix + '   ');
+      });
+    }
+    addNodes(null, '');
+  }
+
+  function populateProductSelect() {
+    const sel = document.getElementById('f-product');
+    sel.innerHTML = '<option value="">בחר מוצר...</option>';
+    products.forEach(p => { const opt = document.createElement('option'); opt.value = p.id; opt.textContent = p.name; sel.appendChild(opt); });
+  }
+
+  const TYPE_LABELS = { percent:'אחוז הנחה', fixed:'סכום קבוע', coupon:'קוד קופון', category:'הנחת קטגוריה', product:'הנחת מוצר' };
+
+  function render() {
+    const q  = document.getElementById('searchInput').value.trim().toLowerCase();
+    const tp = document.getElementById('typeFilter').value;
+    const st = document.getElementById('statusFilter').value;
+    const filtered = promos.filter(p => {
+      if (q && !p.name?.toLowerCase().includes(q)) return false;
+      if (tp && p.type !== tp) return false;
+      if (st !== '' && String(p.is_active) !== st) return false;
+      return true;
+    });
+    document.getElementById('countBadge').textContent = filtered.length;
+    const tbody = document.getElementById('promosBody');
+    tbody.innerHTML = filtered.length ? filtered.map(p => {
+      const valStr = p.type === 'percent' ? `${p.value}%` : p.type === 'fixed' ? `₪${p.value}` : `${p.value}`;
+      const dates = [p.start_date, p.end_date].filter(Boolean).join(' — ') || '—';
+      return `<tr>
+        <td><strong>${p.name}</strong>${p.description ? `<div style="font-size:11px;color:#9ca3af;">${p.description}</div>` : ''}</td>
+        <td><span class="type-badge type-${p.type}">${TYPE_LABELS[p.type]}</span></td>
+        <td><strong>${valStr}</strong></td>
+        <td>${p.coupon_code ? `<code style="background:#f3f0ff;color:#7c3aed;padding:2px 8px;border-radius:6px;font-size:12px;">${p.coupon_code}</code>` : '—'}</td>
+        <td style="font-size:12px;color:#6b7280;">${dates}</td>
+        <td><span class="${p.is_active ? 'status-active' : 'status-inactive'}">${p.is_active ? 'פעיל' : 'לא פעיל'}</span></td>
+        <td style="display:flex;gap:6px;">
+          <button onclick="openEdit(${p.id})" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;">✏️ עריכה</button>
+          <button onclick="toggleActive(${p.id},${p.is_active})" style="background:${p.is_active ? '#fee2e2' : '#d1fae5'};color:${p.is_active ? '#dc2626' : '#065f46'};border:1px solid ${p.is_active ? '#fecaca' : '#a7f3d0'};border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;">${p.is_active ? '⏸ השבת' : '▶ הפעל'}</button>
+          <button onclick="deletePromo(${p.id})" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:40px;">אין מבצעים</td></tr>';
+  }
+
+  function onTypeChange() {
+    const t = document.getElementById('f-type').value;
+    document.getElementById('coupon-row').style.display   = t === 'coupon'   ? '' : 'none';
+    document.getElementById('category-row').style.display = t === 'category' ? '' : 'none';
+    document.getElementById('product-row').style.display  = t === 'product'  ? '' : 'none';
+    document.getElementById('value-label').textContent = t === 'percent' ? 'אחוז הנחה (%) *' : t === 'fixed' ? 'סכום הנחה (₪) *' : 'ערך הנחה *';
+  }
+
+  function openAdd() {
+    editId = null;
+    document.getElementById('modalTitle').textContent = 'מבצע חדש';
+    ['f-name','f-desc','f-value','f-coupon','f-min-order','f-start','f-end'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-type').value = 'percent';
+    document.getElementById('f-category').value = '';
+    document.getElementById('f-product').value = '';
+    document.getElementById('f-active').checked = true;
+    onTypeChange();
+    document.getElementById('promoModal').classList.add('open');
+  }
+
+  function openEdit(id) {
+    const p = promos.find(x => x.id === id);
+    if (!p) return;
+    editId = id;
+    document.getElementById('modalTitle').textContent = 'עריכת מבצע';
+    document.getElementById('f-name').value      = p.name ?? '';
+    document.getElementById('f-desc').value      = p.description ?? '';
+    document.getElementById('f-type').value      = p.type ?? 'percent';
+    document.getElementById('f-value').value     = p.value ?? '';
+    document.getElementById('f-coupon').value    = p.coupon_code ?? '';
+    document.getElementById('f-category').value  = p.category_id ?? '';
+    document.getElementById('f-product').value   = p.product_id ?? '';
+    document.getElementById('f-min-order').value = p.min_order ?? '';
+    document.getElementById('f-start').value     = p.start_date ?? '';
+    document.getElementById('f-end').value       = p.end_date ?? '';
+    document.getElementById('f-active').checked  = p.is_active ?? true;
+    onTypeChange();
+    document.getElementById('promoModal').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('promoModal').classList.remove('open'); }
+
+  async function savePromo() {
+    const name  = document.getElementById('f-name').value.trim();
+    const value = parseFloat(document.getElementById('f-value').value);
+    if (!name)       { alert('נא להזין שם מבצע'); return; }
+    if (isNaN(value)) { alert('נא להזין ערך הנחה'); return; }
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true; btn.textContent = 'שומר...';
+    try {
+      const catId  = document.getElementById('f-category').value;
+      const prodId = document.getElementById('f-product').value;
+      const minOrd = document.getElementById('f-min-order').value;
+      const payload = {
+        name,
+        description:  document.getElementById('f-desc').value.trim() || null,
+        type:         document.getElementById('f-type').value,
+        value,
+        coupon_code:  document.getElementById('f-coupon').value.trim().toUpperCase() || null,
+        category_id:  catId  ? +catId  : null,
+        product_id:   prodId ? +prodId : null,
+        min_order:    minOrd ? parseFloat(minOrd) : null,
+        start_date:   document.getElementById('f-start').value || null,
+        end_date:     document.getElementById('f-end').value   || null,
+        is_active:    document.getElementById('f-active').checked,
+      };
+      const { error } = editId
+        ? await window._sb.from('promotions').update(payload).eq('id', editId)
+        : await window._sb.from('promotions').insert(payload);
+      if (error) throw error;
+      closeModal(); await load();
+    } catch(err) { alert('שגיאה: ' + (err.message ?? err)); }
+    finally { btn.disabled = false; btn.textContent = 'שמור'; }
+  }
+
+  async function toggleActive(id, current) {
+    const { error } = await window._sb.from('promotions').update({ is_active: !current }).eq('id', id);
+    if (error) { alert('שגיאה: ' + error.message); return; }
+    await load();
+  }
+
+  async function deletePromo(id) {
+    if (!confirm('למחוק מבצע זה?')) return;
+    const { error } = await window._sb.from('promotions').delete().eq('id', id);
+    if (error) { alert('שגיאה: ' + error.message); return; }
+    await load();
+  }
+
+  document.getElementById('addBtn').addEventListener('click', openAdd);
+  document.getElementById('searchInput').addEventListener('input', render);
+  document.getElementById('typeFilter').addEventListener('change', render);
+  document.getElementById('statusFilter').addEventListener('change', render);
+
+  load();
+</script>
+</body>
+</html>

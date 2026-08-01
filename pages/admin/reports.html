@@ -52,6 +52,8 @@
       <button class="tab-btn px-4 py-2 rounded-lg border font-medium" onclick="showReport('management',this)">📈 דוח הנהלה</button>
       <button class="tab-btn px-4 py-2 rounded-lg border font-medium" onclick="showReport('csvcompare',this)">🔄 השוואת CSV</button>
       <button class="tab-btn px-4 py-2 rounded-lg border font-medium" onclick="showReport('attendancepdf',this)">📄 דוח נוכחות PDF</button>
+      <button class="tab-btn px-4 py-2 rounded-lg border font-medium" onclick="showReport('inventory',this)">📦 מלאי</button>
+      <button class="tab-btn px-4 py-2 rounded-lg border font-medium" onclick="showReport('gifts',this)">🎁 מתנות יום הולדת</button>
     </div>
 
     <!-- דוח 1: סטטוס -->
@@ -303,6 +305,64 @@
             <tbody id="csvGapsBody">
               <tr><td colspan="5" class="text-center p-4 text-gray-400">טעני קובץ CSV והקישי הצג פערים</td></tr>
             </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- דוח מלאי -->
+    <div id="report-inventory" class="report-section">
+      <div class="bg-white rounded-xl shadow p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-bold">📦 דוח מלאי</h2>
+          <button onclick="exportExcel('inventoryTable','מלאי')" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">⬇️ ייצוא Excel</button>
+        </div>
+        <div id="inventoryKpi" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
+        <div class="flex gap-2 mb-4 flex-wrap">
+          <button onclick="setInvFilter('all',this)" class="_inv-filter-btn active px-3 py-1 rounded-lg border text-sm font-medium">הכל</button>
+          <button onclick="setInvFilter('low',this)" class="_inv-filter-btn px-3 py-1 rounded-lg border text-sm font-medium">⚠️ מלאי נמוך</button>
+          <button onclick="setInvFilter('out',this)" class="_inv-filter-btn px-3 py-1 rounded-lg border text-sm font-medium">🔴 אזל</button>
+        </div>
+        <style>
+          ._inv-filter-btn.active { background:#2563eb; color:white; border-color:#2563eb; }
+        </style>
+        <div class="overflow-x-auto">
+          <table id="inventoryTable" class="w-full border-collapse text-sm">
+            <thead><tr>
+              <th class="p-3 border text-right">מוצר</th>
+              <th class="p-3 border text-right">קטגוריה</th>
+              <th class="p-3 border text-right">וריאנט</th>
+              <th class="p-3 border text-right">SKU</th>
+              <th class="p-3 border text-right">מחיר</th>
+              <th class="p-3 border text-right">מלאי</th>
+              <th class="p-3 border text-right">שווי</th>
+              <th class="p-3 border text-right">סטטוס</th>
+            </tr></thead>
+            <tbody id="inventoryBody"><tr><td colspan="8" class="text-center p-4 text-gray-400">טוען...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- דוח מתנות יום הולדת -->
+    <div id="report-gifts" class="report-section">
+      <div class="bg-white rounded-xl shadow p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-bold">🎁 בחירות מתנות יום הולדת</h2>
+          <button onclick="exportExcel('giftsTable','מתנות_יום_הולדת')" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">⬇️ ייצוא Excel</button>
+        </div>
+        <div id="giftsKpi" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6"></div>
+        <div class="overflow-x-auto">
+          <table id="giftsTable" class="w-full border-collapse text-sm">
+            <thead><tr>
+              <th class="p-3 border text-right">שם לקוחה</th>
+              <th class="p-3 border text-right">טלפון</th>
+              <th class="p-3 border text-right">תאריך יום הולדת</th>
+              <th class="p-3 border text-right">מתנה שנבחרה</th>
+              <th class="p-3 border text-right">תאריך בחירה</th>
+              <th class="p-3 border text-right"></th>
+            </tr></thead>
+            <tbody id="giftsBody"><tr><td colspan="6" class="text-center p-4 text-gray-400">טוען...</td></tr></tbody>
           </table>
         </div>
       </div>

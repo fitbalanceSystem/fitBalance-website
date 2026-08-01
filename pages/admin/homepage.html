@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../../assets/icons/icon.png">
+  <title>ניהול דף הבית</title>
+  <link rel="stylesheet" href="css/admin-theme.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../../services/supabaseClient.js"></script>
+  <style>
+    .section-card { background:white; border-radius:16px; border:1px solid #f3f0ff; box-shadow:0 2px 12px rgba(139,92,246,.07); padding:24px; margin-bottom:20px; }
+    .section-title { font-size:15px; font-weight:800; color:#1f2937; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+    .field label { font-size:12px; font-weight:700; color:#6b7280; }
+    .field input, .field textarea { border:1.5px solid #e5e7eb; border-radius:10px; padding:9px 12px; font-size:13px; font-family:inherit; outline:none; transition:border-color .2s; }
+    .field input:focus, .field textarea:focus { border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.1); }
+    .save-btn { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border:none; border-radius:10px; padding:10px 24px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .save-btn:hover { opacity:.9; }
+    .saved-msg { margin-right:12px; font-size:12px; color:#16a34a; display:none; }
+    .tab-nav { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+    .tab-nav button { border-radius:10px; border:1.5px solid #ede9fe; background:white; color:#6b7280; font-size:13px; font-weight:600; padding:8px 16px; font-family:inherit; cursor:pointer; transition:all .2s; }
+    .tab-nav button.active { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border-color:transparent; box-shadow:0 4px 14px rgba(236,72,153,.3); }
+    .tab-nav button:hover:not(.active) { background:#f3f0ff; color:#7c3aed; }
+    .tab-pane { display:none; }
+    .tab-pane.active { display:block; }
+    .product-chip { display:inline-flex; align-items:center; gap:6px; background:#f3f0ff; color:#7c3aed; border:1px solid #ede9fe; border-radius:999px; padding:4px 12px; font-size:12px; font-weight:600; margin:3px; }
+    .product-chip button { background:none; border:none; color:#9ca3af; cursor:pointer; font-size:13px; line-height:1; padding:0; }
+    .product-chip button:hover { color:#dc2626; }
+    .cat-item { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1.5px solid #ede9fe; border-radius:10px; margin-bottom:8px; background:white; }
+    .cat-item-name { font-size:13px; font-weight:600; color:#374151; }
+    .hero-preview { border-radius:12px; overflow:hidden; border:1.5px solid #ede9fe; margin-bottom:16px; min-height:120px; background:#f8f7ff; display:flex; align-items:center; justify-content:center; position:relative; }
+    .hero-preview img { width:100%; height:180px; object-fit:cover; display:block; }
+    .hero-preview-placeholder { color:#9ca3af; font-size:13px; text-align:center; padding:24px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h1>🏠 ניהול דף הבית</h1>
+    </header>
+
+    <div class="tab-nav">
+      <button class="active" onclick="switchTab('hero',this)">🖼️ באנר ראשי</button>
+      <button onclick="switchTab('featured',this)">⭐ מוצרים מומלצים</button>
+      <button onclick="switchTab('recommended',this)">🔥 מוצרים נבחרים</button>
+      <button onclick="switchTab('categories',this)">🗂️ קטגוריות</button>
+    </div>
+
+    <!-- באנר ראשי -->
+    <div id="tab-hero" class="tab-pane active">
+      <div class="section-card">
+        <div class="section-title">🖼️ באנר ראשי (Hero)</div>
+        <div id="hero-preview-wrap" class="hero-preview">
+          <div class="hero-preview-placeholder">אין תמונה — העלה תמונה למטה</div>
+        </div>
+        <div class="field">
+          <label>תמונת באנר</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button onclick="document.getElementById('hero-img-input').click()" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;"><i class="fas fa-upload"></i> העלה תמונה</button>
+            <input type="file" id="hero-img-input" accept="image/*" style="display:none" onchange="previewHeroImg(this)" />
+            <input type="text" id="hero-img-url" placeholder="או הכנס URL תמונה..." style="flex:1;border:1.5px solid #e5e7eb;border-radius:10px;padding:8px 12px;font-size:13px;font-family:inherit;outline:none;" oninput="updateHeroPreview()" />
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="field">
+            <label>כותרת ראשית</label>
+            <input type="text" id="hero-title" placeholder="לדוגמה: קולקציית קיץ 2025" />
+          </div>
+          <div class="field">
+            <label>כותרת משנה</label>
+            <input type="text" id="hero-subtitle" placeholder="לדוגמה: עד 30% הנחה" />
+          </div>
+          <div class="field">
+            <label>טקסט כפתור</label>
+            <input type="text" id="hero-cta-text" placeholder="לדוגמה: לקנייה עכשיו" />
+          </div>
+          <div class="field">
+            <label>קישור כפתור</label>
+            <input type="text" id="hero-cta-link" placeholder="/pages/customer/shop.html" />
+          </div>
+        </div>
+        <button class="save-btn" onclick="saveHero()">💾 שמור באנר</button>
+        <span class="saved-msg" id="saved-hero">✓ נשמר!</span>
+      </div>
+    </div>
+
+    <!-- מוצרים מומלצים -->
+    <div id="tab-featured" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title">⭐ מוצרים מומלצים (Featured)</div>
+        <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">בחרי מוצרים שיוצגו בסקשן "מוצרים מומלצים" בדף הבית.</p>
+        <div id="featured-chips" style="margin-bottom:12px;min-height:36px;"></div>
+        <div style="display:flex;gap:8px;">
+          <select id="featured-add-select" style="flex:1;border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;">
+            <option value="">בחר מוצר להוספה...</option>
+          </select>
+          <button onclick="addFeatured()" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ הוסף</button>
+        </div>
+        <button class="save-btn" style="margin-top:16px;" onclick="saveFeatured()">💾 שמור</button>
+        <span class="saved-msg" id="saved-featured">✓ נשמר!</span>
+      </div>
+    </div>
+
+    <!-- מוצרים נבחרים -->
+    <div id="tab-recommended" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title">🔥 מוצרים נבחרים (Recommended)</div>
+        <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">בחרי מוצרים שיוצגו בסקשן "אולי תאהבי גם" בדף הבית.</p>
+        <div id="recommended-chips" style="margin-bottom:12px;min-height:36px;"></div>
+        <div style="display:flex;gap:8px;">
+          <select id="recommended-add-select" style="flex:1;border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;">
+            <option value="">בחר מוצר להוספה...</option>
+          </select>
+          <button onclick="addRecommended()" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ הוסף</button>
+        </div>
+        <button class="save-btn" style="margin-top:16px;" onclick="saveRecommended()">💾 שמור</button>
+        <span class="saved-msg" id="saved-recommended">✓ נשמר!</span>
+      </div>
+    </div>
+
+    <!-- קטגוריות בדף הבית -->
+    <div id="tab-categories" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title">🗂️ קטגוריות בדף הבית</div>
+        <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">בחרי אילו קטגוריות ראשיות יוצגו בדף הבית.</p>
+        <div id="cats-list"></div>
+        <button class="save-btn" style="margin-top:8px;" onclick="saveCats()">💾 שמור</button>
+        <span class="saved-msg" id="saved-cats">✓ נשמר!</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="utilities/sidebar.js"></script>
+<script>
+  let allProducts = [], allCats = [], settings = {};
+  let featuredIds = [], recommendedIds = [], showCatIds = [];
+  let heroImgFile = null;
+
+  async function load() {
+    const [{ data: prods }, { data: cats }, { data: stg }] = await Promise.all([
+      window._sb.from('products').select('id,name,image_url,emoji').eq('is_active', true).order('name'),
+      window._sb.from('shop_categories').select('*').is('parent_id', null).order('sort_order'),
+      window._sb.from('store_settings').select('key,value'),
+    ]);
+    allProducts = prods ?? [];
+    allCats = cats ?? [];
+    (stg ?? []).forEach(r => { settings[r.key] = r.value; });
+
+    // parse hero
+    const hero = settings['homepage_hero'] ?? {};
+    document.getElementById('hero-title').value    = hero.title    ?? '';
+    document.getElementById('hero-subtitle').value = hero.subtitle ?? '';
+    document.getElementById('hero-cta-text').value = hero.cta_text ?? '';
+    document.getElementById('hero-cta-link').value = hero.cta_link ?? '';
+    document.getElementById('hero-img-url').value  = hero.image_url ?? '';
+    updateHeroPreview();
+
+    featuredIds    = settings['homepage_featured_ids']    ?? [];
+    recommendedIds = settings['homepage_recommended_ids'] ?? [];
+    showCatIds     = settings['homepage_show_categories'] ?? [];
+
+    populateProductSelects();
+    renderChips('featured-chips', featuredIds, removeFeatured);
+    renderChips('recommended-chips', recommendedIds, removeRecommended);
+    renderCatsList();
+  }
+
+  function populateProductSelects() {
+    ['featured-add-select','recommended-add-select'].forEach(id => {
+      const sel = document.getElementById(id);
+      sel.innerHTML = '<option value="">בחר מוצר להוספה...</option>';
+      allProducts.forEach(p => { const opt = document.createElement('option'); opt.value = p.id; opt.textContent = p.name; sel.appendChild(opt); });
+    });
+  }
+
+  function renderChips(containerId, ids, removeFn) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = ids.length
+      ? ids.map(id => {
+          const p = allProducts.find(x => x.id === id);
+          return p ? `<span class="product-chip">${p.emoji ?? '📦'} ${p.name}<button onclick="${removeFn.name}(${id})">✕</button></span>` : '';
+        }).join('')
+      : '<span style="font-size:12px;color:#9ca3af;">לא נבחרו מוצרים</span>';
+  }
+
+  function addFeatured() {
+    const id = +document.getElementById('featured-add-select').value;
+    if (!id || featuredIds.includes(id)) return;
+    featuredIds.push(id);
+    renderChips('featured-chips', featuredIds, removeFeatured);
+  }
+  function removeFeatured(id) { featuredIds = featuredIds.filter(x => x !== id); renderChips('featured-chips', featuredIds, removeFeatured); }
+
+  function addRecommended() {
+    const id = +document.getElementById('recommended-add-select').value;
+    if (!id || recommendedIds.includes(id)) return;
+    recommendedIds.push(id);
+    renderChips('recommended-chips', recommendedIds, removeRecommended);
+  }
+  function removeRecommended(id) { recommendedIds = recommendedIds.filter(x => x !== id); renderChips('recommended-chips', recommendedIds, removeRecommended); }
+
+  function renderCatsList() {
+    const el = document.getElementById('cats-list');
+    el.innerHTML = allCats.map(c => `
+      <div class="cat-item">
+        <div class="cat-item-name">${c.name}</div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#374151;">
+          <input type="checkbox" value="${c.id}" ${showCatIds.includes(c.id) ? 'checked' : ''} style="width:16px;height:16px;accent-color:#8b5cf6;cursor:pointer;" />
+          הצג בדף הבית
+        </label>
+      </div>`).join('');
+  }
+
+  function previewHeroImg(input) {
+    const file = input.files[0];
+    if (!file) return;
+    heroImgFile = file;
+    document.getElementById('hero-img-url').value = '';
+    const reader = new FileReader();
+    reader.onload = e => showHeroPreview(e.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  function updateHeroPreview() {
+    const url = document.getElementById('hero-img-url').value.trim();
+    if (url) { heroImgFile = null; showHeroPreview(url); }
+    else if (!heroImgFile) showHeroPreview(null);
+  }
+
+  function showHeroPreview(src) {
+    const wrap = document.getElementById('hero-preview-wrap');
+    wrap.innerHTML = src
+      ? `<img src="${src}" onerror="this.parentElement.innerHTML='<div class=hero-preview-placeholder>תמונה לא נטענה</div>'" />`
+      : '<div class="hero-preview-placeholder">אין תמונה — העלה תמונה למטה</div>';
+  }
+
+  async function uploadHeroImg() {
+    if (!heroImgFile) return document.getElementById('hero-img-url').value.trim() || null;
+    const ext  = heroImgFile.name.split('.').pop();
+    const path = `hero/${Date.now()}.${ext}`;
+    const { error } = await window._sb.storage.from('products').upload(path, heroImgFile, { upsert: true });
+    if (error) throw error;
+    return window._sb.storage.from('products').getPublicUrl(path).data.publicUrl;
+  }
+
+  async function upsertSetting(key, value) {
+    const { error } = await window._sb.from('store_settings').upsert({ key, value }, { onConflict: 'key' });
+    if (error) throw error;
+  }
+
+  function showSaved(id) {
+    const el = document.getElementById(id);
+    el.style.display = 'inline';
+    setTimeout(() => el.style.display = 'none', 2000);
+  }
+
+  async function saveHero() {
+    try {
+      const imageUrl = await uploadHeroImg();
+      const hero = {
+        title:     document.getElementById('hero-title').value.trim(),
+        subtitle:  document.getElementById('hero-subtitle').value.trim(),
+        cta_text:  document.getElementById('hero-cta-text').value.trim(),
+        cta_link:  document.getElementById('hero-cta-link').value.trim(),
+        image_url: imageUrl,
+      };
+      await upsertSetting('homepage_hero', hero);
+      showSaved('saved-hero');
+    } catch(e) { alert('שגיאה: ' + e.message); }
+  }
+
+  async function saveFeatured() {
+    try { await upsertSetting('homepage_featured_ids', featuredIds); showSaved('saved-featured'); }
+    catch(e) { alert('שגיאה: ' + e.message); }
+  }
+
+  async function saveRecommended() {
+    try { await upsertSetting('homepage_recommended_ids', recommendedIds); showSaved('saved-recommended'); }
+    catch(e) { alert('שגיאה: ' + e.message); }
+  }
+
+  async function saveCats() {
+    const checked = [...document.querySelectorAll('#cats-list input[type=checkbox]:checked')].map(cb => +cb.value);
+    try { await upsertSetting('homepage_show_categories', checked); showCatIds = checked; showSaved('saved-cats'); }
+    catch(e) { alert('שגיאה: ' + e.message); }
+  }
+
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  window.removeFeatured = removeFeatured;
+  window.removeRecommended = removeRecommended;
+
+  load();
+</script>
+</body>
+</html>

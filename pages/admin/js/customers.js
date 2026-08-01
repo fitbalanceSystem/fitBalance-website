@@ -171,7 +171,42 @@ async function openViewModal(id) {
   document.getElementById('vmStatusBadgeHeader').innerHTML =
     `<span style="background:rgba(255,255,255,0.25);padding:3px 12px;border-radius:999px;">${statusLabels[statusMap[id]]||''}</span>`;
   document.getElementById('vmEditBtn').onclick = () => editCustomer(id);
+
+  // טען הזמנות חנות
+  document.getElementById('vmShopTotal').textContent = 'טוען...';
+  document.getElementById('vmOrders').innerHTML = '<div style="font-size:12px;color:#9ca3af;padding:4px 0;">טוען...</div>';
   document.getElementById('viewModal').classList.add('open');
+
+  const { data: orders } = await supabaseClient
+    .from('orders')
+    .select('id, created_at, total, status, order_items(quantity, products(name))')
+    .eq('customer_id', id)
+    .order('created_at', { ascending: false });
+
+  const shopOrders = orders ?? [];
+  const shopTotal = shopOrders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + Number(o.total), 0);
+  document.getElementById('vmShopTotal').textContent = shopTotal > 0 ? '₪' + shopTotal.toFixed(2) : 'אין רכישות';
+  document.getElementById('vmShopTotal').style.color = shopTotal > 0 ? '#7c3aed' : '#9ca3af';
+
+  const STATUS_LABELS = { pending:'ממתין', processing:'בטיפול', packed:'ארוז', shipped:'נשלח', completed:'הושלם', cancelled:'בוטל' };
+  const STATUS_COLORS = { pending:'#d97706', processing:'#2563eb', packed:'#7c3aed', shipped:'#0891b2', completed:'#059669', cancelled:'#dc2626' };
+  document.getElementById('vmOrders').innerHTML = shopOrders.length
+    ? shopOrders.map(o => {
+        const date = new Date(o.created_at).toLocaleDateString('he-IL');
+        const items = (o.order_items ?? []).map(i => i.products?.name).filter(Boolean).join(', ') || 'פריטים';
+        const sc = STATUS_COLORS[o.status] || '#6b7280';
+        return `<div style="border:1px solid #f3f0ff;border-radius:10px;padding:8px 12px;margin-bottom:6px;font-size:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <span style="font-weight:700;color:#1f2937;">#${o.id} — ${date}</span>
+            <span style="font-weight:800;color:#7c3aed;">₪${Number(o.total).toFixed(2)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:#6b7280;font-size:11px;">${items}</span>
+            <span style="font-size:10px;font-weight:700;color:${sc};background:${sc}18;padding:2px 8px;border-radius:999px;">${STATUS_LABELS[o.status]||o.status}</span>
+          </div>
+        </div>`;
+      }).join('')
+    : '<div style="font-size:12px;color:#9ca3af;padding:4px 0;">אין הזמנות</div>';
 }
 
 function closeViewModal() {
@@ -259,3 +294,5 @@ window.closeViewModal = closeViewModal;
 window.editCustomer = editCustomer;
 window.deleteCustomer = deleteCustomer;
 window.sortBy = sortBy;
+
+

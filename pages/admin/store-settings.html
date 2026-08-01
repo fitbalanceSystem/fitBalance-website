@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../../assets/icons/icon.png">
+  <title>הגדרות חנות</title>
+  <link rel="stylesheet" href="css/admin-theme.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../../services/supabaseClient.js"></script>
+  <style>
+    .section-card { background:white; border-radius:16px; border:1px solid #f3f0ff; box-shadow:0 2px 12px rgba(139,92,246,.07); padding:24px; margin-bottom:20px; }
+    .section-title { font-size:15px; font-weight:800; color:#1f2937; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+    .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .field { display:flex; flex-direction:column; gap:6px; }
+    .field label { font-size:12px; font-weight:700; color:#6b7280; }
+    .field input, .field textarea, .field select { border:1.5px solid #e5e7eb; border-radius:10px; padding:9px 12px; font-size:13px; font-family:inherit; outline:none; transition:border-color .2s; }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.1); }
+    .save-btn { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border:none; border-radius:10px; padding:10px 24px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; margin-top:16px; }
+    .save-btn:hover { opacity:.9; }
+    .saved-msg { margin-right:12px; font-size:12px; color:#16a34a; display:none; }
+    .tab-nav { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+    .tab-nav button { border-radius:10px; border:1.5px solid #ede9fe; background:white; color:#6b7280; font-size:13px; font-weight:600; padding:8px 16px; font-family:inherit; cursor:pointer; transition:all .2s; }
+    .tab-nav button.active { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border-color:transparent; box-shadow:0 4px 14px rgba(236,72,153,.3); }
+    .tab-nav button:hover:not(.active) { background:#f3f0ff; color:#7c3aed; }
+    .tab-pane { display:none; }
+    .tab-pane.active { display:block; }
+    .color-row { display:flex; align-items:center; gap:10px; }
+    .color-row input[type=color] { width:40px; height:36px; border-radius:8px; border:1.5px solid #e5e7eb; cursor:pointer; padding:2px; }
+    .logo-preview { width:80px; height:80px; border-radius:12px; border:1.5px solid #ede9fe; object-fit:contain; background:#f8f7ff; display:none; }
+    .logo-placeholder { width:80px; height:80px; border-radius:12px; border:1.5px dashed #d1d5db; display:flex; align-items:center; justify-content:center; font-size:24px; color:#9ca3af; cursor:pointer; }
+    .pay-method-item { display:flex; align-items:center; gap:8px; padding:8px 12px; border:1.5px solid #ede9fe; border-radius:10px; margin-bottom:8px; background:white; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h1>🏪 הגדרות חנות</h1>
+    </header>
+
+    <div class="tab-nav">
+      <button class="active" onclick="switchTab('brand',this)">🎨 מיתוג</button>
+      <button onclick="switchTab('contact',this)">📞 פרטי קשר</button>
+      <button onclick="switchTab('social',this)">📱 רשתות חברתיות</button>
+      <button onclick="switchTab('shipping',this)">🚚 משלוח</button>
+      <button onclick="switchTab('payment',this)">💳 תשלום</button>
+    </div>
+
+    <!-- מיתוג -->
+    <div id="tab-brand" class="tab-pane active">
+      <div class="section-card">
+        <div class="section-title">🎨 לוגו ומיתוג</div>
+        <div style="display:flex;align-items:flex-start;gap:20px;margin-bottom:20px;">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:8px;">לוגו נוכחי</div>
+            <img id="logo-preview" class="logo-preview" />
+            <div id="logo-placeholder" class="logo-placeholder" onclick="document.getElementById('logo-input').click()">🏪</div>
+          </div>
+          <div style="flex:1;">
+            <div class="field" style="margin-bottom:12px;">
+              <label>שם החנות</label>
+              <input type="text" id="store-name" placeholder="FitBalance" />
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="document.getElementById('logo-input').click()" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;"><i class="fas fa-upload"></i> העלה לוגו</button>
+              <button id="remove-logo-btn" onclick="removeLogo()" style="display:none;background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">✕ הסר</button>
+            </div>
+            <input type="file" id="logo-input" accept="image/*" style="display:none" onchange="previewLogo(this)" />
+          </div>
+        </div>
+        <div class="field-grid">
+          <div class="field">
+            <label>צבע ראשי</label>
+            <div class="color-row">
+              <input type="color" id="primary-color" value="#ec4899" oninput="document.getElementById('primary-color-text').value=this.value" />
+              <input type="text" id="primary-color-text" value="#ec4899" style="flex:1;" oninput="syncColor('primary-color','primary-color-text')" />
+            </div>
+          </div>
+          <div class="field">
+            <label>צבע משני</label>
+            <div class="color-row">
+              <input type="color" id="secondary-color" value="#8b5cf6" oninput="document.getElementById('secondary-color-text').value=this.value" />
+              <input type="text" id="secondary-color-text" value="#8b5cf6" style="flex:1;" oninput="syncColor('secondary-color','secondary-color-text')" />
+            </div>
+          </div>
+        </div>
+        <button class="save-btn" onclick="saveBrand()">💾 שמור מיתוג</button>
+        <span class="saved-msg" id="saved-brand">✓ נשמר!</span>
+      </div>
+    </div>
+
+    <!-- פרטי קשר -->
+    <div id="tab-contact" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title">📞 פרטי קשר</div>
+        <div class="field-grid">
+          <div class="field"><label>טלפון</label><input type="text" id="contact-phone" placeholder="050-0000000" /></div>
+          <div class="field"><label>אימייל</label><input type="email" id="contact-email" placeholder="info@fitbalance.co.il" /></div>
+          <div class="field" style="grid-column:span 2;"><label>כתובת</label><input type="text" id="contact-address" placeholder="רחוב, עיר" /></div>
+        </div>
+        <button class="save-btn" onclick="saveContact()">💾 שמור פרטי קשר</button>
+        <span class="saved-msg" id="saved-contact">✓ נשמר!</span>
+      </div>
+    </div>
+
+    <!-- רשתות חברתיות -->
+    <div id="tab-social" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title">📱 רשתות חברתיות</div>
+        <div class="field-grid">
+          <div class="field">
+            <label><i class="fab fa-instagram" style="color:#e1306c;margin-left:4px;"></i> Instagram</label>
+            <input type="text" id="social-instagram" placeholder="https://instagram.com/..." />
+          </div>
+          <div class="field">
+            <label><i class="fab fa-facebook" style="color:#1877f2;margin-left:4px;"></i> Facebook</label>
+            <input type="text" id="social-facebook" placeholder="https://facebook.com/..." />
+          </div>
+          <div class="field">
+            <label><i class="fab fa-whatsapp" style="color:#25d366;margin-left:4px;"></i> WhatsApp</label>
+            <input type="text" id="social-whatsapp" placeholder="972501234567" />
+          </div>
+          <div class="field">
+            <label><i class="fab fa-tiktok" style="color:#000;margin-left:4px;"></i> TikTok</label>
+            <input type="text" id="social-tiktok" placeholder="https://tiktok.com/@..." />
+          </div>
+        </div>
+        <button class="save-btn" onclick="saveSocial()">💾 שמור קישורים</button>
+        <span class="saved-msg" id="saved-social">✓ נשמר!</span>
+      </div>
+    </div>
+
+    <!-- משלוח -->
+    <div id="tab-shipping" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title">🚚 הגדרות משלוח</div>
+        <div class="field-grid">
+          <div class="field">
+            <label>מחיר משלוח (₪)</label>
+            <input type="number" id="shipping-price" min="0" step="0.01" placeholder="30" />
+          </div>
+          <div class="field">
+            <label>משלוח חינם מעל (₪)</label>
+            <input type="number" id="shipping-free-above" min="0" step="0.01" placeholder="200" />
+          </div>
+          <div class="field" style="grid-column:span 2;">
+            <label>הערת משלוח (מוצגת ללקוח)</label>
+            <textarea id="shipping-note" rows="2" placeholder="לדוגמה: משלוח עד 5 ימי עסקים"></textarea>
+          </div>
+        </div>
+        <button class="save-btn" onclick="saveShipping()">💾 שמור הגדרות משלוח</button>
+        <span class="saved-msg" id="saved-shipping">✓ נשמר!</span>
+      </div>
+    </div>
+
+    <!-- תשלום -->
+    <div id="tab-payment" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title">💳 אמצעי תשלום</div>
+        <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">בחרי אילו אמצעי תשלום מוצגים ללקוחות.</p>
+        <div id="payment-methods-list"></div>
+        <button class="save-btn" onclick="savePayment()">💾 שמור אמצעי תשלום</button>
+        <span class="saved-msg" id="saved-payment">✓ נשמר!</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="utilities/sidebar.js"></script>
+<script>
+  const PAYMENT_OPTIONS = [
+    { value:'bit',           label:'ביט',              icon:'💙' },
+    { value:'cash',          label:'מזומן',             icon:'💵' },
+    { value:'transfer',      label:'העברה בנקאית',      icon:'🏦' },
+    { value:'paybox',        label:'פייבוקס',           icon:'📲' },
+    { value:'credit_card',   label:'כרטיס אשראי',      icon:'💳' },
+    { value:'standing_order',label:'הוראת קבע',         icon:'🔄' },
+  ];
+
+  let settings = {}, logoFile = null, currentLogoUrl = null;
+
+  async function load() {
+    const { data } = await window._sb.from('store_settings').select('key,value');
+    (data ?? []).forEach(r => { settings[r.key] = r.value; });
+
+    document.getElementById('store-name').value          = settings['store_name']        ?? 'FitBalance';
+    document.getElementById('primary-color').value       = settings['primary_color']     ?? '#ec4899';
+    document.getElementById('primary-color-text').value  = settings['primary_color']     ?? '#ec4899';
+    document.getElementById('secondary-color').value     = settings['secondary_color']   ?? '#8b5cf6';
+    document.getElementById('secondary-color-text').value= settings['secondary_color']   ?? '#8b5cf6';
+    document.getElementById('contact-phone').value       = settings['contact_phone']     ?? '';
+    document.getElementById('contact-email').value       = settings['contact_email']     ?? '';
+    document.getElementById('contact-address').value     = settings['contact_address']   ?? '';
+    document.getElementById('social-instagram').value    = settings['social_instagram']  ?? '';
+    document.getElementById('social-facebook').value     = settings['social_facebook']   ?? '';
+    document.getElementById('social-whatsapp').value     = settings['social_whatsapp']   ?? '';
+    document.getElementById('social-tiktok').value       = settings['social_tiktok']     ?? '';
+    document.getElementById('shipping-price').value      = settings['shipping_price']    ?? '30';
+    document.getElementById('shipping-free-above').value = settings['shipping_free_above']?? '200';
+    document.getElementById('shipping-note').value       = settings['shipping_note']     ?? '';
+
+    currentLogoUrl = settings['logo_url'] ?? null;
+    if (currentLogoUrl) {
+      document.getElementById('logo-preview').src = currentLogoUrl;
+      document.getElementById('logo-preview').style.display = 'block';
+      document.getElementById('logo-placeholder').style.display = 'none';
+      document.getElementById('remove-logo-btn').style.display = 'inline-block';
+    }
+
+    renderPaymentMethods(settings['payment_methods'] ?? ['bit','cash','transfer']);
+  }
+
+  function renderPaymentMethods(active) {
+    const el = document.getElementById('payment-methods-list');
+    el.innerHTML = PAYMENT_OPTIONS.map(opt => `
+      <div class="pay-method-item">
+        <input type="checkbox" id="pm-${opt.value}" value="${opt.value}" ${active.includes(opt.value) ? 'checked' : ''} style="width:16px;height:16px;accent-color:#8b5cf6;cursor:pointer;" />
+        <label for="pm-${opt.value}" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer;display:flex;align-items:center;gap:6px;">${opt.icon} ${opt.label}</label>
+      </div>`).join('');
+  }
+
+  function syncColor(colorId, textId) {
+    const val = document.getElementById(textId).value;
+    if (/^#[0-9a-fA-F]{6}$/.test(val)) document.getElementById(colorId).value = val;
+  }
+
+  function previewLogo(input) {
+    const file = input.files[0];
+    if (!file) return;
+    logoFile = file;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('logo-preview').src = e.target.result;
+      document.getElementById('logo-preview').style.display = 'block';
+      document.getElementById('logo-placeholder').style.display = 'none';
+      document.getElementById('remove-logo-btn').style.display = 'inline-block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeLogo() {
+    logoFile = null; currentLogoUrl = null;
+    document.getElementById('logo-preview').style.display = 'none';
+    document.getElementById('logo-placeholder').style.display = 'flex';
+    document.getElementById('remove-logo-btn').style.display = 'none';
+    document.getElementById('logo-input').value = '';
+  }
+
+  async function uploadLogo() {
+    if (!logoFile) return currentLogoUrl;
+    const ext  = logoFile.name.split('.').pop();
+    const path = `logo/logo.${ext}`;
+    const { error } = await window._sb.storage.from('products').upload(path, logoFile, { upsert: true });
+    if (error) throw error;
+    return window._sb.storage.from('products').getPublicUrl(path).data.publicUrl;
+  }
+
+  async function upsertSetting(key, value) {
+    const { error } = await window._sb.from('store_settings').upsert({ key, value }, { onConflict: 'key' });
+    if (error) throw error;
+  }
+
+  function showSaved(id) {
+    const el = document.getElementById(id);
+    el.style.display = 'inline';
+    setTimeout(() => el.style.display = 'none', 2000);
+  }
+
+  async function saveBrand() {
+    try {
+      const logoUrl = await uploadLogo();
+      currentLogoUrl = logoUrl;
+      await Promise.all([
+        upsertSetting('store_name',      document.getElementById('store-name').value.trim()),
+        upsertSetting('logo_url',        logoUrl),
+        upsertSetting('primary_color',   document.getElementById('primary-color').value),
+        upsertSetting('secondary_color', document.getElementById('secondary-color').value),
+      ]);
+      showSaved('saved-brand');
+    } catch(e) { alert('שגיאה: ' + e.message); }
+  }
+
+  async function saveContact() {
+    try {
+      await Promise.all([
+        upsertSetting('contact_phone',   document.getElementById('contact-phone').value.trim()),
+        upsertSetting('contact_email',   document.getElementById('contact-email').value.trim()),
+        upsertSetting('contact_address', document.getElementById('contact-address').value.trim()),
+      ]);
+      showSaved('saved-contact');
+    } catch(e) { alert('שגיאה: ' + e.message); }
+  }
+
+  async function saveSocial() {
+    try {
+      await Promise.all([
+        upsertSetting('social_instagram', document.getElementById('social-instagram').value.trim()),
+        upsertSetting('social_facebook',  document.getElementById('social-facebook').value.trim()),
+        upsertSetting('social_whatsapp',  document.getElementById('social-whatsapp').value.trim()),
+        upsertSetting('social_tiktok',    document.getElementById('social-tiktok').value.trim()),
+      ]);
+      showSaved('saved-social');
+    } catch(e) { alert('שגיאה: ' + e.message); }
+  }
+
+  async function saveShipping() {
+    try {
+      await Promise.all([
+        upsertSetting('shipping_price',      parseFloat(document.getElementById('shipping-price').value) || 30),
+        upsertSetting('shipping_free_above', parseFloat(document.getElementById('shipping-free-above').value) || 200),
+        upsertSetting('shipping_note',       document.getElementById('shipping-note').value.trim()),
+      ]);
+      showSaved('saved-shipping');
+    } catch(e) { alert('שגיאה: ' + e.message); }
+  }
+
+  async function savePayment() {
+    const methods = [...document.querySelectorAll('#payment-methods-list input:checked')].map(cb => cb.value);
+    try { await upsertSetting('payment_methods', methods); showSaved('saved-payment'); }
+    catch(e) { alert('שגיאה: ' + e.message); }
+  }
+
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  load();
+</script>
+</body>
+</html>

@@ -13,16 +13,28 @@ function fmt(d) {
 
 function daysUntilBirthday(dobStr) {
   if (!dobStr) return 999;
-  // birthDate format: YYYY-MM-DD or DD/MM/YYYY
+  const useHebrew = (localStorage.getItem('sys_dash-birthday-calendar') ?? 'gregorian') === 'hebrew';
   let m, d;
-  if (dobStr.includes('-')) {
-    [, m, d] = dobStr.split('-');
-  } else if (dobStr.includes('/')) {
-    [d, m] = dobStr.split('/');
-  } else return 999;
-  const next = new Date(today.getFullYear(), +m - 1, +d);
-  if (next < today) next.setFullYear(today.getFullYear() + 1);
-  return Math.round((next - today) / 86400000);
+  if (dobStr.includes('-')) { [, m, d] = dobStr.split('-'); }
+  else if (dobStr.includes('/')) { [d, m] = dobStr.split('/'); }
+  else return 999;
+
+  if (!useHebrew) {
+    const next = new Date(today.getFullYear(), +m - 1, +d);
+    if (next < today) next.setFullYear(today.getFullYear() + 1);
+    return Math.round((next - today) / 86400000);
+  }
+
+  // לוח עברי — מחשב את התאריך העברי של יום ההולדת ומוצא את הפעם הבאה שלו
+  const year = dobStr.includes('-') ? +dobStr.split('-')[0] : +dobStr.split('/')[2];
+  const birthHeb = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { day: 'numeric', month: 'long' }).format(new Date(year, +m - 1, +d));
+  // מחפש את התאריך הלועזי הקרוב שמתאים לאותו תאריך עברי
+  for (let i = 0; i <= 400; i++) {
+    const candidate = new Date(today.getTime() + i * 86400000);
+    const candHeb = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { day: 'numeric', month: 'long' }).format(candidate);
+    if (candHeb === birthHeb) return i;
+  }
+  return 999;
 }
 
 function getBirthYear(dobStr) {
@@ -71,33 +83,42 @@ async function loadKPIs() {
   document.getElementById('kpiOrders').textContent = orders ?? 0;
 }
 
-const DEFAULT_BIRTHDAY_SUBJECT = 'יום הולדת שמח {שם}! 🎂';
-const DEFAULT_BIRTHDAY_BODY = 'שלום {שם},\nמאחלים לך יום הולדת שמח ומלא שמחה! 🎉\n\nבאהבה,\nצוות FitBalance';
+function toHebrewGematria(n) {
+  const ones  = ['','א','ב','ג','ד','ה','ו','ז','ח','ט','י','יא','יב','יג','יד','טו','טז','יז','יח','יט','כ','כא','כב','כג','כד','כה','כו','כז','כח','כט','ל'];
+  if (n >= 1 && n <= 30) return ones[n];
+  return String(n);
+}
 
-function getSetting(id, def) {
-  return localStorage.getItem('sys_' + id) ?? def;
+function toHebrewDate(dobStr) {
+  try {
+    let year, month, day;
+    if (dobStr.includes('-')) { [year, month, day] = dobStr.split('-').map(Number); }
+    else if (dobStr.includes('/')) { [day, month, year] = dobStr.split('/').map(Number); }
+    else return '';
+    const fmt = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { day: 'numeric', month: 'long' }).format(new Date(year, month - 1, day));
+    // fmt מחזיר למשל "22 באב" — מחליפים את המספר בגימטריה
+    return fmt.replace(/^(\d+)/, (_, d) => toHebrewGematria(+d));
+  } catch { return ''; }
 }
 
 const birthdayMailLinks = {};
 
-function sendBirthdayMail(idx) {
-  const href = birthdayMailLinks[idx];
-  if (!href) return;
-  location.href = href;
-}
-
-function openMailModal(idx) {
-  const m = birthdayMailLinks[idx];
+function openMailModal(id) {
+  console.log('openMailModal id:', id);
+  console.log('birthdayMailLinks:', JSON.stringify(birthdayMailLinks));
+  const m = birthdayMailLinks[id];
+  console.log('found entry:', m);
   if (!m) return;
   document.getElementById('mailTo').value = m.to;
-  document.getElementById('mailSubject').value = m.subject;
-  document.getElementById('mailBody').value = m.body;
+  document.getElementById('mailFirstName').value = m.firstName;
+  document.getElementById('mailGiftLink').value = `https://fitbalance.co.il/pages/customer/birthday-gift.html?id=${m.id}`;
+  document.getElementById('mailCustomerId').value = m.id;
   document.getElementById('mailModal').style.display = 'flex';
 }
 
 async function loadBirthdays() {
   const el = document.getElementById('birthdayList');
-  const { data } = await sb.from('customers').select('id, firstName, lastName, birthDate, email').not('birthDate', 'is', null);
+  const { data } = await sb.from('customers').select('id, firstName, lastName, birthDate, email, birthday_email_sent_at').not('birthDate', 'is', null);
   if (!data?.length) { el.innerHTML = '<div class="empty-msg">אין נתוני ימי הולדת</div>'; return; }
 
   const sorted = data
@@ -114,17 +135,20 @@ async function loadBirthdays() {
     const badge = c.days === 0
       ? '<span class="badge-today">היום! 🎉</span>'
       : `<span class="badge-days">בעוד ${c.days} ימים</span>`;
-    const mailSubject = getSetting('tmpl-birthday-subject', DEFAULT_BIRTHDAY_SUBJECT).replace('{שם}', c.firstName);
-    const mailBody = getSetting('tmpl-birthday-body', DEFAULT_BIRTHDAY_BODY).replace(/{שם}/g, c.firstName);
-    if (c.email) birthdayMailLinks[idx] = { to: c.email, subject: mailSubject, body: mailBody };
+    if (c.email) birthdayMailLinks[c.id] = { to: c.email, firstName: c.firstName, id: c.id };
+    const sentAt = c.birthday_email_sent_at ? new Date(c.birthday_email_sent_at).toLocaleDateString('he-IL') : null;
     const mailLink = c.email
-      ? `<button onclick="openMailModal(${idx})" title="שלח מייל מזל טוב" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;">✉️</button>`
+      ? `<button onclick="openMailModal('${c.id}')" title="${sentAt ? 'נשלח ב-' + sentAt + ' — לחץ לשליחה חוזרת' : 'שלח מייל מזל טוב'}" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;">${sentAt ? '✅' : '✉️'}</button>`
       : '<span style="font-size:11px;color:#ccc;">אין מייל</span>';
+    const useHebrew = (localStorage.getItem('sys_dash-birthday-calendar') ?? 'gregorian') === 'hebrew';
+    const dateDisplay = useHebrew
+      ? toHebrewDate(c.birthDate)
+      : c.birthDate;
     return `<div class="widget-row">
       <span class="row-icon">🎂</span>
       <div class="row-info">
         <div class="row-name">${c.firstName} ${c.lastName}</div>
-        <div class="row-sub">${c.birthDate}${age ? ` · גיל ${age}` : ''}</div>
+        <div class="row-sub">${dateDisplay}${age ? ` · גיל ${age}` : ''}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">${mailLink}${badge}</div>
     </div>`;
@@ -257,9 +281,99 @@ async function loadUpdates() {
   }).join('');
 }
 
+async function loadShopAnalytics() {
+  // הכנסות החודש ל-KPI
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+  const { data: monthOrders } = await sb.from('orders')
+    .select('total')
+    .neq('status', 'cancelled')
+    .gte('created_at', monthStart);
+  const monthRev = (monthOrders || []).reduce((s, o) => s + Number(o.total), 0);
+  document.getElementById('kpiShopRevenue').textContent = '₪' + monthRev.toFixed(0);
+
+  // 6 חודשים אחרונים
+  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1).toISOString();
+  const { data: orders6 } = await sb.from('orders')
+    .select('created_at, total, order_items(quantity, price, products(name))')
+    .neq('status', 'cancelled')
+    .gte('created_at', sixMonthsAgo);
+
+  // גרף לפי חודש
+  const monthLabels = [];
+  const monthRevMap = {};
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = d.toLocaleDateString('he-IL', { month: 'short', year: '2-digit' });
+    monthLabels.push(label);
+    monthRevMap[key] = 0;
+  }
+  (orders6 || []).forEach(o => {
+    const key = o.created_at?.slice(0, 7);
+    if (key in monthRevMap) monthRevMap[key] += Number(o.total);
+  });
+  const chartData = Object.values(monthRevMap);
+
+  const ctx = document.getElementById('shopChart')?.getContext('2d');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: monthLabels,
+        datasets: [{
+          label: 'הכנסות ₪',
+          data: chartData,
+          backgroundColor: chartData.map((_, i) => i === 5
+            ? 'rgba(139,92,246,.85)'
+            : 'rgba(236,72,153,.35)'),
+          borderRadius: 8,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { ticks: { callback: v => '₪' + v }, grid: { color: '#f3f0ff' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // מוצרים מובילים
+  const productMap = {};
+  (orders6 || []).forEach(o => {
+    (o.order_items || []).forEach(item => {
+      const name = item.products?.name || 'מוצר';
+      if (!productMap[name]) productMap[name] = { qty: 0, rev: 0 };
+      productMap[name].qty += item.quantity;
+      productMap[name].rev += item.price * item.quantity;
+    });
+  });
+  const topProducts = Object.entries(productMap)
+    .sort((a, b) => b[1].rev - a[1].rev)
+    .slice(0, 6);
+
+  const el = document.getElementById('topProductsList');
+  if (!topProducts.length) { el.innerHTML = '<div class="empty-msg">אין נתוני מכירות</div>'; return; }
+  const maxRev = topProducts[0][1].rev || 1;
+  el.innerHTML = topProducts.map(([name, { qty, rev }]) => `
+    <div class="widget-row" style="flex-direction:column;align-items:stretch;gap:4px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="row-name">${name}</span>
+        <span style="font-size:11px;font-weight:700;color:#7c3aed;">₪${rev.toFixed(0)} · ${qty} יח'</span>
+      </div>
+      <div style="height:5px;border-radius:3px;background:#f3f0ff;overflow:hidden;">
+        <div style="height:100%;width:${(rev/maxRev*100).toFixed(1)}%;background:linear-gradient(90deg,#ec4899,#8b5cf6);border-radius:3px;"></div>
+      </div>
+    </div>`).join('');
+}
+
 loadKPIs();
 loadUpdates();
 loadBirthdays();
 loadInquiries();
 loadDebts();
 loadOrders();
+loadShopAnalytics();

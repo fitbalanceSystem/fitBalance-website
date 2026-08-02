@@ -11,6 +11,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="../../services/supabaseClient.js"></script>
+  <script src="../../services/uploadService.js"></script>
   <style>
     .section-card { background:white; border-radius:16px; border:1px solid #f3f0ff; box-shadow:0 2px 12px rgba(139,92,246,.07); padding:24px; margin-bottom:20px; }
     .section-title { font-size:15px; font-weight:800; color:#1f2937; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
@@ -794,7 +795,16 @@ async function deleteShopCat(id) {
     <div style="display:flex;flex-direction:column;gap:12px">
       <div class="field"><label>שם המתנה</label><input id="gift-name" type="text" placeholder="לדוגמא: שיעור חינם" /></div>
       <div class="field"><label>תיאור</label><textarea id="gift-desc" rows="3" placeholder="תיאור קצר של המתנה"></textarea></div>
-      <div class="field"><label>URL תמונה</label><input id="gift-img" type="text" placeholder="https://..." /></div>
+      <div class="field">
+        <label>תמונה</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <img id="gift-img-preview" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1.5px solid #ede9fe;display:none" />
+          <button type="button" onclick="document.getElementById('gift-img-file').click()" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit"><i class="fas fa-upload"></i> העלי תמונה</button>
+          <button type="button" id="gift-img-remove" onclick="removeGiftImg()" style="display:none;background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:10px;padding:7px 10px;font-size:12px;cursor:pointer">✕</button>
+        </div>
+        <input type="file" id="gift-img-file" accept="image/*" style="display:none" onchange="previewGiftImg(this)" />
+        <input id="gift-img" type="text" placeholder="או הדביקי URL ישירות" style="font-size:12px" oninput="syncGiftImgUrl(this.value)" />
+      </div>
       <div style="display:flex;align-items:center;gap:8px">
         <input type="checkbox" id="gift-active" checked style="width:16px;height:16px;accent-color:#ec4899;cursor:pointer" />
         <label for="gift-active" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer">פעילה</label>
@@ -848,8 +858,44 @@ function openGiftModal(id) {
   document.getElementById('gift-name').value = g?.name || '';
   document.getElementById('gift-desc').value = g?.description || '';
   document.getElementById('gift-img').value  = g?.image_url || '';
+  document.getElementById('gift-img-file').value = '';
   document.getElementById('gift-active').checked = g ? (g.is_active ?? true) : true;
+  const preview = document.getElementById('gift-img-preview');
+  const removeBtn = document.getElementById('gift-img-remove');
+  if (g?.image_url) {
+    preview.src = g.image_url; preview.style.display = 'block'; removeBtn.style.display = 'inline-block';
+  } else {
+    preview.style.display = 'none'; removeBtn.style.display = 'none';
+  }
   document.getElementById('gift-modal').style.display = 'flex';
+}
+
+function previewGiftImg(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('gift-img-preview');
+    preview.src = e.target.result; preview.style.display = 'block';
+    document.getElementById('gift-img-remove').style.display = 'inline-block';
+    document.getElementById('gift-img').value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function syncGiftImgUrl(url) {
+  const preview = document.getElementById('gift-img-preview');
+  const removeBtn = document.getElementById('gift-img-remove');
+  if (url) { preview.src = url; preview.style.display = 'block'; removeBtn.style.display = 'inline-block'; }
+  else { preview.style.display = 'none'; removeBtn.style.display = 'none'; }
+  document.getElementById('gift-img-file').value = '';
+}
+
+function removeGiftImg() {
+  document.getElementById('gift-img').value = '';
+  document.getElementById('gift-img-file').value = '';
+  document.getElementById('gift-img-preview').style.display = 'none';
+  document.getElementById('gift-img-remove').style.display = 'none';
 }
 
 function closeGiftModal() {
@@ -860,10 +906,16 @@ function closeGiftModal() {
 async function saveGift() {
   const name = document.getElementById('gift-name').value.trim();
   if (!name) return alert('יש להזין שם מתנה');
+  let image_url = document.getElementById('gift-img').value.trim() || null;
+  const file = document.getElementById('gift-img-file').files[0];
+  if (file) {
+    try { image_url = await window.uploadService.uploadGift(file); }
+    catch(e) { return alert('שגיאה בהעלאת תמונה: ' + e.message); }
+  }
   const payload = {
     name,
     description: document.getElementById('gift-desc').value.trim() || null,
-    image_url:   document.getElementById('gift-img').value.trim()  || null,
+    image_url,
     is_active:   document.getElementById('gift-active').checked,
     sort_order:  giftEditId ? (giftsData.find(g => g.id === giftEditId)?.sort_order ?? 0) : giftsData.length,
   };

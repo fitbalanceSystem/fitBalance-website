@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitBalance | חתימה על טופס</title>
+  <link rel="icon" type="image/png" href="../../assets/icons/icon.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Heebo', sans-serif; background: #f8f7ff; direction: rtl; color: #1f2937; }
+
+    /* topbar */
+    #topbar {
+      position: fixed; top: 0; right: 0; left: 0; height: 64px;
+      background: white; z-index: 30;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid #ede9fe;
+      box-shadow: 0 1px 12px rgba(139,92,246,.07);
+    }
+    .topbar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .topbar-logo img { height: 36px; border-radius: 8px; }
+    .topbar-logo span {
+      font-size: 18px; font-weight: 800;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .page-wrap { margin-top: 64px; min-height: calc(100vh - 64px); display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px; }
+    .form-card {
+      background: white; border-radius: 20px; width: 100%; max-width: 640px;
+      box-shadow: 0 4px 32px rgba(139,92,246,.10); border: 1px solid #f3f0ff;
+      overflow: hidden;
+    }
+    .form-header {
+      background: linear-gradient(135deg, #1a1035, #3b1f7a);
+      padding: 28px 28px 24px; color: white;
+    }
+    .form-header h1 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    .form-header p  { font-size: 13px; color: rgba(255,255,255,.6); }
+    .form-body { padding: 28px; }
+
+    /* state screens */
+    .state-screen { text-align: center; padding: 48px 24px; }
+    .state-icon { font-size: 56px; margin-bottom: 16px; }
+    .state-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .state-sub   { font-size: 14px; color: #6b7280; line-height: 1.7; }
+
+    /* form content */
+    .form-content-box {
+      background: #faf9ff; border: 1px solid #ede9fe; border-radius: 12px;
+      padding: 20px; margin-bottom: 24px;
+      max-height: 280px; overflow-y: auto;
+      font-size: 14px; line-height: 1.9; color: #374151;
+    }
+    .form-content-box h2 { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #1f2937; }
+    .form-content-box h3 { font-size: 14px; font-weight: 700; margin: 14px 0 6px; color: #374151; }
+    .form-content-box ol, .form-content-box ul { padding-right: 20px; }
+    .form-content-box li { margin-bottom: 6px; }
+
+    /* fields */
+    .field-group { margin-bottom: 18px; }
+    .field-group label { display: block; font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 6px; }
+    .field-group input {
+      width: 100%; border: 1.5px solid #e5e7eb; border-radius: 10px;
+      padding: 10px 14px; font-size: 14px; font-family: inherit; color: #1f2937;
+      outline: none; transition: border-color .2s; background: white;
+    }
+    .field-group input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,.1); }
+
+    /* canvas */
+    #sig-wrap {
+      border: 2px dashed #d1d5db; border-radius: 12px;
+      background: #fafafa; position: relative; overflow: hidden;
+      margin-bottom: 8px; cursor: crosshair;
+    }
+    #sig-wrap.has-sig { border-color: #8b5cf6; border-style: solid; }
+    #sigCanvas { display: block; width: 100%; touch-action: none; }
+    #sig-placeholder {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: #9ca3af; font-size: 13px; pointer-events: none;
+    }
+    .sig-actions { display: flex; gap: 8px; margin-bottom: 20px; }
+    .btn-clear {
+      font-size: 12px; color: #6b7280; background: #f3f4f6;
+      border: none; border-radius: 8px; padding: 6px 14px; cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-clear:hover { background: #e5e7eb; }
+
+    /* submit */
+    .btn-submit {
+      width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: white; font-size: 16px; font-weight: 700; font-family: inherit;
+      box-shadow: 0 4px 18px rgba(236,72,153,.35);
+      transition: opacity .2s, transform .2s;
+    }
+    .btn-submit:hover:not(:disabled) { opacity: .92; transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* success */
+    #successScreen { display: none; }
+    .btn-download {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 28px; border: none; border-radius: 12px; cursor: pointer;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: white; font-size: 14px; font-weight: 700; font-family: inherit;
+      box-shadow: 0 4px 14px rgba(236,72,153,.3);
+      text-decoration: none; margin: 6px;
+    }
+    .btn-print {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 28px; border: 1.5px solid #ede9fe; border-radius: 12px; cursor: pointer;
+      background: white; color: #7c3aed;
+      font-size: 14px; font-weight: 700; font-family: inherit; margin: 6px;
+    }
+    .btn-print:hover { background: #f3f0ff; }
+
+    /* loader */
+    .spinner {
+      width: 28px; height: 28px; border: 3px solid #ede9fe;
+      border-top-color: #8b5cf6; border-radius: 50%;
+      animation: spin .7s linear infinite; margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* divider */
+    .divider { height: 1px; background: #f3f0ff; margin: 20px 0; }
+  </style>
+</head>
+<body>
+
+<!-- Topbar -->
+<header id="topbar">
+  <a href="../../home.html" class="topbar-logo">
+    <img src="../../assets/icons/logo.jpg" onerror="this.style.display='none'" />
+    <span>FitBalance</span>
+  </a>
+  <span style="font-size:12px;color:#9ca3af;">טופס דיגיטלי מאובטח 🔒</span>
+</header>
+
+<div class="page-wrap">
+  <div class="form-card">
+
+    <!-- מסך טעינה -->
+    <div id="loadingScreen" class="form-body">
+      <div class="state-screen">
+        <div class="spinner"></div>
+        <div class="state-sub">טוען את הטופס...</div>
+      </div>
+    </div>
+
+    <!-- מסך שגיאה: token לא תקין -->
+    <div id="invalidScreen" class="form-body" style="display:none">
+      <div class="state-screen">
+        <div class="state-icon">🔗</div>
+        <div class="state-title" style="color:#ef4444">הקישור אינו תקין</div>
+        <div class="state-sub">הקישור שקיבלת אינו תקין או שפג תוקפו.<br>פני למדריכה שלך לקבלת קישור חדש.</div>
+      </div>
+    </div>
+
+    <!-- מסך שגיאה: כבר נחתם -->
+    <div id="signedScreen" class="form-body" style="display:none">
+      <div class="state-screen">
+        <div class="state-icon">✅</div>
+        <div class="state-title" style="color:#10b981">הטופס כבר נחתם</div>
+        <div class="state-sub">חתמת על טופס זה בעבר.<br>אין צורך לחתום שוב.</div>
+      </div>
+    </div>
+
+    <!-- מסך הטופס -->
+    <div id="formScreen" style="display:none">
+      <div class="form-header">
+        <h1 id="formTitle">טופס</h1>
+        <p id="formDesc"></p>
+      </div>
+      <div class="form-body">
+
+        <!-- תוכן הטופס -->
+        <div class="form-content-box" id="formContentBox"></div>
+
+        <!-- שדות -->
+        <div id="fieldsWrap"></div>
+
+        <div class="divider"></div>
+
+        <!-- חתימה -->
+        <div class="field-group">
+          <label>חתימה דיגיטלית <span style="color:#ef4444">*</span></label>
+          <div id="sig-wrap">
+            <canvas id="sigCanvas" height="160"></canvas>
+            <div id="sig-placeholder"><i class="fas fa-pen" style="margin-left:6px"></i> חתמי כאן באצבע או בעכבר</div>
+          </div>
+          <div class="sig-actions">
+            <button class="btn-clear" id="clearSigBtn"><i class="fas fa-eraser"></i> נקה חתימה</button>
+          </div>
+        </div>
+
+        <!-- כפתור שליחה -->
+        <button class="btn-submit" id="submitBtn" disabled>
+          <i class="fas fa-check-circle"></i> אני מאשר/ת ושולח/ת
+        </button>
+        <p style="font-size:11px;color:#9ca3af;text-align:center;margin-top:10px">
+          בלחיצה על הכפתור אתה/את מאשר/ת את תוכן הטופס ומסכים/ה לתנאיו
+        </p>
+
+      </div>
+    </div>
+
+    <!-- מסך הצלחה -->
+    <div id="successScreen" class="form-body">
+      <div class="state-screen">
+        <div class="state-icon">🎉</div>
+        <div class="state-title" style="color:#10b981">הטופס נחתם בהצלחה!</div>
+        <div class="state-sub" id="successMsg">תודה! הטופס נשמר במערכת.</div>
+        <div style="margin-top:24px;display:flex;flex-wrap:wrap;justify-content:center">
+          <a id="downloadPdfBtn" class="btn-download" style="display:none">
+            <i class="fas fa-file-pdf"></i> הורד PDF
+          </a>
+          <button class="btn-print" id="printBtn" style="display:none">
+            <i class="fas fa-print"></i> הדפס
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../../services/supabaseClient.js"></script>
+<script src="../../services/formsService.js"></script>
+<script src="../../services/formTemplates.js"></script>
+<script src="../../services/pdfService.js"></script>
+<script src="js/sign.js"></script>
+</body>
+</html>

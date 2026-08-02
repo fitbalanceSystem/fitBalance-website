@@ -2,5 +2,29 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.109.0",
     "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^10.9.0",
+    "@cucumber/gherkin-streams": "^5.0.1",
+    "@cucumber/messages": "^22.0.0",
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^22.0.0",
+    "allure-commandline": "^2.30.0",
+    "allure-cucumberjs": "^3.0.0",
+    "cross-env": "^10.1.0",
+    "multiple-cucumber-html-reporter": "^3.7.0",
+    "playwright": "^1.48.0",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.6.0"
+  },
+  "scripts": {
+    "test": "cucumber-js --config tests/cucumber.config.ts",
+    "test:local": "cross-env ENV=local cucumber-js --config tests/cucumber.config.ts",
+    "test:staging": "cross-env ENV=staging cucumber-js --config tests/cucumber.config.ts",
+    "test:production": "cross-env ENV=production cucumber-js --config tests/cucumber.config.ts",
+    "test:headed": "cross-env HEADED=true cucumber-js --config tests/cucumber.config.ts",
+    "test:report": "allure generate tests/reports/allure-results --clean -o tests/reports/allure-report && allure open tests/reports/allure-report",
+    "test:install": "playwright install chromium"
   }
 }

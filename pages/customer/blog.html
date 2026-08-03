@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>מאמרים | FitBalance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: #fafafa;
+      color: #1a1a2e;
+      direction: rtl;
+    }
+
+    /* ── Header ── */
+    #main-header {
+      position: fixed; top: 0; right: 0; left: 0;
+      background: white; z-index: 50; height: 64px;
+      display: flex; align-items: center; padding: 0 24px;
+      justify-content: space-between;
+      border-bottom: 1px solid #f0eeff;
+      box-shadow: 0 1px 20px rgba(139,92,246,.06);
+      transition: box-shadow .3s;
+    }
+    #main-header.scrolled { box-shadow: 0 4px 20px rgba(0,0,0,.1); }
+    .header-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .header-logo img { height: 56px; }
+    .gradient-text {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      font-size: 20px; font-weight: 700;
+    }
+    .header-nav { display: flex; align-items: center; gap: 32px; }
+    .nav-link {
+      font-size: 15px; font-weight: 500; color: #374151;
+      text-decoration: none; position: relative; transition: color .2s;
+    }
+    .nav-link::after {
+      content: ''; position: absolute; bottom: -4px; right: 0;
+      width: 0; height: 2px; background: #ec4899; transition: width .3s;
+    }
+    .nav-link:hover { color: #ec4899; }
+    .nav-link:hover::after { width: 100%; }
+    .nav-link.active { color: #ec4899; font-weight: 700; }
+    .nav-link.active::after { width: 100%; }
+    .nav-cta {
+      background: #ec4899;
+      color: white; padding: 8px 20px; border-radius: 999px;
+      font-size: 15px; font-weight: 500; text-decoration: none;
+      transition: background .2s, box-shadow .2s;
+      box-shadow: 0 2px 8px rgba(236,72,153,.3);
+    }
+    .nav-cta:hover { background: #db2777; }
+    #menu-btn { display: none; background: none; border: none; font-size: 24px; color: #374151; cursor: pointer; }
+    #mobile-menu {
+      display: none; position: fixed; top: 64px; right: 0; left: 0;
+      background: white; z-index: 40; padding: 24px;
+      flex-direction: column; gap: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.1);
+    }
+    #mobile-menu.open { display: flex; }
+    .mobile-link {
+      display: block; padding: 8px 0; border-bottom: 1px solid #f3f0ff;
+      font-size: 15px; font-weight: 500; color: #374151; text-decoration: none;
+    }
+    .mobile-link:hover { color: #ec4899; }
+
+    /* ── Hero ── */
+    .hero {
+      margin-top: 64px;
+      background: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      padding: 80px 24px 72px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 30% 50%, rgba(236,72,153,.18) 0%, transparent 60%),
+                  radial-gradient(ellipse at 70% 50%, rgba(139,92,246,.18) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-label {
+      display: inline-block;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      color: rgba(255,255,255,.7);
+      font-size: 12px; font-weight: 600; letter-spacing: .08em;
+      padding: 5px 16px; border-radius: 999px; margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 900; color: white; margin-bottom: 16px; line-height: 1.2;
+    }
+    .hero p { font-size: 17px; color: rgba(255,255,255,.6); font-weight: 400; max-width: 480px; margin: 0 auto; }
+
+    /* ── Layout ── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 56px 24px 80px; }
+
+    /* ── Filters ── */
+    .filters-bar {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      align-items: center; margin-bottom: 40px;
+    }
+    .search-wrap {
+      flex: 1; min-width: 220px; position: relative;
+    }
+    .search-wrap i {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      color: #9ca3af; font-size: 14px; pointer-events: none;
+    }
+    .search-wrap input {
+      width: 100%; padding: 11px 40px 11px 16px;
+      border: 1.5px solid #e5e7eb; border-radius: 12px;
+      font-size: 14px; font-family: inherit; outline: none;
+      background: white; transition: border-color .2s;
+    }
+    .search-wrap input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,.08); }
+    .cat-btn {
+      border: 1.5px solid #e5e7eb; border-radius: 999px;
+      background: white; color: #6b7280;
+      font-size: 13px; font-weight: 600; padding: 8px 18px;
+      font-family: inherit; cursor: pointer; transition: all .2s;
+      white-space: nowrap;
+    }
+    .cat-btn:hover { border-color: #8b5cf6; color: #7c3aed; }
+    .cat-btn.active {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 14px rgba(236,72,153,.3);
+    }
+
+    /* ── Grid ── */
+    .articles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 28px;
+    }
+
+    /* ── Card ── */
+    .article-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #f0eeff;
+      box-shadow: 0 2px 16px rgba(139,92,246,.05);
+      overflow: hidden;
+      text-decoration: none; color: inherit;
+      display: flex; flex-direction: column;
+      transition: transform .25s ease, box-shadow .25s ease;
+      animation: fadeUp .45s ease both;
+    }
+    .article-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 16px 40px rgba(139,92,246,.12);
+    }
+    .card-img {
+      height: 200px;
+      background: linear-gradient(135deg, #f5f3ff, #fce7f3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 52px; overflow: hidden; flex-shrink: 0;
+      position: relative;
+    }
+    .card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card-img .card-cat-overlay {
+      position: absolute; bottom: 12px; right: 12px;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(8px);
+      color: #7c3aed; font-size: 11px; font-weight: 700;
+      padding: 4px 10px; border-radius: 999px;
+      border: 1px solid rgba(139,92,246,.2);
+    }
+    .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .card-title { font-size: 17px; font-weight: 800; color: #111827; line-height: 1.4; }
+    .card-summary { font-size: 13px; color: #6b7280; line-height: 1.7; flex: 1; }
+    .card-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 14px; border-top: 1px solid #f3f0ff;
+      font-size: 12px; color: #9ca3af;
+    }
+    .card-footer .author { display: flex; align-items: center; gap: 5px; }
+
+    /* ── States ── */
+    .state-msg { text-align: center; padding: 80px 20px; color: #9ca3af; }
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid #ede9fe;
+      border-top-color: #8b5cf6; border-radius: 50%;
+      animation: spin .7s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── Footer ── */
+    footer {
+      background: #111827; color: #6b7280;
+      padding: 48px 24px 32px; text-align: center;
+    }
+    footer a { color: #9ca3af; text-decoration: none; }
+    footer a:hover { color: #ec4899; }
+
+    @media (max-width: 768px) {
+      .header-nav { display: none; }
+      #menu-btn { display: block; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header id="main-header">
+  <a href="../../home.html" class="header-logo">
+    <img src="../../assets/icons/logo.jpg" onerror="this.style.display='none'" alt="FitBalance" />
+    <span class="gradient-text">FitBalance</span>
+  </a>
+  <nav class="header-nav">
+    <a href="../../home.html" class="nav-link">דף הבית</a>
+    <a href="../../home.html#classes" class="nav-link">שיעורים</a>
+    <a href="../../home.html#shop" class="nav-link">חנות</a>
+    <a href="../../home.html#testimonials" class="nav-link">המלצות</a>
+    <a href="../../about.html" class="nav-link">אודות</a>
+    <a href="blog.html" class="nav-link active">מאמרים</a>
+    <a href="../../login.html" class="nav-cta"><i class="fas fa-user" style="margin-left:6px"></i>כניסה לאזור אישי</a>
+  </nav>
+  <button id="menu-btn"><i class="fas fa-bars"></i></button>
+</header>
+
+<!-- Mobile menu -->
+<div id="mobile-menu">
+  <a href="../../home.html" class="mobile-link">דף הבית</a>
+  <a href="../../home.html#classes" class="mobile-link">שיעורים</a>
+  <a href="../../home.html#shop" class="mobile-link">חנות</a>
+  <a href="../../home.html#testimonials" class="mobile-link">המלצות</a>
+  <a href="../../about.html" class="mobile-link">אודות</a>
+  <a href="blog.html" class="mobile-link" style="color:#ec4899;font-weight:700">מאמרים</a>
+  <a href="../../login.html" class="mobile-link" style="color:#8b5cf6;font-weight:700">כניסה לאזור אישי</a>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <div style="position:relative;z-index:1">
+    <div class="hero-label">Blog</div>
+    <h1>מאמרים ותוכן מקצועי</h1>
+    <p>טיפים, מדריכים וכתבות בנושאי כושר, תזונה ובריאות מהצוות שלנו</p>
+  </div>
+</section>
+
+<div class="page">
+
+  <!-- Filters -->
+  <div class="filters-bar" id="filters-bar">
+    <div class="search-wrap">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="חיפוש מאמרים..." oninput="render()" />
+    </div>
+    <button class="cat-btn active" data-cat="" onclick="selectCat('', this)">הכל</button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading-screen" class="state-msg">
+    <div class="spinner"></div>
+    <p style="font-size:14px">טוען מאמרים...</p>
+  </div>
+
+  <!-- Empty -->
+  <div id="empty-screen" class="state-msg" style="display:none">
+    <div style="font-size:44px;margin-bottom:12px;opacity:.4">📭</div>
+    <p style="font-size:15px">לא נמצאו מאמרים</p>
+  </div>
+
+  <!-- Grid -->
+  <div class="articles-grid" id="articles-grid" style="display:none"></div>
+
+</div>
+
+<!-- Footer -->
+<footer>
+  <div style="font-size:18px;font-weight:800;color:white;margin-bottom:8px">FitBalance</div>
+  <p style="font-size:13px;margin-bottom:20px">חוגי ספורט לנשים, ילדות ונערות</p>
+  <div style="display:flex;justify-content:center;gap:24px;font-size:13px;flex-wrap:wrap">
+    <a href="../../home.html">דף הבית</a>
+    <a href="../../about.html">אודות</a>
+    <a href="blog.html">מאמרים</a>
+    <a href="../../login.html">אזור אישי</a>
+  </div>
+  <div style="margin-top:24px;padding-top:20px;border-top:1px solid #1f2937;font-size:12px">
+    © 2026 FitBalance – כל הזכויות שמורות
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../../services/supabaseClient.js"></script>
+<script>
+  const sb = window._sb;
+  let articles = [], activeCat = '';
+  const ctx = new URLSearchParams(location.search).get('ctx');
+  const filterCol = ctx === 'customers' ? 'show_customers' : ctx === 'employees' ? 'show_employees' : 'show_public';
+
+  async function init() {
+    const { data, error } = await sb
+      .from('articles')
+      .select('id,title,slug,summary,image_url,author,category,published_at')
+      .eq('status', 'published')
+      .eq(filterCol, true)
+      .order('published_at', { ascending: false });
+
+    document.getElementById('loading-screen').style.display = 'none';
+
+    if (error || !data?.length) {
+      document.getElementById('empty-screen').style.display = 'block';
+      return;
+    }
+
+    articles = data;
+    buildCatButtons();
+    render();
+  }
+
+  function buildCatButtons() {
+    const cats = [...new Set(articles.map(a => a.category).filter(Boolean))].sort();
+    const bar = document.getElementById('filters-bar');
+    cats.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'cat-btn';
+      btn.dataset.cat = cat;
+      btn.textContent = cat;
+      btn.onclick = () => selectCat(cat, btn);
+      bar.appendChild(btn);
+    });
+  }
+
+  function selectCat(cat, btn) {
+    activeCat = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function render() {
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    const filtered = articles.filter(a => {
+      if (activeCat && a.category !== activeCat) return false;
+      if (q && !a.title?.toLowerCase().includes(q) && !a.summary?.toLowerCase().includes(q)) return false;
+      return true;
+    });
+
+    const grid  = document.getElementById('articles-grid');
+    const empty = document.getElementById('empty-screen');
+
+    if (!filtered.length) {
+      grid.style.display = 'none'; empty.style.display = 'block'; return;
+    }
+    empty.style.display = 'none';
+    grid.style.display  = 'grid';
+    grid.innerHTML = filtered.map((a, i) => `
+      <a class="article-card" href="article.html?slug=${encodeURIComponent(a.slug)}" style="animation-delay:${i*.06}s">
+        <div class="card-img">
+          ${a.image_url
+            ? `<img src="${a.image_url}" alt="${a.title}" />`
+            : '<span style="opacity:.35">📝</span>'}
+          ${a.category ? `<span class="card-cat-overlay">${a.category}</span>` : ''}
+        </div>
+        <div class="card-body">
+          <div class="card-title">${a.title}</div>
+          ${a.summary ? `<div class="card-summary">${a.summary.slice(0,110)}${a.summary.length>110?'…':''}</div>` : ''}
+          <div class="card-footer">
+            <span class="author"><i class="fas fa-user-circle" style="color:#c4b5fd"></i> ${a.author || 'FitBalance'}</span>
+            <span>${a.published_at ? new Date(a.published_at).toLocaleDateString('he-IL') : ''}</span>
+          </div>
+        </div>
+      </a>`).join('');
+  }
+
+  // Header scroll effect
+  window.addEventListener('scroll', () => {
+    document.getElementById('main-header').classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  // Mobile menu
+  document.getElementById('menu-btn').addEventListener('click', () => {
+    document.getElementById('mobile-menu').classList.toggle('open');
+  });
+
+  init();
+</script>
+</body>
+</html>

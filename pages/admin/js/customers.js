@@ -21,9 +21,12 @@ async function loadCustomers() {
   renderTable();
 }
 
+let futureStatusSet = new Set();
+
 async function buildStatusMap() {
   const allIds = customerData.map(c => c.id);
   if (!allIds.length) return;
+  futureStatusSet = new Set();
   const [{ data: enrollments }, { data: trials, error: te }] = await Promise.all([
     supabaseClient.from('program_enrollments').select('id, customer_id, start_date, end_date').in('customer_id', allIds),
     supabaseClient.from('trial_sessions').select('customer_id, session_id').in('customer_id', allIds),
@@ -42,6 +45,7 @@ async function buildStatusMap() {
     if (s && e && s <= today && e >= today) activeSet.add(en.customer_id);
     else if (s && s > today) futureSet.add(en.customer_id);
   });
+  futureSet.forEach(id => futureStatusSet.add(id));
   const manual = ['frozen','left','not_interested'];
   customerData.forEach(cust => {
     if (manual.includes(cust.status_code)) { statusMap[cust.id] = cust.status_code; return; }
@@ -56,12 +60,18 @@ async function buildStatusMap() {
   });
 }
 
+let activeDebtMap = {};
+let futureDebtMap = {};
+
 async function buildDebtMap() {
   const allIds = customerData.map(c => c.id);
   if (!allIds.length) return;
   debtMapGlobal = {};
+  activeDebtMap = {};
+  futureDebtMap = {};
+  const today = new Date().toISOString().split('T')[0];
   const [{ data: enrollments }, { data: payments }] = await Promise.all([
-    supabaseClient.from('program_enrollments').select('id, customer_id, start_date, end_date, programs!fk_enrollments_program(price)').in('customer_id', allIds),
+    supabaseClient.from('program_enrollments').select('id, customer_id, start_date, end_date, programs!fk_enrollments_program(price)').in('customer_id', allIds).gte('end_date', today),
     supabaseClient.from('payments').select('enrollment_id, amount, method'),
   ]);
   function calcMonths(s, e) {
@@ -76,7 +86,11 @@ async function buildDebtMap() {
     if (enPay.some(p => p.method === 'standing_order')) return;
     const paid = enPay.reduce((s,p) => s+(p.amount||0), 0);
     const debt = totalDue - paid;
-    if (debt > 0) debtMapGlobal[en.customer_id] = (debtMapGlobal[en.customer_id]||0) + debt;
+    if (debt <= 0) return;
+    const isFuture = en.start_date > today;
+    if (isFuture) futureDebtMap[en.customer_id] = (futureDebtMap[en.customer_id]||0) + debt;
+    else activeDebtMap[en.customer_id] = (activeDebtMap[en.customer_id]||0) + debt;
+    debtMapGlobal[en.customer_id] = (debtMapGlobal[en.customer_id]||0) + debt;
   });
 }
 
@@ -102,10 +116,21 @@ async function renderTable() {
   pageData.forEach(customer => {
     const tr = document.createElement('tr');
     tr.style.cursor = 'pointer';
-    const debt = debtMapGlobal[customer.id] || 0;
-    const status = statusMap[customer.id];
+    const activeDebt = activeDebtMap[customer.id] || 0;
+    const futureDebt = futureDebtMap[customer.id] || 0;
+    const hasFuture = futureStatusSet.has(customer.id);
     const isManual = ['frozen','left','not_interested'].includes(customer.status_code);
-    const debtBadge = (!isManual && debt > 0) ? ` <span style="color:red;font-size:0.75em;font-weight:bold">+חוב</span>` : '';
+    let displayStatus = statusMap[customer.id];
+    let debtBadge = '';
+    if (!isManual) {
+      if (activeDebt > 0) {
+        displayStatus = 'active';
+        debtBadge = ` <span style="color:red;font-size:0.75em;font-weight:bold">+חוב</span>`;
+      } else if (hasFuture) {
+        displayStatus = 'future';
+        if (futureDebt > 0) debtBadge = ` <span style="color:red;font-size:0.75em;font-weight:bold">+חוב</span>`;
+      }
+    }
     tr.innerHTML = `
       <td>${customer.idValue||''}</td>
       <td>${customer.firstName||''}</td>
@@ -113,7 +138,7 @@ async function renderTable() {
       <td>${customer.birthDate||''}</td>
       <td>${customer.email||''}</td>
       <td>${customer.mobile||''}</td>
-      <td>${getStatusHtml(status)}${debtBadge}</td>
+      <td>${getStatusHtml(displayStatus)}${debtBadge}</td>
       <td class="action-icons" onclick="event.stopPropagation()">
         <button class="action-btn" title="צפייה" onclick="openViewModal(${customer.id})"><i class="fas fa-eye" style="color:#8b5cf6"></i></button>
         <button class="action-btn edit" title="עריכה" onclick="editCustomer(${customer.id})"><i class="fas fa-edit"></i></button>
@@ -131,8 +156,19 @@ function renderPagination(totalRows) {
   document.getElementById('pageInfo').textContent = `עמוד ${currentPage} מתוך ${totalPages}`;
   document.getElementById('prevPage').disabled = currentPage === 1;
   document.getElementById('nextPage').disabled = currentPage === totalPages;
+  document.getElementById('firstPage').disabled = currentPage === 1;
+  document.getElementById('lastPage').disabled = currentPage === totalPages;
   document.getElementById('prevPage').onclick = () => { if (currentPage > 1) { currentPage--; renderTable(); } };
   document.getElementById('nextPage').onclick = () => { if (currentPage < totalPages) { currentPage++; renderTable(); } };
+  document.getElementById('firstPage').onclick = () => { if (currentPage !== 1) { currentPage = 1; renderTable(); } };
+  document.getElementById('lastPage').onclick = () => { if (currentPage !== totalPages) { currentPage = totalPages; renderTable(); } };
+  const goInput = document.getElementById('goToPageInput');
+  goInput.max = totalPages;
+  goInput.onkeydown = (e) => {
+    if (e.key !== 'Enter') return;
+    const p = parseInt(goInput.value);
+    if (p >= 1 && p <= totalPages) { currentPage = p; goInput.value = ''; renderTable(); }
+  };
 }
 
 function sortBy(field) {
@@ -213,7 +249,16 @@ function closeViewModal() {
   document.getElementById('viewModal').classList.remove('open');
 }
 
+function saveTableState() {
+  sessionStorage.setItem('customersState', JSON.stringify({
+    search: document.getElementById('searchInput').value,
+    status: document.getElementById('statusFilter').value,
+    page: currentPage
+  }));
+}
+
 function editCustomer(id) {
+  saveTableState();
   window.location.href = `customer-form.html?id=${id}`;
 }
 
@@ -269,7 +314,7 @@ function exportToCSV(data) {
 document.addEventListener('DOMContentLoaded', () => {
   loadStatusOptions();
   loadCustomers();
-  document.getElementById('newCustomerBtn')?.addEventListener('click', () => { window.location.href = 'customer-form.html'; });
+  document.getElementById('newCustomerBtn')?.addEventListener('click', () => { saveTableState(); window.location.href = 'customer-form.html'; });
   document.getElementById('exportCustomersBtn')?.addEventListener('click', () => exportToCSV(currentFilteredData || customerData));
   document.getElementById('searchInput')?.addEventListener('input', filterCustomers);
   document.getElementById('statusFilter')?.addEventListener('change', filterCustomers);
@@ -278,14 +323,28 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-window.addEventListener('pageshow', () => {
+window.addEventListener('pageshow', async () => {
+  const needReload = sessionStorage.getItem('reloadCustomers') === 'true';
+  const savedState = sessionStorage.getItem('customersState');
+
   if (sessionStorage.getItem('resetSearch') === 'true') {
     document.getElementById('searchInput').value = '';
     sessionStorage.removeItem('resetSearch');
   }
-  if (sessionStorage.getItem('reloadCustomers') === 'true') {
-    sessionStorage.removeItem('reloadCustomers');
-    loadCustomers();
+
+  sessionStorage.removeItem('reloadCustomers');
+  sessionStorage.removeItem('customersState');
+
+  if (needReload || savedState) {
+    await loadCustomers();
+    if (savedState) {
+      const { search, status, page } = JSON.parse(savedState);
+      document.getElementById('searchInput').value = search || '';
+      document.getElementById('statusFilter').value = status || 'all';
+      if (search || (status && status !== 'all')) filterCustomers();
+      currentPage = page || 1;
+      renderTable();
+    }
   }
 });
 

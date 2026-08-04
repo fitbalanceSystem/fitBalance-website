@@ -1,15 +1,50 @@
 <!DOCTYPE html>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet">
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../../assets/icons/icon.png">
-  <title>מערכת ניהול | FitBalance</title>
+  <title>דשבורד | FitBalance</title>
+  <link rel="stylesheet" href="css/admin-theme.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script src="../../services/supabaseClient.js"></script>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 14px; margin-bottom: 24px; }
+    .kpi-card { background: white; border-radius: 16px; padding: 18px 22px; border: 1px solid #f3f0ff; box-shadow: 0 2px 12px rgba(139,92,246,.07); }
+    .kpi-label { font-size: 11px; color: #9ca3af; margin-bottom: 6px; font-weight: 600; }
+    .kpi-value { font-size: 28px; font-weight: 800; }
+    .kpi-icon { font-size: 22px; margin-bottom: 8px; }
+
+    .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .dash-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    .widget { background: white; border-radius: 16px; border: 1px solid #f3f0ff; box-shadow: 0 2px 12px rgba(139,92,246,.07); overflow: hidden; }
+    .widget-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #f3f0ff; background: #faf9ff; }
+    .widget-title { font-size: 14px; font-weight: 800; color: #1f2937; display: flex; align-items: center; gap: 7px; }
+    .widget-link { font-size: 11px; color: #8b5cf6; font-weight: 600; text-decoration: none; }
+    .widget-link:hover { text-decoration: underline; }
+    .widget-body { padding: 8px 0; max-height: 320px; overflow-y: auto; }
+
+    .widget-row { display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-bottom: 1px solid #f9f8ff; transition: background .15s; }
+    .widget-row:last-child { border-bottom: none; }
+    .widget-row:hover { background: #faf9ff; }
+    .row-icon { font-size: 18px; flex-shrink: 0; width: 32px; text-align: center; }
+    .row-info { flex: 1; min-width: 0; }
+    .row-name { font-size: 13px; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row-sub { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+
+    .badge-today { background: #fce7f3; color: #be185d; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+    .badge-days  { background: #ede9fe; color: #7c3aed; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+    .badge-new   { background: #fce7f3; color: #be185d; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+    .badge-overdue { background: #fee2e2; color: #dc2626; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+
+    .empty-msg { padding: 24px 16px; text-align: center; color: #9ca3af; font-size: 13px; }
+
+    .date-banner { font-size: 13px; color: #6b7280; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -19,48 +54,163 @@
 
     <main class="main-content">
       <header class="page-header">
-        <h1>מערכת לניהול חוגים</h1>
+        <h1>🏠 דשבורד</h1>
+        <span class="date-banner" id="dateBanner"></span>
       </header>
 
-      <section style="margin-top:8px">
-        <p style="color:#6b7280;font-size:14px;margin-bottom:24px">ברוכה הבאה! כאן תוכלי לנהל את כל הלקוחות, המדריכות, החוגים והדוחות שלך.</p>
-      </section>
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon">👥</div>
+          <div class="kpi-label">חברות פעילות</div>
+          <div class="kpi-value" style="color:#7c3aed" id="kpiMembers">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🎀</div>
+          <div class="kpi-label">מתעניינות חדשות</div>
+          <div class="kpi-value" style="color:#be185d" id="kpiInquiries">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">💳</div>
+          <div class="kpi-label">חובות פתוחים</div>
+          <div class="kpi-value" style="color:#dc2626" id="kpiDebts">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">📦</div>
+          <div class="kpi-label">הזמנות ממתינות</div>
+          <div class="kpi-value" style="color:#d97706" id="kpiOrders">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🛒</div>
+          <div class="kpi-label">הכנסות חנות (החודש)</div>
+          <div class="kpi-value" style="color:#059669" id="kpiShopRevenue">—</div>
+        </div>
+      </div>
 
-      <section style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px">
-        <a href="customers.html" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px;background:white;border-radius:16px;border:1px solid #f3f0ff;box-shadow:0 2px 16px rgba(139,92,246,.07);text-decoration:none;color:#1f2937;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-          <span style="font-size:28px">👥</span>
-          <span style="font-weight:600;font-size:14px">לקוחות</span>
-        </a>
-        <a href="instructors.html" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px;background:white;border-radius:16px;border:1px solid #f3f0ff;box-shadow:0 2px 16px rgba(139,92,246,.07);text-decoration:none;color:#1f2937;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-          <span style="font-size:28px">🧑‍🏫</span>
-          <span style="font-weight:600;font-size:14px">מדריכות</span>
-        </a>
-        <a href="reports.html" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px;background:white;border-radius:16px;border:1px solid #f3f0ff;box-shadow:0 2px 16px rgba(139,92,246,.07);text-decoration:none;color:#1f2937;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-          <span style="font-size:28px">📊</span>
-          <span style="font-weight:600;font-size:14px">דוחות</span>
-        </a>
-        <a href="jobs.html" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px;background:white;border-radius:16px;border:1px solid #f3f0ff;box-shadow:0 2px 16px rgba(139,92,246,.07);text-decoration:none;color:#1f2937;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-          <span style="font-size:28px">⚙️</span>
-          <span style="font-weight:600;font-size:14px">תהליכים</span>
-        </a>
-        <a href="system-settings.html" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px;background:white;border-radius:16px;border:1px solid #f3f0ff;box-shadow:0 2px 16px rgba(139,92,246,.07);text-decoration:none;color:#1f2937;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-          <span style="font-size:28px">🛠️</span>
-          <span style="font-weight:600;font-size:14px">הגדרות מערכת</span>
-        </a>
-        <a href="automations.html" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px;background:white;border-radius:16px;border:1px solid #f3f0ff;box-shadow:0 2px 16px rgba(139,92,246,.07);text-decoration:none;color:#1f2937;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-          <span style="font-size:28px">⚡</span>
-          <span style="font-weight:600;font-size:14px">אוטומציות</span>
-        </a>
-        <a href="products.html" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px;background:white;border-radius:16px;border:1px solid #f3f0ff;box-shadow:0 2px 16px rgba(139,92,246,.07);text-decoration:none;color:#1f2937;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-          <span style="font-size:28px">🛍️</span>
-          <span style="font-weight:600;font-size:14px">ניהול חנות</span>
-        </a>
-        <a href="orders.html" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:24px;background:white;border-radius:16px;border:1px solid #f3f0ff;box-shadow:0 2px 16px rgba(139,92,246,.07);text-decoration:none;color:#1f2937;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-          <span style="font-size:28px">📦</span>
-          <span style="font-weight:600;font-size:14px">הזמנות</span>
-        </a>
-      </section>
+      <!-- שורה עליונה: עדכונים + ימי הולדת -->
+      <div class="dash-grid">
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title">⚡ עדכונים להיום</div>
+          </div>
+          <div class="widget-body" id="updateList"><div class="empty-msg">טוען...</div></div>
+        </div>
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title">🎂 ימי הולדת קרובים</div>
+            <a href="customers.html" class="widget-link">ראה הכל ←</a>
+          </div>
+          <div class="widget-body" id="birthdayList"><div class="empty-msg">טוען...</div></div>
+        </div>
+      </div>
+
+      <!-- אנליטיקס חנות -->
+      <div class="dash-grid" style="margin-bottom:16px;">
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title">📈 מכירות חנות — 6 חודשים אחרונים</div>
+            <a href="orders.html" class="widget-link">לכל ההזמנות ←</a>
+          </div>
+          <div class="widget-body" style="padding:16px 18px;" id="shopChartWrap">
+            <canvas id="shopChart" height="120"></canvas>
+          </div>
+        </div>
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title">🏆 מוצרים מובילים</div>
+          </div>
+          <div class="widget-body" id="topProductsList"><div class="empty-msg">טוען...</div></div>
+        </div>
+      </div>
+
+      <!-- שורה תחתונה: מתעניינות + חובות + הזמנות -->
+      <div class="dash-grid-3">
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title">🎀 מתעניינות</div>
+            <a href="inquiries.html" class="widget-link">ראה הכל ←</a>
+          </div>
+          <div class="widget-body" id="inquiryList"><div class="empty-msg">טוען...</div></div>
+        </div>
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title">💳 חובות</div>
+            <a href="reports.html#debt" class="widget-link">ראה הכל ←</a>
+          </div>
+          <div class="widget-body" id="debtList"><div class="empty-msg">טוען...</div></div>
+        </div>
+        <div class="widget">
+          <div class="widget-head">
+            <div class="widget-title">📦 הזמנות חנות</div>
+            <a href="orders.html" class="widget-link">ראה הכל ←</a>
+          </div>
+          <div class="widget-body" id="orderList"><div class="empty-msg">טוען...</div></div>
+        </div>
+      </div>
     </main>
   </div>
+
+  <script>
+    const days = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+    const months = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+    const now = new Date();
+    document.getElementById('dateBanner').textContent =
+      `יום ${days[now.getDay()]}, ${now.getDate()} ב${months[now.getMonth()]} ${now.getFullYear()}`;
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>emailjs.init('3OeAsX8ImAoqype7f');</script>
+  <script src="js/dashboard.js" defer></script>
+
+  <!-- מודאל עריכת מייל לפני שליחה -->
+  <div id="mailModal" style="display:none;position:fixed;inset:0;background:rgba(15,10,40,.65);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+    <div style="background:white;border-radius:20px;width:520px;max-width:95vw;box-shadow:0 25px 60px rgba(0,0,0,.2);overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#ec4899,#8b5cf6);padding:20px 24px;display:flex;justify-content:space-between;align-items:center;">
+        <div style="color:white;font-size:16px;font-weight:800;">✉️ שלח מייל מזל טוב</div>
+        <button onclick="document.getElementById('mailModal').style.display='none'" style="background:rgba(255,255,255,.2);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;">×</button>
+      </div>
+      <div style="padding:24px;display:grid;gap:14px;">
+        <input id="mailFirstName" type="hidden" />
+        <input id="mailGiftLink" type="hidden" />
+        <input id="mailCustomerId" type="hidden" />
+        <div>
+          <label style="font-size:12px;font-weight:700;color:#6b7280;display:block;margin-bottom:6px;">נמען</label>
+          <input id="mailTo" type="text" readonly style="width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;background:#f9fafb;outline:none;" />
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+          <button onclick="document.getElementById('mailModal').style.display='none'" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">ביטול</button>
+          <button onclick="sendMailFromModal()" id="sendMailBtn" style="background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:10px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">שלח מייל ✉️</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function sendMailFromModal() {
+      const btn = document.getElementById('sendMailBtn');
+      const to = document.getElementById('mailTo').value;
+      const firstName = document.getElementById('mailFirstName').value;
+      const customerId = document.getElementById('mailCustomerId').value;
+      console.log('sending customer_id:', customerId);
+      btn.disabled = true;
+      btn.textContent = 'שולח...';
+      try {
+        await emailjs.send('service_eum98de', 'template_elsg6w1', {
+          to_email: to,
+          first_name: firstName,
+          gift_link: document.getElementById('mailGiftLink').value,
+          customer_id: customerId,
+        });
+        await window._sb.from('customers').update({ birthday_email_sent_at: new Date().toISOString() }).eq('id', customerId);
+        document.getElementById('mailModal').style.display = 'none';
+        alert('המייל נשלח בהצלחה! 🎉');
+        loadBirthdays();
+      } catch(e) {
+        alert('שגיאה בשליחת המייל: ' + (e?.text || e?.message || JSON.stringify(e)));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'שלח מייל ✉️';
+      }
+    }
+  </script>
 </body>
 </html>

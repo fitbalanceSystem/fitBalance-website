@@ -118,6 +118,14 @@
           <div class="vm-icon" style="background:#fef9c3;">💰</div>
           <div><div class="vm-label">חוב</div><div class="vm-value" id="vmDebt"></div></div>
         </div>
+        <div class="vm-row">
+          <div class="vm-icon" style="background:#d1fae5;">🛒</div>
+          <div><div class="vm-label">סה"כ רכישות בחנות</div><div class="vm-value" id="vmShopTotal"></div></div>
+        </div>
+        <div style="margin-top:12px;">
+          <div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:8px;">📦 הזמנות חנות</div>
+          <div id="vmOrders" style="max-height:180px;overflow-y:auto;"></div>
+        </div>
         <div style="display:flex; gap:10px; margin-top:20px;">
           <button id="vmEditBtn" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700">✏️ עריכה</button>
           <button onclick="closeViewModal()" class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200">סגור</button>

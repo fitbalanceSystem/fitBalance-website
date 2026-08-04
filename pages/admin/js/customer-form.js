@@ -1665,6 +1665,36 @@ window.deleteTrial = async function(sessionId, btn) {
   btn.closest('tr').remove();
 };
 
+// ======= שליחת מייל ברוכה הבאה =======
+const EMAILJS_SERVICE  = 'service_eum98de';
+const EMAILJS_TEMPLATE = 'template_xkogl8v';
+const EMAILJS_KEY      = '3OeAsX8ImAoqype7f';
+
+document.getElementById('welcomeEmailBtn')?.addEventListener('click', async () => {
+  const email     = document.getElementById('email').value.trim();
+  const firstName = document.getElementById('firstName').value.trim();
+  if (!email)     return alert('אין כתובת מייל ללקוחה');
+  if (!firstName) return alert('אין שם ללקוחה');
+
+  const btn = document.getElementById('welcomeEmailBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ שולח...';
+  try {
+    await emailjs.init(EMAILJS_KEY);
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+      to_email:   email,
+      first_name: firstName,
+    });
+    btn.textContent = '✅ נשלח!';
+    setTimeout(() => { btn.disabled = false; btn.textContent = '💌 ברוכה הבאה'; }, 3000);
+  } catch (err) {
+    console.error(err);
+    alert('שגיאה בשליחת מייל: ' + (err?.text || err?.message || JSON.stringify(err)));
+    btn.disabled = false;
+    btn.textContent = '💌 ברוכה הבאה';
+  }
+});
+
 // ======= חישוב סטטוס אוטומטי =======
 async function calcAutoStatus(customerId) {
   const today = new Date();

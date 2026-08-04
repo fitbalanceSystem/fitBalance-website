@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>מתנת יום הולדת 🎁 | FitBalance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;800;900&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Heebo', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #fdf2f8 0%, #f5f3ff 50%, #fdf2f8 100%);
+      direction: rtl;
+    }
+
+    /* כוכבים ברקע */
+    .stars { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .star {
+      position: absolute; border-radius: 50%;
+      background: radial-gradient(circle, #ec4899, #8b5cf6);
+      animation: twinkle var(--d) ease-in-out infinite alternate;
+      opacity: .15;
+    }
+    @keyframes twinkle { from { transform: scale(1); opacity: .1; } to { transform: scale(1.6); opacity: .3; } }
+
+    .page { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 40px 20px 60px; }
+
+    /* כותרת */
+    .hero {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeDown .7s ease both;
+    }
+    .hero-emoji { font-size: 72px; display: block; margin-bottom: 12px; animation: bounce 2s infinite; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .hero h1 {
+      font-size: 32px; font-weight: 900;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .hero p { font-size: 16px; color: #6b7280; font-weight: 600; }
+
+    /* גריד מתנות */
+    .gifts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .gift-card {
+      background: white;
+      border-radius: 20px;
+      border: 2.5px solid #f3f0ff;
+      box-shadow: 0 4px 20px rgba(139,92,246,.08);
+      cursor: pointer;
+      transition: all .25s ease;
+      overflow: hidden;
+      animation: fadeUp .5s ease both;
+      position: relative;
+    }
+    .gift-card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(236,72,153,.18); border-color: #ec4899; }
+    .gift-card.selected {
+      border-color: #ec4899;
+      box-shadow: 0 0 0 4px rgba(236,72,153,.2), 0 12px 32px rgba(236,72,153,.2);
+      transform: translateY(-4px);
+    }
+    .gift-card.selected::after {
+      content: '✓';
+      position: absolute; top: 10px; left: 10px;
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg,#ec4899,#8b5cf6);
+      color: white; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800;
+    }
+
+    .gift-img {
+      height: 160px;
+      background: linear-gradient(135deg, #fce7f3, #ede9fe);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 56px;
+      overflow: hidden;
+    }
+    .gift-img img { width: 100%; height: 100%; object-fit: cover; }
+
+    .gift-body { padding: 16px; }
+    .gift-name { font-size: 15px; font-weight: 800; color: #1f2937; margin-bottom: 6px; }
+    .gift-desc { font-size: 12px; color: #6b7280; line-height: 1.5; }
+
+    /* כפתור */
+    .submit-wrap { text-align: center; }
+    .submit-btn {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: white; border: none; border-radius: 16px;
+      padding: 16px 48px; font-size: 17px; font-weight: 800;
+      cursor: pointer; font-family: inherit;
+      box-shadow: 0 8px 24px rgba(236,72,153,.35);
+      transition: all .2s;
+    }
+    .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(236,72,153,.45); }
+    .submit-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    /* הצלחה */
+    .success-screen {
+      display: none; text-align: center;
+      animation: fadeUp .6s ease both;
+    }
+    .success-screen.show { display: block; }
+    .success-emoji { font-size: 80px; display: block; margin-bottom: 16px; }
+    .success-screen h2 { font-size: 26px; font-weight: 900; color: #1f2937; margin-bottom: 10px; }
+    .success-screen p { font-size: 15px; color: #6b7280; }
+    .selected-gift-name { color: #ec4899; font-weight: 800; }
+
+    /* שגיאה / טעינה */
+    .state-msg { text-align: center; padding: 60px 20px; color: #9ca3af; font-size: 15px; }
+
+    @keyframes fadeDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(20px);  } to { opacity:1; transform:translateY(0); } }
+  </style>
+</head>
+<body>
+
+<!-- כוכבים -->
+<div class="stars" id="stars"></div>
+
+<div class="page">
+
+  <!-- מסך טעינה -->
+  <div id="loading-screen" class="state-msg">
+    <div style="font-size:48px;margin-bottom:12px">🎁</div>
+    <p>טוען את המתנות שלך...</p>
+  </div>
+
+  <!-- מסך שגיאה -->
+  <div id="error-screen" class="state-msg" style="display:none">
+    <div style="font-size:48px;margin-bottom:12px">😕</div>
+    <p id="error-msg">קישור לא תקין</p>
+  </div>
+
+  <!-- מסך כבר בחרה -->
+  <div id="already-screen" class="state-msg" style="display:none">
+    <div style="font-size:72px;margin-bottom:16px">🎀</div>
+    <h2 style="font-size:22px;font-weight:900;color:#1f2937;margin-bottom:8px">כבר בחרת מתנה!</h2>
+    <p style="color:#6b7280">המתנה שלך בדרך אלייך 💜</p>
+  </div>
+
+  <!-- מסך בחירה -->
+  <div id="main-screen" style="display:none">
+    <div class="hero">
+      <span class="hero-emoji">🎂</span>
+      <h1 id="hero-title">יום הולדת שמח!</h1>
+      <p>בחרי מתנה אחת מאיתנו 🎁</p>
+    </div>
+
+    <div class="gifts-grid" id="gifts-grid"></div>
+
+    <div class="submit-wrap">
+      <button class="submit-btn" id="submit-btn" disabled onclick="submitGift()">
+        🎁 קבלי את המתנה שלי!
+      </button>
+    </div>
+  </div>
+
+  <!-- מסך הצלחה -->
+  <div class="success-screen" id="success-screen">
+    <span class="success-emoji">🎉</span>
+    <h2>איזה כיף!</h2>
+    <p>בחרת: <span class="selected-gift-name" id="success-gift-name"></span></p>
+    <p style="margin-top:8px">ניצור איתך קשר בקרוב לקבלת המתנה 💜</p>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../../services/supabaseClient.js"></script>
+<script>
+  // כוכבים
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 18; i++) {
+    const s = document.createElement('div');
+    const size = Math.random() * 6 + 3;
+    s.className = 'star';
+    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${Math.random()*3+2}s`;
+    starsEl.appendChild(s);
+  }
+
+  const sb = window._sb;
+  const params = new URLSearchParams(location.search);
+  const customerId = parseInt(params.get('id'));
+  let selectedGiftId = null;
+  let gifts = [];
+
+  async function init() {
+    if (!customerId) return showError('קישור לא תקין — חסר מזהה לקוחה');
+
+    // שליפת שם לקוחה
+    const { data: customer, error: ce } = await sb.from('customers').select('firstName').eq('id', customerId).single();
+    if (ce || !customer) return showError('לקוחה לא נמצאה');
+
+    // בדיקה אם כבר בחרה
+    const { data: existing } = await sb.from('birthday_gift_selections').select('id').eq('customer_id', customerId).maybeSingle();
+    if (existing) return showScreen('already-screen');
+
+    // שליפת מתנות פעילות
+    const { data: giftsData, error: ge } = await sb.from('birthday_gifts').select('*').eq('is_active', true).order('sort_order').order('id');
+    if (ge || !giftsData?.length) return showError('אין מתנות זמינות כרגע');
+
+    gifts = giftsData;
+    document.getElementById('hero-title').textContent = `יום הולדת שמח ${customer.firstName}! 🎂`;
+    renderGifts();
+    showScreen('main-screen');
+  }
+
+  function renderGifts() {
+    document.getElementById('gifts-grid').innerHTML = gifts.map((g, i) => `
+      <div class="gift-card" id="gift-${g.id}" onclick="selectGift(${g.id})" style="animation-delay:${i * .08}s">
+        <div class="gift-img">
+          ${g.image_url ? `<img src="${g.image_url}" alt="${g.name}" />` : '🎁'}
+        </div>
+        <div class="gift-body">
+          <div class="gift-name">${g.name}</div>
+          ${g.description ? `<div class="gift-desc">${g.description}</div>` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  function selectGift(id) {
+    selectedGiftId = id;
+    document.querySelectorAll('.gift-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('gift-' + id)?.classList.add('selected');
+    document.getElementById('submit-btn').disabled = false;
+  }
+
+  async function submitGift() {
+    if (!selectedGiftId) return;
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ שומר...';
+
+    const { error } = await sb.from('birthday_gift_selections').insert({ customer_id: customerId, gift_id: selectedGiftId });
+    if (error) {
+      btn.disabled = false;
+      btn.textContent = '🎁 קבלי את המתנה שלי!';
+      return alert('שגיאה: ' + error.message);
+    }
+
+    const gift = gifts.find(g => g.id === selectedGiftId);
+    document.getElementById('success-gift-name').textContent = gift?.name || '';
+    showScreen('success-screen');
+  }
+
+  function showScreen(id) {
+    ['loading-screen','error-screen','already-screen','main-screen','success-screen']
+      .forEach(s => document.getElementById(s).style.display = 'none');
+    const el = document.getElementById(id);
+    el.style.display = 'block';
+    if (id === 'success-screen') el.classList.add('show');
+  }
+
+  function showError(msg) {
+    document.getElementById('error-msg').textContent = msg;
+    showScreen('error-screen');
+  }
+
+  init();
+</script>
+</body>
+</html>

@@ -20,6 +20,19 @@
     #img-preview { width:100%; height:140px; object-fit:cover; border-radius:12px; display:none; }
     #img-placeholder { height:140px; border-radius:12px; border:2px dashed #ede9fe; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer; color:#9ca3af; font-size:13px; transition:border-color .2s; }
     #img-placeholder:hover { border-color:#8b5cf6; color:#7c3aed; }
+    .media-section { margin-top:16px; }
+    .media-section label { font-size:12px; font-weight:600; color:#6b7280; display:block; margin-bottom:8px; }
+    .media-grid { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+    .media-thumb { position:relative; width:80px; height:80px; border-radius:10px; overflow:hidden; border:1.5px solid #ede9fe; flex-shrink:0; }
+    .media-thumb img, .media-thumb video { width:100%; height:100%; object-fit:cover; display:block; }
+    .media-thumb .media-del { position:absolute; top:3px; left:3px; background:rgba(239,68,68,.85); color:white; border:none; border-radius:50%; width:20px; height:20px; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; }
+    .media-thumb .media-type { position:absolute; bottom:3px; right:3px; background:rgba(0,0,0,.55); color:white; font-size:9px; border-radius:4px; padding:1px 4px; }
+    .media-add-btn { display:flex; align-items:center; gap:6px; padding:7px 14px; border:1.5px dashed #d1d5db; border-radius:10px; background:white; font-size:12px; color:#6b7280; cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .media-add-btn:hover { border-color:#8b5cf6; color:#7c3aed; }
+    .video-url-row { display:flex; gap:6px; margin-top:6px; }
+    .video-url-row input { flex:1; border:1.5px solid #e5e7eb; border-radius:10px; padding:7px 10px; font-size:12px; font-family:inherit; outline:none; }
+    .video-url-row input:focus { border-color:#8b5cf6; }
+    .video-url-row button { padding:7px 12px; background:#f3f0ff; color:#7c3aed; border:1px solid #ede9fe; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; }
   </style>
 </head>
 <body>
@@ -87,38 +100,144 @@
         </div>
         <img id="img-preview" />
         <input type="file" id="imgInput" accept="image/*" style="display:none;" onchange="previewImage(this)" />
-        <button id="removeImgBtn" onclick="removeImage()" style="display:none; margin-top:6px; font-size:12px; color:#ef4444; background:none; border:none; cursor:pointer;">✕ הסר תמונה</button>
+        <button id="removeImgBtn" onclick="removeImage()" style="display:none; margin-top:6px; font-size:12px; color:#ef4444; background:none; border:none; cursor:pointer;">✕ הסר תמונה ראשית</button>
       </div>
 
-      <div class="form-grid">
-        <div class="form-group" style="grid-column:span 2;">
-          <label>שם מוצר *</label>
-          <input type="text" id="f-name" placeholder="שם המוצר" />
+      <!-- תמונות נוספות -->
+      <div class="media-section">
+        <label>📸 תמונות נוספות</label>
+        <div class="media-grid" id="extra-images-grid"></div>
+        <button class="media-add-btn" onclick="document.getElementById('extraImgInput').click()">
+          <i class="fas fa-plus"></i> הוסף תמונה
+        </button>
+      </div>
+
+      <!-- סרטונים -->
+      <div class="media-section">
+        <label>🎬 סרטונים</label>
+        <div class="media-grid" id="videos-grid"></div>
+        <!-- העלאת קובץ -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="media-add-btn" onclick="document.getElementById('videoFileInput').click()">
+            <i class="fas fa-upload"></i> העלה סרטון
+          </button>
         </div>
-        <div class="form-group" style="grid-column:span 2;">
-          <label>תיאור</label>
-          <textarea id="f-desc" rows="2" style="border:1.5px solid #e5e7eb; border-radius:10px; padding:9px 12px; font-size:13px; font-family:inherit; resize:vertical; outline:none;" placeholder="תיאור קצר..."></textarea>
+        <!-- קישור YouTube / Vimeo -->
+        <div class="video-url-row">
+          <input type="text" id="video-url-input" placeholder="קישור YouTube / Vimeo..." />
+          <button onclick="addVideoUrl()">+ הוסף קישור</button>
         </div>
-        <div class="form-group">
-          <label>מחיר (₪) *</label>
-          <input type="number" id="f-price" min="0" step="0.01" placeholder="0.00" />
+      </div>
+
+      <!-- טאבים -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+        <button type="button" class="_ptab active" data-tab="basic" onclick="switchPTab('basic',this)">📋 בסיסי</button>
+        <button type="button" class="_ptab" data-tab="pricing" onclick="switchPTab('pricing',this)">💰 מחיר</button>
+        <button type="button" class="_ptab" data-tab="inventory" onclick="switchPTab('inventory',this)">📦 מלאי</button>
+      </div>
+      <style>
+        ._ptab{border-radius:8px;border:1.5px solid #ede9fe;background:white;color:#6b7280;font-size:12px;font-weight:600;padding:6px 12px;font-family:inherit;cursor:pointer;transition:all .2s}
+        ._ptab.active{background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border-color:transparent}
+        ._ptab:hover:not(.active){background:#f3f0ff;color:#7c3aed}
+        ._ptab-pane{display:none}._ptab-pane.active{display:block}
+      </style>
+
+      <!-- טאב בסיסי -->
+      <div id="_ptab-basic" class="_ptab-pane active">
+        <div class="form-grid">
+          <div class="form-group" style="grid-column:span 2;">
+            <label>שם מוצר *</label>
+            <input type="text" id="f-name" placeholder="שם המוצר" />
+          </div>
+          <div class="form-group" style="grid-column:span 2;">
+            <label>תיאור קצר</label>
+            <textarea id="f-desc" rows="2" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;resize:vertical;outline:none;" placeholder="תיאור קצר..."></textarea>
+          </div>
+          <div class="form-group" style="grid-column:span 2;">
+            <label>תיאור מלא</label>
+            <textarea id="f-full-desc" rows="3" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;resize:vertical;outline:none;" placeholder="תיאור מפורט..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>קטגוריה</label>
+            <select id="f-category" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;">
+              <option value="">בחר קטגוריה...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>מותג</label>
+            <input type="text" id="f-brand" placeholder="שם המותג" />
+          </div>
+          <div class="form-group">
+            <label>SKU</label>
+            <input type="text" id="f-sku" placeholder="קוד מוצר" />
+          </div>
+          <div class="form-group">
+            <label>אמוג'י</label>
+            <input type="text" id="f-emoji" placeholder="📦" maxlength="4" />
+          </div>
+          <div class="form-group" style="grid-column:span 2;">
+            <label>תגיות <span style="font-size:11px;color:#9ca3af;font-weight:400">(מופרדות בפסיק)</span></label>
+            <input type="text" id="f-tags" placeholder="ספורט, כושר, אביזרים" />
+          </div>
+          <div class="form-group" style="grid-column:span 2;flex-direction:row;align-items:center;gap:10px;">
+            <input type="checkbox" id="f-active" style="width:16px;height:16px;accent-color:#8b5cf6;cursor:pointer;" />
+            <label for="f-active" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer;">מוצר פעיל (מוצג בחנות)</label>
+          </div>
+          <div class="form-group" style="grid-column:span 2;flex-direction:row;align-items:center;gap:10px;">
+            <input type="checkbox" id="f-variant-required" style="width:16px;height:16px;accent-color:#8b5cf6;cursor:pointer;" />
+            <label for="f-variant-required" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer;">חובה לבחור וריאנט לפני הוספה לעגלה</label>
+          </div>
         </div>
-        <div class="form-group">
-          <label>קטגוריה</label>
-          <input type="text" id="f-category" placeholder="לדוגמה: ציוד, ביגוד..." />
+      </div>
+
+      <!-- טאב מחיר -->
+      <div id="_ptab-pricing" class="_ptab-pane">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>מחיר רגיל (₪) *</label>
+            <input type="number" id="f-price" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>מחיר מבצע (₪)</label>
+            <input type="number" id="f-sale-price" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div class="form-group">
+            <label>אחוז הנחה (%)</label>
+            <input type="number" id="f-discount-pct" min="0" max="100" step="0.1" placeholder="0" />
+          </div>
+          <div class="form-group"></div>
+          <div class="form-group">
+            <label>תחילת מבצע</label>
+            <input type="date" id="f-sale-start" />
+          </div>
+          <div class="form-group">
+            <label>סיום מבצע</label>
+            <input type="date" id="f-sale-end" />
+          </div>
         </div>
-        <div class="form-group">
-          <label>מלאי</label>
-          <input type="number" id="f-stock" min="0" placeholder="כמות" />
+      </div>
+
+      <!-- טאב מלאי -->
+      <div id="_ptab-inventory" class="_ptab-pane">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>כמות במלאי</label>
+            <input type="number" id="f-stock" min="0" placeholder="כמות" />
+          </div>
+          <div class="form-group">
+            <label>סף מלאי נמוך</label>
+            <input type="number" id="f-low-stock" min="0" placeholder="5" />
+          </div>
         </div>
-        <div class="form-group">
-          <label>אמוג'י</label>
-          <input type="text" id="f-emoji" placeholder="📦" maxlength="4" />
+      </div>
+
+      <!-- וריאנטים -->
+      <div style="margin-top:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <label style="font-size:13px;font-weight:700;color:#374151;">וריאנטים (מידה / צבע / כמות)</label>
+          <button onclick="addVariantRow()" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;">+ הוסף וריאנט</button>
         </div>
-        <div class="form-group" style="grid-column:span 2; flex-direction:row; align-items:center; gap:10px;">
-          <input type="checkbox" id="f-active" style="width:16px; height:16px; accent-color:#8b5cf6; cursor:pointer;" />
-          <label for="f-active" style="font-size:13px; font-weight:600; color:#374151; cursor:pointer;">מוצר פעיל (מוצג בחנות)</label>
-        </div>
+        <div id="variants-list" style="display:flex;flex-direction:column;gap:8px;"></div>
       </div>
 
       <div style="display:flex; gap:10px; margin-top:20px; justify-content:flex-end;">
@@ -130,32 +249,75 @@
 </div>
 
 <script src="utilities/sidebar.js"></script>
+<!-- file inputs מחוץ למודאל כדי שהדפדפן יפתח אותם תמיד -->
+<input type="file" id="extraImgInput" accept="image/*" multiple style="display:none" onchange="addExtraImages(this)" />
+<input type="file" id="videoFileInput" accept="video/*" multiple style="display:none" onchange="addVideoFiles(this)" />
 <script>
   let products = [], editId = null, currentImageUrl = null;
+  let extraImages = [];   // [{type:'file'|'url', file?, url, preview}]
+  let productVideos = []; // [{type:'file'|'url', file?, url, preview}]
+  let variantRows = [];   // [{id?, option_type, option_value, price_modifier, stock, sort_order, _delete}]
+
+  function switchPTab(name, btn) {
+    document.querySelectorAll('._ptab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('._ptab').forEach(b => b.classList.remove('active'));
+    document.getElementById('_ptab-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+  window.switchPTab = switchPTab;
 
   async function load() {
-    const { data, error } = await window._sb.from('products').select('*').order('category').order('name');
+    let { data, error } = await window._sb.from('products').select('*, product_variants(*)').order('category').order('name');
+    if (error?.code === 'PGRST200') {
+      ({ data, error } = await window._sb.from('products').select('*').order('category').order('name'));
+    }
     if (error) { console.error(error); return; }
     products = data ?? [];
+    await loadShopCatsForForm();
     populateCatFilter();
     render();
   }
 
+  let shopCatsData = [];
+  async function loadShopCatsForForm() {
+    const { data } = await window._sb.from('shop_categories').select('*').order('sort_order');
+    shopCatsData = data || [];
+    populateCatSelect(document.getElementById('f-category'), null, '');
+  }
+
+  function populateCatSelect(sel, parentId, prefix) {
+    const children = shopCatsData.filter(n => (n.parent_id ?? null) === parentId).sort((a,b) => a.sort_order - b.sort_order);
+    children.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n.id;
+      opt.textContent = prefix + n.name;
+      sel.appendChild(opt);
+      populateCatSelect(sel, n.id, prefix + '   ');
+    });
+  }
+
+  function onCatChange() {} // לא נדרש יותר — הסלקט הוא היררכי בעצמו
+
+  function getAllDescendantIds(parentId) {
+    const children = shopCatsData.filter(n => n.parent_id === parentId);
+    return [parentId, ...children.flatMap(c => getAllDescendantIds(c.id))];
+  }
+
   function populateCatFilter() {
-    const cats = [...new Set(products.map(p => p.category).filter(Boolean))];
     const sel = document.getElementById('catFilter');
-    sel.innerHTML = '<option value="">כל הקטגוריות</option>' +
-      cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    sel.innerHTML = '<option value="">כל הקטגוריות</option>';
+    populateCatSelect(sel, null, '');
   }
 
   function render() {
     const q   = document.getElementById('searchInput').value.trim().toLowerCase();
     const cat = document.getElementById('catFilter').value;
     const st  = document.getElementById('statusFilter').value;
+    const allowedIds = cat ? new Set(getAllDescendantIds(+cat)) : null;
 
     const filtered = products.filter(p => {
       if (q && !p.name?.toLowerCase().includes(q)) return false;
-      if (cat && p.category !== cat) return false;
+      if (allowedIds && !allowedIds.has(p.category_id)) return false;
       if (st !== '' && String(p.is_active) !== st) return false;
       return true;
     });
@@ -169,8 +331,10 @@
           : `<div class="product-img-placeholder">${p.emoji ?? '📦'}</div>`}
         </td>
         <td><strong>${p.name}</strong>${p.description ? `<div style="font-size:11px;color:#9ca3af;margin-top:2px;">${p.description}</div>` : ''}</td>
-        <td>${p.category ?? '—'}</td>
-        <td><strong>₪${Number(p.price ?? 0).toFixed(2)}</strong></td>
+        <td>${p.category_id ? (shopCatsData.find(c=>c.id===p.category_id)?.name ?? p.category ?? '—') : (p.category ?? '—')}</td>
+        <td>${p.sale_price && p.sale_price < p.price
+          ? `<div><strong style="color:#dc2626;">₪${Number(p.sale_price).toFixed(2)}</strong></div><div style="font-size:11px;color:#9ca3af;text-decoration:line-through;">₪${Number(p.price).toFixed(2)}</div>`
+          : `<strong>₪${Number(p.price ?? 0).toFixed(2)}</strong>`}</td>
         <td>${p.stock == null ? '—' : p.stock === 0 ? '<span style="color:#dc2626;font-weight:700;">אזל</span>' : p.stock <= 5 ? `<span style="color:#d97706;font-weight:700;">${p.stock}</span>` : p.stock}</td>
         <td><span class="${p.is_active ? 'badge-active' : 'badge-inactive'}">${p.is_active ? 'פעיל' : 'לא פעיל'}</span></td>
         <td style="display:flex;gap:6px;">
@@ -182,11 +346,16 @@
   }
 
   function openAdd() {
-    editId = null; currentImageUrl = null;
+    editId = null; currentImageUrl = null; extraImages = []; productVideos = []; variantRows = [];
     document.getElementById('modalTitle').textContent = 'מוצר חדש';
-    ['f-name','f-desc','f-price','f-category','f-stock','f-emoji'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('f-active').checked = true;
+    ['f-name','f-desc','f-full-desc','f-price','f-sale-price','f-discount-pct','f-sale-start','f-sale-end','f-stock','f-low-stock','f-emoji','f-brand','f-sku','f-tags'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+    document.getElementById('f-category').value = '';
+    document.getElementById('f-active').checked           = true;
+    document.getElementById('f-variant-required').checked  = false;
+    switchPTab('basic', document.querySelector('._ptab[data-tab="basic"]'));
     resetImageUI();
+    renderMediaGrids();
+    renderVariants();
     document.getElementById('productModal').classList.add('open');
   }
 
@@ -194,22 +363,37 @@
     const p = products.find(x => x.id === id);
     if (!p) return;
     editId = id; currentImageUrl = p.image_url ?? null;
+    // טען תמונות וסרטונים שמורים
+    extraImages   = (Array.isArray(p.images) ? p.images : []).map(url => ({ type:'url', url, preview:url }));
+    productVideos = (Array.isArray(p.videos) ? p.videos : []).map(url => ({ type:'url', url, preview:url }));
+    variantRows   = (p.product_variants || []).map(v => ({ ...v }));
     document.getElementById('modalTitle').textContent = 'עריכת מוצר';
-    document.getElementById('f-name').value      = p.name ?? '';
-    document.getElementById('f-desc').value      = p.description ?? '';
-    document.getElementById('f-price').value     = p.price ?? '';
-    document.getElementById('f-category').value  = p.category ?? '';
-    document.getElementById('f-stock').value     = p.stock ?? '';
-    document.getElementById('f-emoji').value     = p.emoji ?? '';
-    document.getElementById('f-active').checked  = p.is_active ?? true;
+    document.getElementById('f-name').value         = p.name ?? '';
+    document.getElementById('f-desc').value         = p.description ?? '';
+    document.getElementById('f-full-desc').value    = p.full_desc ?? '';
+    document.getElementById('f-price').value        = p.price ?? '';
+    document.getElementById('f-sale-price').value   = p.sale_price ?? '';
+    document.getElementById('f-discount-pct').value = p.discount_pct ?? '';
+    document.getElementById('f-sale-start').value   = p.sale_start ?? '';
+    document.getElementById('f-sale-end').value     = p.sale_end ?? '';
+    document.getElementById('f-category').value     = p.category_id ?? '';
+    document.getElementById('f-stock').value        = p.stock ?? '';
+    document.getElementById('f-low-stock').value    = p.low_stock_threshold ?? '';
+    document.getElementById('f-emoji').value        = p.emoji ?? '';
+    document.getElementById('f-brand').value        = p.brand ?? '';
+    document.getElementById('f-sku').value          = p.sku ?? '';
+    document.getElementById('f-tags').value         = (p.tags ?? []).join(', ');
+    document.getElementById('f-active').checked            = p.is_active ?? true;
+    document.getElementById('f-variant-required').checked   = p.variant_required ?? false;
+    switchPTab('basic', document.querySelector('._ptab[data-tab="basic"]'));
     if (p.image_url) {
       document.getElementById('img-preview').src = p.image_url;
       document.getElementById('img-preview').style.display = 'block';
       document.getElementById('img-placeholder').style.display = 'none';
       document.getElementById('removeImgBtn').style.display = 'inline-block';
-    } else {
-      resetImageUI();
-    }
+    } else { resetImageUI(); }
+    renderMediaGrids();
+    renderVariants();
     document.getElementById('productModal').classList.add('open');
   }
 
@@ -253,6 +437,72 @@
     return data.publicUrl;
   }
 
+  // ---- ניהול מדיה מרובה ----
+  function renderMediaGrids() {
+    renderGrid('extra-images-grid', extraImages, 'img');
+    renderGrid('videos-grid', productVideos, 'video');
+  }
+
+  function renderGrid(gridId, arr, kind) {
+    const grid = document.getElementById(gridId);
+    grid.innerHTML = arr.map((item, i) => `
+      <div class="media-thumb">
+        ${kind === 'img'
+          ? `<img src="${item.preview}" />`
+          : isEmbedUrl(item.url)
+            ? `<div style="width:100%;height:100%;background:#1a1a2e;display:flex;align-items:center;justify-content:center;"><i class="fab fa-youtube" style="color:#ff0000;font-size:28px;"></i></div>`
+            : `<video src="${item.preview}" muted></video>`
+        }
+        <button class="media-del" onclick="removeMedia('${kind}',${i})">✕</button>
+        <span class="media-type">${kind === 'img' ? 'תמונה' : isEmbedUrl(item.url) ? 'YouTube' : 'סרטון'}</span>
+      </div>`).join('');
+  }
+
+  function isEmbedUrl(url) {
+    return url && (url.includes('youtube') || url.includes('youtu.be') || url.includes('vimeo'));
+  }
+
+  function removeMedia(kind, i) {
+    if (kind === 'img') extraImages.splice(i, 1);
+    else productVideos.splice(i, 1);
+    renderMediaGrids();
+  }
+
+  function addExtraImages(input) {
+    [...input.files].forEach(file => {
+      const preview = URL.createObjectURL(file);
+      extraImages.push({ type: 'file', file, url: null, preview });
+    });
+    input.value = '';
+    renderMediaGrids();
+  }
+
+  function addVideoFiles(input) {
+    [...input.files].forEach(file => {
+      const preview = URL.createObjectURL(file);
+      productVideos.push({ type: 'file', file, url: null, preview });
+    });
+    input.value = '';
+    renderMediaGrids();
+  }
+
+  function addVideoUrl() {
+    const input = document.getElementById('video-url-input');
+    const url = input.value.trim();
+    if (!url) return;
+    productVideos.push({ type: 'url', url, preview: url });
+    input.value = '';
+    renderMediaGrids();
+  }
+
+  async function uploadMedia(file, folder) {
+    const ext  = file.name.split('.').pop();
+    const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await window._sb.storage.from('products').upload(path, file, { upsert: true });
+    if (error) throw error;
+    return window._sb.storage.from('products').getPublicUrl(path).data.publicUrl;
+  }
+
   async function saveProduct() {
     const name  = document.getElementById('f-name').value.trim();
     const price = parseFloat(document.getElementById('f-price').value);
@@ -267,23 +517,65 @@
       let imageUrl = currentImageUrl;
       if (file) imageUrl = await uploadImage(file);
 
+      // העלאת תמונות נוספות
+      const imagesUrls = [];
+      for (const m of (extraImages || [])) {
+        if (m.type === 'file') {
+          const url = await uploadMedia(m.file, 'images');
+          imagesUrls.push(url);
+        } else if (m.url) {
+          imagesUrls.push(m.url);
+        }
+      }
+
+      // העלאת סרטונים
+      const videosUrls = [];
+      for (const m of (productVideos || [])) {
+        if (m.type === 'file') {
+          const url = await uploadMedia(m.file, 'videos');
+          videosUrls.push(url);
+        } else if (m.url) {
+          videosUrls.push(m.url);
+        }
+      }
+
+      const catId = document.getElementById('f-category').value;
+      const catNode = catId ? shopCatsData.find(c => c.id === +catId) : null;
+      const tagsRaw = document.getElementById('f-tags').value.trim();
+      const salePriceVal = document.getElementById('f-sale-price').value;
+      const discountVal  = document.getElementById('f-discount-pct').value;
       const payload = {
         name,
-        description: document.getElementById('f-desc').value.trim() || null,
+        description:          document.getElementById('f-desc').value.trim() || null,
+        full_desc:            document.getElementById('f-full-desc').value.trim() || null,
         price,
-        category:   document.getElementById('f-category').value.trim() || null,
-        stock:      document.getElementById('f-stock').value !== '' ? parseInt(document.getElementById('f-stock').value) : null,
-        emoji:      document.getElementById('f-emoji').value.trim() || null,
-        is_active:  document.getElementById('f-active').checked,
-        image_url:  imageUrl,
+        sale_price:           salePriceVal !== '' ? parseFloat(salePriceVal) : null,
+        discount_pct:         discountVal  !== '' ? parseFloat(discountVal)  : null,
+        sale_start:           document.getElementById('f-sale-start').value || null,
+        sale_end:             document.getElementById('f-sale-end').value   || null,
+        category_id:          catId ? +catId : null,
+        category:             catNode?.name || null,
+        stock:                document.getElementById('f-stock').value !== '' ? parseInt(document.getElementById('f-stock').value) : null,
+        low_stock_threshold:  document.getElementById('f-low-stock').value !== '' ? parseInt(document.getElementById('f-low-stock').value) : 5,
+        emoji:                document.getElementById('f-emoji').value.trim() || null,
+        brand:                document.getElementById('f-brand').value.trim() || null,
+        sku:                  document.getElementById('f-sku').value.trim()   || null,
+        tags:                 tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [],
+        is_active:            document.getElementById('f-active').checked,
+        variant_required:     document.getElementById('f-variant-required').checked,
+        image_url:            imageUrl,
+        images:               imagesUrls,
+        videos:               videosUrls,
       };
 
       if (editId) {
         const { error } = await window._sb.from('products').update(payload).eq('id', editId);
         if (error) throw error;
+        await saveVariants(editId);
       } else {
-        const { error } = await window._sb.from('products').insert(payload);
+        const { data: newProd, error } = await window._sb.from('products').insert(payload).select().single();
         if (error) throw error;
+        await saveVariants(newProd.id);
       }
 
       closeModal();
@@ -305,6 +597,108 @@
       return;
     }
     await load();
+  }
+
+  function renderVariants() {
+    const list = document.getElementById('variants-list');
+    const active = variantRows.filter(v => !v._delete);
+    const basePrice = parseFloat(document.getElementById('f-price').value) || 0;
+    list.innerHTML = active.length ? active.map((v, i) => `
+      <div style="background:#f9fafb;border-radius:10px;padding:10px;margin-bottom:2px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 80px 80px 36px;gap:6px;align-items:center;">
+          <select onchange="variantRows.filter(r=>!r._delete)[${i}].option_type=this.value;renderVariants()" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 8px;font-size:12px;font-family:inherit;outline:none;">
+            ${[['size','מידה'],['color','צבע'],['pack','כמות'],['custom','אחר']].map(([val,lbl]) =>
+              `<option value="${val}"${v.option_type===val?' selected':''}>${lbl}</option>`).join('')}
+          </select>
+          ${v.option_type === 'color' ? `
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input type="color" value="${v.color_hex||'#000000'}" oninput="variantRows.filter(r=>!r._delete)[${i}].color_hex=this.value" style="width:32px;height:32px;border:none;border-radius:6px;cursor:pointer;padding:0;background:none;flex-shrink:0;" title="בחר צבע" />
+              <input value="${v.option_value||''}" placeholder="שם הצבע (אדום, שחור...)" onchange="variantRows.filter(r=>!r._delete)[${i}].option_value=this.value" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 8px;font-size:12px;font-family:inherit;outline:none;width:100%;" />
+            </div>` : `
+          <input value="${v.option_value||''}" placeholder="ערך (S, שלישייה...)" onchange="variantRows.filter(r=>!r._delete)[${i}].option_value=this.value" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 8px;font-size:12px;font-family:inherit;outline:none;" />`}
+          <input type="number" value="${v.price_modifier || basePrice || 0}" placeholder="מחיר" title="מחיר סופי לוריאנט זה" onchange="variantRows.filter(r=>!r._delete)[${i}].price_modifier=+this.value" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 8px;font-size:12px;font-family:inherit;outline:none;" />
+          <input type="number" value="${v.stock??''}" placeholder="מלאי" onchange="variantRows.filter(r=>!r._delete)[${i}].stock=this.value===''?null:+this.value" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 8px;font-size:12px;font-family:inherit;outline:none;" />
+          <button onclick="removeVariantRow(${i})" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px;">✕</button>
+        </div>
+        <div style="margin-top:6px;">
+          <input value="${v.sku||''}" placeholder="SKU (קוד וריאנט)" onchange="variantRows.filter(r=>!r._delete)[${i}].sku=this.value" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 8px;font-size:12px;font-family:inherit;outline:none;width:180px;" />
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#374151;cursor:pointer;">
+            <input type="checkbox" ${v.is_required ? 'checked' : ''} onchange="variantRows.filter(r=>!r._delete)[${i}].is_required=this.checked" style="width:14px;height:14px;accent-color:#ec4899;cursor:pointer;" />
+            חובה לבחור
+          </label>
+          ${v.image_url
+            ? `<img src="${v.image_url}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1.5px solid #ede9fe;flex-shrink:0;" />`
+            : `<div style="width:48px;height:48px;border-radius:8px;border:1.5px dashed #d1d5db;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:18px;flex-shrink:0;">📷</div>`
+          }
+          <label style="font-size:11px;color:#7c3aed;font-weight:600;cursor:pointer;background:#f3f0ff;border:1px solid #ede9fe;border-radius:8px;padding:4px 10px;white-space:nowrap;">
+            ${v.image_url ? '🔄 החלף תמונה' : '+ תמונה לוריאנט'}
+            <input type="file" accept="image/*" style="display:none;" onchange="uploadVariantImage(this,${i})" />
+          </label>
+          ${v.image_url ? `<button onclick="variantRows.filter(r=>!r._delete)[${i}].image_url=null;renderVariants()" style="font-size:11px;color:#ef4444;background:none;border:none;cursor:pointer;">✕ הסר</button>` : ''}
+        </div>
+      </div>`).join('')
+    : '<p style="font-size:12px;color:#9ca3af;">אין וריאנטים — המוצר יימכר ללא בחירה</p>';
+  }
+
+  function addVariantRow() {
+    variantRows.push({ option_type: 'size', option_value: '', price_modifier: 0, stock: null, sort_order: variantRows.length });
+    renderVariants();
+  }
+
+  function removeVariantRow(i) {
+    const active = variantRows.filter(v => !v._delete);
+    if (active[i].id) active[i]._delete = true; else variantRows.splice(variantRows.indexOf(active[i]), 1);
+    renderVariants();
+  }
+
+  async function uploadVariantImage(input, i) {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+      const url = await uploadMedia(file, 'variants');
+      variantRows.filter(r => !r._delete)[i].image_url = url;
+      renderVariants();
+    } catch(e) { alert('שגיאה בהעלאת תמונה: ' + e.message); }
+  }
+
+  async function saveVariants(productId) {
+    const toDelete = variantRows.filter(v => v._delete && v.id);
+    const toUpdate = variantRows.filter(v => !v._delete && v.id && v.option_value?.trim());
+    const toInsert = variantRows.filter(v => !v._delete && !v.id && v.option_value?.trim());
+
+    if (toDelete.length)
+      await window._sb.from('product_variants').delete().in('id', toDelete.map(v => v.id));
+
+    for (const v of toUpdate) {
+      await window._sb.from('product_variants').update({
+        option_type:    v.option_type,
+        option_value:   v.option_value.trim(),
+        price_modifier: v.price_modifier || 0,
+        stock:          v.stock ?? null,
+        sku:            v.sku?.trim() || null,
+        sort_order:     v.sort_order || 0,
+        image_url:      v.image_url ?? null,
+        color_hex:      v.option_type === 'color' ? (v.color_hex ?? null) : null,
+        is_required:    v.is_required ?? false,
+      }).eq('id', v.id);
+    }
+
+    if (toInsert.length) {
+      await window._sb.from('product_variants').insert(toInsert.map(v => ({
+        product_id:     productId,
+        option_type:    v.option_type,
+        option_value:   v.option_value.trim(),
+        price_modifier: v.price_modifier || 0,
+        stock:          v.stock ?? null,
+        sku:            v.sku?.trim() || null,
+        sort_order:     v.sort_order || 0,
+        image_url:      v.image_url ?? null,
+        color_hex:      v.option_type === 'color' ? (v.color_hex ?? null) : null,
+        is_required:    v.is_required ?? false,
+      })));
+    }
   }
 
   document.getElementById('addBtn').addEventListener('click', openAdd);

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="../../assets/icons/icon.png" />
+  <title>טפסים דיגיטליים</title>
+  <link rel="stylesheet" href="css/admin-theme.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+<div class="container">
+  <div id="sidebar-placeholder"></div>
+  <script src="utilities/sidebar.js"></script>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h1>טפסים דיגיטליים</h1>
+    </header>
+
+    <!-- חיפוש -->
+    <div class="search-box" style="margin-bottom:16px">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="חיפוש לפי שם לקוח..." />
+      <select id="statusFilter">
+        <option value="">כל הסטטוסים</option>
+        <option value="pending">ממתין לחתימה</option>
+        <option value="signed">נחתם</option>
+        <option value="expired">פג תוקף</option>
+      </select>
+      <select id="formFilter">
+        <option value="">כל הטפסים</option>
+      </select>
+    </div>
+
+    <!-- טבלה -->
+    <div class="table-section">
+      <table id="formsTable">
+        <thead>
+          <tr>
+            <th>לקוח</th>
+            <th>טופס</th>
+            <th>שנת פעילות</th>
+            <th>סטטוס</th>
+            <th>נשלח</th>
+            <th>נחתם</th>
+            <th>פעולות</th>
+          </tr>
+        </thead>
+        <tbody id="formsBody">
+          <tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af">טוען...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- מודאל שליחת טופס -->
+<div id="sendModal" style="display:none;position:fixed;inset:0;background:rgba(15,10,40,.65);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div style="background:white;border-radius:20px;width:100%;max-width:480px;padding:32px;box-shadow:0 25px 60px rgba(0,0,0,.2);margin:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="font-size:18px;font-weight:800;color:#1f2937">שליחת טופס ללקוח</h2>
+      <button id="closeSendModal" style="background:#f3f0ff;border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;color:#7c3aed">✕</button>
+    </div>
+
+    <div class="form-group" style="margin-bottom:16px">
+      <label style="font-size:12px;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">לקוח</label>
+      <input type="text" id="customerSearch" placeholder="חיפוש לפי שם או טלפון..."
+        style="width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 14px;font-size:14px;font-family:inherit;outline:none" />
+      <div id="customerResults" style="border:1px solid #ede9fe;border-radius:10px;margin-top:4px;display:none;max-height:180px;overflow-y:auto;background:white;box-shadow:0 4px 16px rgba(139,92,246,.1)"></div>
+      <input type="hidden" id="selectedCustomerId" />
+      <div id="selectedCustomerName" style="font-size:13px;color:#7c3aed;font-weight:600;margin-top:6px;display:none"></div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:16px">
+      <label style="font-size:12px;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">סוג טופס</label>
+      <select id="formTypeSelect" style="width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 14px;font-size:14px;font-family:inherit;outline:none;background:white">
+        <option value="">בחר טופס...</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="margin-bottom:24px">
+      <label style="font-size:12px;font-weight:700;color:#6b7280;display:block;margin-bottom:6px">שנת פעילות</label>
+      <input type="number" id="activityYear" min="2020" max="2100"
+        style="width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 14px;font-size:14px;font-family:inherit;outline:none" />
+    </div>
+
+    <!-- קישור שנוצר -->
+    <div id="linkWrap" style="display:none;background:#f3f0ff;border:1px solid #ede9fe;border-radius:12px;padding:16px;margin-bottom:20px">
+      <div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:8px">קישור לחתימה:</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="linkInput" readonly
+          style="flex:1;border:1px solid #ede9fe;border-radius:8px;padding:8px 12px;font-size:12px;background:white;color:#374151;font-family:monospace" />
+        <button id="copyLinkBtn" style="background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+          <i class="fas fa-copy"></i> העתק
+        </button>
+      </div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:8px">
+        <i class="fas fa-clock"></i> תוקף הקישור: 7 ימים
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button id="createLinkBtn" style="flex:1;padding:12px;background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+        <i class="fas fa-link"></i> צור קישור
+      </button>
+      <button id="cancelSendBtn" style="padding:12px 20px;background:#f3f0ff;color:#7c3aed;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">
+        ביטול
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- כפתור שליחה צף -->
+<button id="openSendModalBtn"
+  style="position:fixed;bottom:28px;left:28px;background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:16px;padding:14px 24px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(236,72,153,.4);display:flex;align-items:center;gap:8px;font-family:inherit;z-index:100">
+  <i class="fas fa-paper-plane"></i> שלח טופס ללקוח
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../../services/supabaseClient.js"></script>
+<script src="../../services/formsService.js"></script>
+<script src="../../services/pdfService.js"></script>
+<script src="js/forms.js" type="module"></script>
+</body>
+</html>

@@ -84,24 +84,55 @@
   function renderWeekly() {
     const container = document.getElementById('schedule-grid');
     const weekDates = getWeekDates(navDate);
+    const isMobile = window.innerWidth <= 768;
 
-    const cols = weekDates.map(ds => {
+    if (isMobile) {
+      // במובייל — יום אחד בכל פעם
+      const todayIdx = weekDates.indexOf(todayStr);
+      if (!container.dataset.dayIdx) container.dataset.dayIdx = todayIdx >= 0 ? todayIdx : 0;
+      const dayIdx = Number(container.dataset.dayIdx);
+      const ds = weekDates[dayIdx];
       const d = parseDateLocal(ds);
       const isToday = ds === todayStr;
       const sessions = allSessions.filter(s => s.date === ds).sort((a,b) => a.time.localeCompare(b.time));
 
-      return `
-        <div class="min-w-0">
-          <div class="text-center mb-2 py-1.5 rounded-xl text-xs font-bold ${isToday ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white' : 'bg-gray-100 text-gray-600'}">
-            יום ${DAYS[d.getDay()]}<br/><span class="font-normal">${d.getDate()}/${d.getMonth()+1}</span>
+      container.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px">
+          <button id="day-prev" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #e5e7eb;background:white;font-size:16px;cursor:pointer;" ${dayIdx===0?'disabled style="opacity:.3"':''}>›</button>
+          <div style="text-align:center;flex:1">
+            <div style="font-size:15px;font-weight:800;color:${isToday?'#ec4899':'#1f2937'}">יום ${DAYS[d.getDay()]}</div>
+            <div style="font-size:12px;color:#9ca3af">${d.getDate()}/${d.getMonth()+1}</div>
           </div>
-          <div class="space-y-2">
-            ${sessions.length ? sessions.map(s => sessionCard(s, ds)).join('') : '<div class="text-center text-gray-300 text-xs py-4">—</div>'}
-          </div>
+          <button id="day-next" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #e5e7eb;background:white;font-size:16px;cursor:pointer;" ${dayIdx===5?'disabled style="opacity:.3"':''}>‹</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${sessions.length ? sessions.map(s => sessionCard(s, ds)).join('') : '<div style="text-align:center;color:#9ca3af;padding:40px 0">אין שיעורים ביום זה</div>'}
         </div>`;
-    });
 
-    container.innerHTML = `<div class="grid grid-cols-6 gap-2">${cols.join('')}</div>`;
+      container.querySelector('#day-prev')?.addEventListener('click', () => {
+        if (dayIdx > 0) { container.dataset.dayIdx = dayIdx - 1; renderWeekly(); }
+      });
+      container.querySelector('#day-next')?.addEventListener('click', () => {
+        if (dayIdx < 5) { container.dataset.dayIdx = Number(dayIdx) + 1; renderWeekly(); }
+      });
+    } else {
+      // דסקטופ — גריד שבועי
+      const cols = weekDates.map(ds => {
+        const d = parseDateLocal(ds);
+        const isToday = ds === todayStr;
+        const sessions = allSessions.filter(s => s.date === ds).sort((a,b) => a.time.localeCompare(b.time));
+        return `
+          <div class="min-w-0">
+            <div class="text-center mb-2 py-1.5 rounded-xl text-xs font-bold ${isToday ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white' : 'bg-gray-100 text-gray-600'}">
+              יום ${DAYS[d.getDay()]}<br/><span class="font-normal">${d.getDate()}/${d.getMonth()+1}</span>
+            </div>
+            <div class="space-y-2">
+              ${sessions.length ? sessions.map(s => sessionCard(s, ds)).join('') : '<div class="text-center text-gray-300 text-xs py-4">—</div>'}
+            </div>
+          </div>`;
+      });
+      container.innerHTML = `<div class="grid grid-cols-6 gap-2">${cols.join('')}</div>`;
+    }
 
     container.querySelectorAll('.action-btn').forEach(btn => {
       btn.addEventListener('click', () => handleAction(btn));
@@ -212,9 +243,9 @@
     `<div class="text-center py-16 text-gray-400 col-span-6"><div class="text-4xl mb-3">⏳</div><p>טוען...</p></div>`;
   await loadData();
 
-  document.getElementById('prev-week').onclick    = () => { navDate.setDate(navDate.getDate()-7); render(); };
-  document.getElementById('next-week').onclick    = () => { navDate.setDate(navDate.getDate()+7); render(); };
-  document.getElementById('today-btn').onclick    = () => { navDate = new Date(today); render(); };
+  document.getElementById('prev-week').onclick    = () => { navDate.setDate(navDate.getDate()-7); document.getElementById('schedule-grid').dataset.dayIdx=''; render(); };
+  document.getElementById('next-week').onclick    = () => { navDate.setDate(navDate.getDate()+7); document.getElementById('schedule-grid').dataset.dayIdx=''; render(); };
+  document.getElementById('today-btn').onclick    = () => { navDate = new Date(today); document.getElementById('schedule-grid').dataset.dayIdx=''; render(); };
   document.getElementById('print-btn').onclick    = () => printSchedule();
   document.getElementById('download-btn').onclick = () => downloadSchedule();
 

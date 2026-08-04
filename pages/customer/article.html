@@ -262,16 +262,16 @@
 <script src="../../services/supabaseClient.js"></script>
 <script>
   const sb   = window._sb;
-  const slug = new URLSearchParams(location.search).get('slug');
+  const id = new URLSearchParams(location.search).get('id');
 
   async function init() {
-    if (!slug) { showError(); return; }
+    if (!id) { showError(); return; }
 
     const { data, error } = await sb
       .from('articles')
       .select('*')
-      .eq('slug', slug)
-      .eq('status', 'published')
+      .eq('id', id)
+      .eq('is_published', true)
       .maybeSingle();
 
     document.getElementById('loading-screen').style.display = 'none';
@@ -279,36 +279,62 @@
     render(data);
   }
 
-  function render(a) {
-    document.title = (a.meta_title || a.title) + ' | FitBalance';
-    document.getElementById('meta-desc').setAttribute('content', a.meta_desc || a.summary || '');
+  const TYPE_LABEL = { video: '🎬 סרטון', post: '📄 כתבה', tip: '💡 טיפ' };
 
+  function render(a) {
+    document.title = a.title + ' | FitBalance';
+    document.getElementById('meta-desc').setAttribute('content', a.description || '');
     document.getElementById('bc-title').textContent = a.title;
 
-    document.getElementById('hero-wrap').innerHTML = a.image_url
-      ? `<img class="hero-img" src="${a.image_url}" alt="${a.title}" />`
-      : `<div class="hero-placeholder">📝</div>`;
+    // Hero — video or image
+    const heroWrap = document.getElementById('hero-wrap');
+    if (a.type === 'video' && a.video_url) {
+      const embed = getEmbedUrl(a.video_url);
+      if (embed) {
+        heroWrap.innerHTML = `<div style="border-radius:20px;overflow:hidden;aspect-ratio:16/9;margin-bottom:40px;box-shadow:0 12px 40px rgba(0,0,0,.12)"><iframe src="${embed}" style="width:100%;height:100%;border:none" allowfullscreen></iframe></div>`;
+      } else {
+        const ext = a.video_url.split('.').pop().toLowerCase().split('?')[0];
+        const mimeMap = { mp4:'video/mp4', mov:'video/mp4', webm:'video/webm', ogg:'video/ogg', ogv:'video/ogg', avi:'video/x-msvideo', mkv:'video/x-matroska' };
+        const mime = mimeMap[ext] || 'video/mp4';
+        heroWrap.innerHTML = `
+          <video controls style="width:100%;border-radius:20px;margin-bottom:40px;max-height:480px;background:#000"
+            onerror="this.outerHTML='<div style=padding:40px;text-align:center;color:#9ca3af;background:#f8f7ff;border-radius:20px;margin-bottom:40px>⚠️ לא ניתן להפעיל את הסרטון</div>'">
+            <source src="${a.video_url}" type="${mime}" />
+            הדפדפן שלך אינו תומך בהפעלת וידאו
+          </video>`;
+      }
+    } else if (a.thumbnail_url) {
+      heroWrap.innerHTML = `<img class="hero-img" src="${a.thumbnail_url}" alt="${a.title}" />`;
+    } else {
+      heroWrap.innerHTML = `<div class="hero-placeholder">${TYPE_LABEL[a.type]?.split(' ')[0] || '📝'}</div>`;
+    }
 
     const parts = [];
-    if (a.category)     parts.push(`<span class="cat-badge">${a.category}</span>`);
-    if (a.author)       parts.push(`<span class="meta-item"><i class="fas fa-user-circle"></i>${a.author}</span>`);
+    if (a.type)        parts.push(`<span class="cat-badge">${TYPE_LABEL[a.type] || a.type}</span>`);
+    if (a.category)    parts.push(`<span class="cat-badge" style="background:#f0fdf4;color:#166534;border-color:rgba(22,101,52,.15)">${a.category}</span>`);
+    if (a.author)      parts.push(`<span class="meta-item"><i class="fas fa-user-circle"></i>${a.author}</span>`);
     if (a.published_at) {
-      const [datePart, timePart] = a.published_at.replace('T',' ').split(' ');
-      const [y,m,d] = datePart.split('-');
-      const hm = timePart ? timePart.slice(0,5) : '';
-      parts.push(`<span class="meta-item"><i class="fas fa-calendar-alt"></i>${d}/${m}/${y}${hm ? ' ' + hm : ''}</span>`);
+      parts.push(`<span class="meta-item"><i class="fas fa-calendar-alt"></i>${new Date(a.published_at).toLocaleDateString('he-IL')}</span>`);
     }
     document.getElementById('article-meta').innerHTML = parts.join('');
-
     document.getElementById('article-title').textContent = a.title;
 
-    if (a.summary) {
-      document.getElementById('article-summary').textContent = a.summary;
+    if (a.description) {
+      document.getElementById('article-summary').textContent = a.description;
       document.getElementById('article-summary').style.display = 'block';
     }
 
-    document.getElementById('article-content').textContent = a.content || '';
+    document.getElementById('article-content').textContent = '';
     document.getElementById('article-screen').style.display = 'block';
+  }
+
+  function getEmbedUrl(url) {
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+    const vm = url.match(/vimeo\.com\/(\d+)/);
+    if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
+    if (url.includes('embed')) return url;
+    return null;
   }
 
   function showError() {

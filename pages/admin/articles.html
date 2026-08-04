@@ -4,46 +4,141 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" type="image/png" href="../../assets/icons/icon.png">
-  <title>מאמרים | FitBalance</title>
+  <title>ניהול כתבות</title>
   <link rel="stylesheet" href="css/admin-theme.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="../../services/supabaseClient.js"></script>
+  <script src="../../services/uploadService.js"></script>
+  <script>
+    (async () => {
+      const { data: { session } } = await window._sb.auth.getSession();
+      if (!session) window.location.href = '../../login.html';
+    })();
+  </script>
   <style>
-    .article-img { width:52px; height:52px; object-fit:cover; border-radius:10px; border:1px solid #f3f0ff; }
-    .article-img-placeholder { width:52px; height:52px; border-radius:10px; background:#f3f0ff; display:flex; align-items:center; justify-content:center; font-size:22px; }
-    .badge-published { background:#d1fae5; color:#065f46; border-radius:999px; padding:2px 10px; font-size:11px; font-weight:700; }
-    .badge-draft     { background:#fef3c7; color:#92400e; border-radius:999px; padding:2px 10px; font-size:11px; font-weight:700; }
-    #articleModal { display:none; position:fixed; inset:0; background:rgba(15,10,40,.65); z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
-    #articleModal.open { display:flex; }
-    .form-field { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
-    .form-field label { font-size:12px; font-weight:600; color:#6b7280; }
-    .form-field input, .form-field textarea, .form-field select {
+    .card { background:white; border-radius:16px; border:1px solid #f3f0ff; box-shadow:0 2px 12px rgba(139,92,246,.07); padding:24px; margin-bottom:20px; }
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+    .field label { font-size:12px; font-weight:700; color:#6b7280; }
+    .field input, .field textarea, .field select {
       border:1.5px solid #e5e7eb; border-radius:10px; padding:9px 12px;
       font-size:13px; font-family:inherit; outline:none; transition:border-color .2s;
     }
-    .form-field input:focus, .form-field textarea:focus, .form-field select:focus {
+    .field input:focus, .field textarea:focus, .field select:focus {
       border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.1);
     }
-    .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    #img-preview { width:100%; height:140px; object-fit:cover; border-radius:12px; display:none; }
-    #img-placeholder {
-      height:140px; border-radius:12px; border:2px dashed #ede9fe;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      gap:6px; cursor:pointer; color:#9ca3af; font-size:13px; transition:border-color .2s;
+    .btn-primary { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border:none; border-radius:10px; padding:10px 22px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .btn-primary:hover { opacity:.9; }
+    .btn-ghost { background:#f3f0ff; color:#7c3aed; border:1px solid #ede9fe; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+    .btn-ghost:hover { background:#ede9fe; }
+
+    /* type badge */
+    .type-badge { display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:700; }
+    .type-video { background:#fce7f3; color:#be185d; }
+    .type-post  { background:#ede9fe; color:#6d28d9; }
+    .type-tip   { background:#d1fae5; color:#065f46; }
+
+    /* article cards grid */
+    .articles-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+    .article-card {
+      background:white; border-radius:14px; border:1.5px solid #f3f0ff;
+      box-shadow:0 2px 10px rgba(139,92,246,.06); overflow:hidden;
+      display:flex; flex-direction:column;
     }
-    #img-placeholder:hover { border-color:#8b5cf6; color:#7c3aed; }
-    .modal-tabs { display:flex; gap:6px; margin-bottom:16px; }
-    .modal-tab {
-      border-radius:8px; border:1.5px solid #ede9fe; background:white;
-      color:#6b7280; font-size:12px; font-weight:600; padding:6px 14px;
-      font-family:inherit; cursor:pointer; transition:all .2s;
+    .article-thumb {
+      width:100%; height:160px; object-fit:cover; background:#f8f7ff;
+      display:flex; align-items:center; justify-content:center;
+      color:#c4b5fd; font-size:40px;
     }
-    .modal-tab.active { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border-color:transparent; }
-    .modal-tab:hover:not(.active) { background:#f3f0ff; color:#7c3aed; }
-    .tab-pane { display:none; }
-    .tab-pane.active { display:block; }
+    .article-thumb img { width:100%; height:100%; object-fit:cover; }
+    .article-body { padding:14px; flex:1; display:flex; flex-direction:column; gap:8px; }
+    .article-title { font-size:14px; font-weight:700; color:#1f2937; line-height:1.4; }
+    .article-desc { font-size:12px; color:#6b7280; line-height:1.5; flex:1; }
+    .article-footer { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-top:1px solid #f3f0ff; }
+    .article-actions { display:flex; gap:6px; }
+    .icon-btn { background:none; border:none; cursor:pointer; padding:5px 8px; border-radius:8px; font-size:14px; transition:background .15s; }
+    .icon-btn:hover { background:#f3f0ff; }
+    .icon-btn.danger:hover { background:#fee2e2; color:#dc2626; }
+
+    /* publish toggle */
+    .toggle-wrap { display:flex; align-items:center; gap:8px; font-size:13px; color:#374151; font-weight:600; }
+    .toggle { position:relative; display:inline-block; width:40px; height:22px; flex-shrink:0; }
+    .toggle input {
+      opacity:0 !important; width:0 !important; height:0 !important;
+      position:absolute !important; margin:0 !important; padding:0 !important;
+      border:none !important; box-shadow:none !important;
+    }
+    .toggle-slider {
+      position:absolute; inset:0; background:#d1d5db; border-radius:999px;
+      cursor:pointer; transition:.2s;
+    }
+    .toggle-slider:before {
+      content:''; position:absolute; width:16px; height:16px; left:3px; top:3px;
+      background:white; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.25);
+    }
+    .toggle input:checked + .toggle-slider { background:linear-gradient(135deg,#ec4899,#8b5cf6); }
+    .toggle input:checked + .toggle-slider:before { transform:translateX(18px); }
+
+    /* modal */
+    .modal-overlay {
+      display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,.5); z-index:9999;
+      align-items:center; justify-content:center;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal {
+      background:white; border-radius:20px; width:calc(100% - 40px); max-width:560px;
+      max-height:90vh; overflow-y:auto; padding:28px;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);
+      margin:auto;
+    }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+    .modal-title { font-size:17px; font-weight:800; color:#1f2937; }
+    .modal-close { background:none; border:none; font-size:20px; color:#9ca3af; cursor:pointer; }
+    .modal-close:hover { color:#374151; }
+
+    /* video preview */
+    .video-preview { border-radius:12px; overflow:hidden; background:#000; margin-bottom:14px; aspect-ratio:16/9; }
+    .video-preview iframe { width:100%; height:100%; border:none; }
+    .video-preview-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#6b7280; font-size:13px; background:#f8f7ff; border-radius:12px; aspect-ratio:16/9; }
+
+    .filter-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+    .filter-bar input { border:1.5px solid #e5e7eb; border-radius:10px; padding:8px 14px; font-size:13px; font-family:inherit; outline:none; flex:1; min-width:180px; }
+    .filter-bar input:focus { border-color:#8b5cf6; }
+    .filter-btn { border-radius:10px; border:1.5px solid #ede9fe; background:white; color:#6b7280; font-size:13px; font-weight:600; padding:8px 14px; font-family:inherit; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .filter-btn.active { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border-color:transparent; }
+    .filter-btn:hover:not(.active) { background:#f3f0ff; color:#7c3aed; }
+
+    .empty-state { text-align:center; padding:60px 20px; color:#9ca3af; }
+    .empty-state i { font-size:48px; margin-bottom:16px; display:block; }
+
+    /* upload area */
+    .upload-area {
+      border:2px dashed #d8b4fe; border-radius:12px; padding:20px;
+      text-align:center; cursor:pointer; transition:all .2s; background:#faf5ff;
+      position:relative;
+    }
+    .upload-area:hover { border-color:#8b5cf6; background:#f3f0ff; }
+    .upload-area input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .upload-area i { font-size:24px; color:#a78bfa; margin-bottom:6px; display:block; }
+    .upload-area span { font-size:12px; color:#7c3aed; font-weight:600; }
+    .upload-area small { display:block; font-size:11px; color:#9ca3af; margin-top:2px; }
+    .thumb-preview { width:100%; height:120px; object-fit:cover; border-radius:10px; margin-top:10px; display:none; }
+    .video-file-preview { margin-top:10px; padding:10px 14px; background:#f3f0ff; border-radius:10px; font-size:12px; color:#7c3aed; font-weight:600; display:none; }
+    .upload-progress { height:4px; background:#ede9fe; border-radius:999px; margin-top:8px; display:none; }
+    .upload-progress-bar { height:100%; background:linear-gradient(135deg,#ec4899,#8b5cf6); border-radius:999px; width:0%; transition:width .3s; }
+
+    /* toast */
+    .toast {
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+      background:#1f2937; color:white; padding:12px 24px; border-radius:12px;
+      font-size:14px; font-weight:600; z-index:99999;
+      display:flex; align-items:center; gap:8px;
+      opacity:0; transition:opacity .25s, transform .25s; pointer-events:none;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast.success { background:linear-gradient(135deg,#059669,#10b981); }
+    .toast.error   { background:linear-gradient(135deg,#dc2626,#ef4444); }
   </style>
 </head>
 <body>
@@ -51,422 +146,402 @@
   <div id="sidebar-placeholder"></div>
 
   <main class="main-content">
-    <header class="page-header">
-      <h1>📝 מאמרים</h1>
-      <button id="addBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm">+ מאמר חדש</button>
+    <header class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <h1>📝 כתבות ותוכן</h1>
+      <button class="btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> כתבה חדשה</button>
     </header>
 
-    <!-- חיפוש + סינון -->
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="חיפוש לפי כותרת או מחבר..." />
-      <select id="statusFilter">
-        <option value="">כל הסטטוסים</option>
-        <option value="published">מפורסם</option>
-        <option value="draft">טיוטה</option>
-      </select>
-      <select id="catFilter"><option value="">כל הקטגוריות</option></select>
-      <i class="fas fa-search"></i>
+    <div class="filter-bar">
+      <input type="text" id="search-input" placeholder="🔍 חיפוש לפי כותרת..." oninput="renderList()" />
+      <button class="filter-btn active" data-type="" onclick="setFilter('',this)">הכל</button>
+      <button class="filter-btn" data-type="video" onclick="setFilter('video',this)">🎬 סרטונים</button>
+      <button class="filter-btn" data-type="post" onclick="setFilter('post',this)">📄 כתבות</button>
+      <button class="filter-btn" data-type="tip" onclick="setFilter('tip',this)">💡 טיפים</button>
     </div>
 
-    <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
-      <span style="color:#555; font-size:14px;">מוצגים:</span>
-      <span id="countBadge">0</span>
-      <span style="color:#555; font-size:14px;">מאמרים</span>
-    </div>
-
-    <div class="table-section">
-      <table class="customers-table">
-        <thead>
-          <tr>
-            <th>תמונה</th>
-            <th>כותרת</th>
-            <th>קטגוריה</th>
-            <th>מחבר</th>
-            <th>תאריך פרסום</th>
-            <th>סטטוס</th>
-            <th>פעולות</th>
-          </tr>
-        </thead>
-        <tbody id="articlesBody"></tbody>
-      </table>
-    </div>
+    <div id="articles-grid" class="articles-grid"></div>
   </main>
 </div>
 
-<!-- מודאל הוספה/עריכה -->
-<div id="articleModal">
-  <div style="background:white; border-radius:20px; width:620px; max-width:95vw; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,.2); position:relative;">
-    <div style="background:linear-gradient(135deg,#ec4899,#8b5cf6); padding:20px 24px; border-radius:20px 20px 0 0; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10;">
-      <h2 id="modalTitle" style="color:white; font-size:18px; font-weight:800; margin:0;">מאמר חדש</h2>
-      <button onclick="closeModal()" style="background:rgba(255,255,255,.2); border:none; color:white; width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">כתבה חדשה</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
 
-    <div style="padding:24px;">
+    <div class="field">
+      <label>סוג כתבה</label>
+      <select id="f-type" onchange="onTypeChange()">
+        <option value="video">🎬 סרטון</option>
+        <option value="post">📄 כתבה</option>
+        <option value="tip">💡 טיפ</option>
+      </select>
+    </div>
 
-      <!-- תמונה ראשית -->
-      <div class="form-field" style="margin-bottom:16px;">
-        <label>תמונה ראשית</label>
-        <div id="img-placeholder" onclick="document.getElementById('imgInput').click()">
-          <i class="fas fa-cloud-upload-alt" style="font-size:24px;"></i>
-          <span>לחצי להעלאת תמונה</span>
-        </div>
-        <img id="img-preview" />
-        <input type="file" id="imgInput" accept="image/*" style="display:none;" onchange="previewImage(this)" />
-        <button id="removeImgBtn" onclick="removeImage()" style="display:none; margin-top:6px; font-size:12px; color:#ef4444; background:none; border:none; cursor:pointer;">✕ הסר תמונה</button>
-      </div>
+    <div class="field">
+      <label>כותרת</label>
+      <input type="text" id="f-title" placeholder="כותרת הכתבה..." />
+    </div>
 
-      <!-- טאבים -->
-      <div class="modal-tabs">
-        <button class="modal-tab active" onclick="switchTab('content', this)">📄 תוכן</button>
-        <button class="modal-tab" onclick="switchTab('meta', this)">🔍 SEO</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field">
+        <label>מחבר/ת</label>
+        <input type="text" id="f-author" placeholder="שם המחבר/ת..." />
       </div>
+      <div class="field">
+        <label>קטגוריה</label>
+        <input type="text" id="f-category" placeholder="כושר, תזונה..." />
+      </div>
+    </div>
 
-      <!-- טאב תוכן -->
-      <div id="tab-content" class="tab-pane active">
-        <div class="form-field">
-          <label>כותרת *</label>
-          <input type="text" id="f-title" placeholder="כותרת המאמר" oninput="autoSlug()" />
-        </div>
-        <div class="form-field">
-          <label>Slug <span style="font-size:11px;color:#9ca3af;font-weight:400">(כתובת URL — אנגלית, מקפים)</span></label>
-          <input type="text" id="f-slug" placeholder="article-url-slug" dir="ltr" />
-        </div>
-        <div class="form-grid-2">
-          <div class="form-field">
-            <label>מחבר</label>
-            <input type="text" id="f-author" placeholder="שם המחבר" />
-          </div>
-          <div class="form-field">
-            <label>קטגוריה</label>
-            <input type="text" id="f-category" placeholder="לדוגמה: תזונה, כושר" list="cats-list" />
-            <datalist id="cats-list"></datalist>
-          </div>
-        </div>
-        <div class="form-field">
-          <label>תקציר</label>
-          <textarea id="f-summary" rows="2" placeholder="תיאור קצר של המאמר..."></textarea>
-        </div>
-        <div class="form-field">
-          <label>תוכן מלא</label>
-          <textarea id="f-content" rows="8" placeholder="תוכן המאמר..."></textarea>
-        </div>
-        <div class="form-grid-2">
-          <div class="form-field">
-            <label>סטטוס</label>
-            <select id="f-status">
-              <option value="draft">טיוטה</option>
-              <option value="published">מפורסם</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label>תאריך פרסום</label>
-            <input type="datetime-local" id="f-published-at" />
-          </div>
-        </div>
-        <div class="form-field">
-          <label>הצג במערכות</label>
-          <div style="display:flex;gap:20px;padding:10px 0;">
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#374151;cursor:pointer;">
-              <input type="checkbox" id="f-show-public" style="width:15px;height:15px;accent-color:#8b5cf6;" /> אתר ראשי
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#374151;cursor:pointer;">
-              <input type="checkbox" id="f-show-customers" style="width:15px;height:15px;accent-color:#8b5cf6;" /> מערכת לקוחות
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#374151;cursor:pointer;">
-              <input type="checkbox" id="f-show-employees" style="width:15px;height:15px;accent-color:#8b5cf6;" /> מערכת עובדים
-            </label>
-          </div>
-        </div>
-      </div>
+    <div class="field">
+      <label>תיאור / הסבר</label>
+      <textarea id="f-description" rows="4" placeholder="הסבר קצר על הכתבה..."></textarea>
+    </div>
 
-      <!-- טאב SEO -->
-      <div id="tab-meta" class="tab-pane">
-        <div class="form-field">
-          <label>Meta Title <span style="font-size:11px;color:#9ca3af;font-weight:400">(ברירת מחדל: כותרת המאמר)</span></label>
-          <input type="text" id="f-meta-title" placeholder="כותרת לגוגל..." />
-        </div>
-        <div class="form-field">
-          <label>Meta Description <span style="font-size:11px;color:#9ca3af;font-weight:400">(עד 160 תווים)</span></label>
-          <textarea id="f-meta-desc" rows="3" placeholder="תיאור לגוגל..." oninput="updateMetaCount(this)"></textarea>
-          <span id="meta-count" style="font-size:11px;color:#9ca3af;text-align:left;">0 / 160</span>
-        </div>
-        <div style="background:#f9fafb;border-radius:12px;padding:14px;margin-top:8px;">
-          <div style="font-size:11px;font-weight:700;color:#6b7280;margin-bottom:8px;">תצוגה מקדימה בגוגל</div>
-          <div style="font-size:14px;color:#1a0dab;font-weight:500;" id="seo-preview-title">כותרת המאמר</div>
-          <div style="font-size:12px;color:#006621;margin:2px 0;" id="seo-preview-url">fitbalance.co.il/blog/slug</div>
-          <div style="font-size:12px;color:#545454;" id="seo-preview-desc">תיאור המאמר יופיע כאן...</div>
-        </div>
+    <!-- שדות ייחודיים לסרטון -->
+    <div id="video-fields">
+      <div class="field">
+        <label>סרטון — קישור YouTube / Vimeo</label>
+        <input type="text" id="f-video-url" placeholder="https://www.youtube.com/watch?v=..." oninput="updateVideoPreview()" />
       </div>
+      <div style="text-align:center;font-size:12px;color:#9ca3af;margin:-8px 0 10px;">— או —</div>
+      <div class="field">
+        <label>העלאת קובץ סרטון</label>
+        <div class="upload-area" id="video-upload-area">
+          <input type="file" id="f-video-file" accept="video/*" onchange="onVideoFileChange(this)" />
+          <i class="fas fa-film"></i>
+          <span>לחצי להעלאת סרטון</span>
+          <small>MP4, MOV, AVI עד 200MB</small>
+        </div>
+        <div class="video-file-preview" id="video-file-name"><i class="fas fa-check-circle"></i> <span id="video-file-label"></span></div>
+        <div class="upload-progress" id="video-progress"><div class="upload-progress-bar" id="video-progress-bar"></div></div>
+      </div>
+      <div id="video-preview-wrap" class="video-preview-placeholder">
+        <span>תצוגה מקדימה תופיע לאחר הכנסת קישור YouTube/Vimeo</span>
+      </div>
+    </div>
 
-      <div style="display:flex; gap:10px; margin-top:20px; justify-content:flex-end;">
-        <button onclick="closeModal()" style="padding:10px 20px;border:1.5px solid #e5e7eb;border-radius:10px;background:white;font-size:13px;cursor:pointer;font-family:inherit;">ביטול</button>
-        <button id="saveBtn" onclick="saveArticle()" style="padding:10px 24px;background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">שמור</button>
+    <div class="field" style="margin-top:14px;">
+      <label>תמונת תצוגה</label>
+      <div class="upload-area" id="thumb-upload-area">
+        <input type="file" id="f-thumbnail-file" accept="image/*" onchange="onThumbFileChange(this)" />
+        <i class="fas fa-image"></i>
+        <span>לחצי להעלאת תמונה</span>
+        <small>JPG, PNG, WEBP</small>
       </div>
+      <img id="thumb-preview" class="thumb-preview" />
+    </div>
+
+    <div class="field">
+      <label>תגיות (מופרדות בפסיק)</label>
+      <input type="text" id="f-tags" placeholder="כושר, תזונה, יוגה..." />
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:10px;">הצגה</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#374151;font-weight:600;">
+          <input type="checkbox" id="f-published" style="width:18px;height:18px;accent-color:#8b5cf6;cursor:pointer;" />
+          פרסם כתבה (גלויה בכלל)
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#374151;">
+          <input type="checkbox" id="f-show-home" style="width:18px;height:18px;accent-color:#8b5cf6;cursor:pointer;" />
+          🏠 הצג בדף הבית
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#374151;">
+          <input type="checkbox" id="f-show-customers" style="width:18px;height:18px;accent-color:#8b5cf6;cursor:pointer;" />
+          👤 הצג באזור אישי לקוחות
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#374151;">
+          <input type="checkbox" id="f-show-instructors" style="width:18px;height:18px;accent-color:#8b5cf6;cursor:pointer;" />
+          🏋️ הצג באזור אישי מדריכות
+        </label>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-ghost" onclick="closeModal()">ביטול</button>
+      <button class="btn-primary" onclick="saveArticle()"><i class="fas fa-save"></i> שמור</button>
     </div>
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script src="utilities/sidebar.js"></script>
 <script>
-  let articles = [], editId = null, currentImageUrl = null;
-
-  // ── טאבים ──────────────────────────────────────────────────
-  function switchTab(name, btn) {
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.modal-tab').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + name).classList.add('active');
-    btn.classList.add('active');
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = '';
+    t.className = `toast ${type}`;
+    const icon = document.createElement('i');
+    icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+    t.appendChild(icon);
+    t.appendChild(document.createTextNode(' ' + msg));
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 3000);
   }
+</script>
+<script>
+  let articles = [];
+  let editingId = null;
+  let activeFilter = '';
+  let pendingThumbFile = null;
+  let pendingVideoFile = null;
+  let uploadedVideoUrl = null;
 
-  // ── טעינה ──────────────────────────────────────────────────
+  const TYPE_LABELS = { video: '🎬 סרטון', post: '📄 כתבה', tip: '💡 טיפ' };
+  const TYPE_CLASS  = { video: 'type-video', post: 'type-post', tip: 'type-tip' };
+
   async function load() {
     const { data, error } = await window._sb
       .from('articles')
-      .select('id,title,slug,summary,image_url,author,category,status,published_at,meta_title,meta_desc,content,created_at,show_public,show_customers,show_employees')
+      .select('*')
       .order('created_at', { ascending: false });
-    if (error) { console.error('articles load error:', error); return; }
+    if (error) { console.error(error); return; }
     articles = data ?? [];
-    populateCatFilter();
-    render();
+    renderList();
   }
 
-  function populateCatFilter() {
-    const cats = [...new Set(articles.map(a => a.category).filter(Boolean))].sort();
-    const sel = document.getElementById('catFilter');
-    sel.innerHTML = '<option value="">כל הקטגוריות</option>';
-    cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
-    // datalist לשדה קטגוריה במודאל
-    const dl = document.getElementById('cats-list');
-    dl.innerHTML = cats.map(c => `<option value="${c}">`).join('');
+  function setFilter(type, btn) {
+    activeFilter = type;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderList();
   }
 
-  // ── רינדור טבלה ────────────────────────────────────────────
-  function render() {
-    const q   = document.getElementById('searchInput').value.trim().toLowerCase();
-    const st  = document.getElementById('statusFilter').value;
-    const cat = document.getElementById('catFilter').value;
+  function renderList() {
+    const q = document.getElementById('search-input').value.trim().toLowerCase();
+    const grid = document.getElementById('articles-grid');
+    let list = articles;
+    if (activeFilter) list = list.filter(a => a.type === activeFilter);
+    if (q) list = list.filter(a => a.title?.toLowerCase().includes(q) || a.description?.toLowerCase().includes(q));
 
-    const filtered = articles.filter(a => {
-      if (q && !a.title?.toLowerCase().includes(q) && !a.author?.toLowerCase().includes(q)) return false;
-      if (st  && a.status   !== st)  return false;
-      if (cat && a.category !== cat) return false;
-      return true;
-    });
+    if (!list.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-newspaper"></i>אין כתבות להצגה</div>`;
+      return;
+    }
 
-    document.getElementById('countBadge').textContent = filtered.length;
-    const tbody = document.getElementById('articlesBody');
-    tbody.innerHTML = filtered.length ? filtered.map(a => `
-      <tr>
-        <td>${a.image_url
-          ? `<img class="article-img" src="${a.image_url}" alt="${a.title}" />`
-          : `<div class="article-img-placeholder">📝</div>`}
-        </td>
-        <td>
-          <strong>${a.title}</strong>
-          ${a.summary ? `<div style="font-size:11px;color:#9ca3af;margin-top:2px;">${a.summary.slice(0,60)}${a.summary.length>60?'…':''}</div>` : ''}
-        </td>
-        <td>${a.category || '—'}</td>
-        <td>${a.author || '—'}</td>
-        <td>${a.published_at ? new Date(a.published_at).toLocaleDateString('he-IL') : '—'}</td>
-        <td><span class="${a.status === 'published' ? 'badge-published' : 'badge-draft'}">${a.status === 'published' ? 'מפורסם' : 'טיוטה'}</span></td>
-        <td style="display:flex;gap:6px;">
-          <button onclick="openEdit(${a.id})" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;">✏️ עריכה</button>
-          <button onclick="deleteArticle(${a.id})" style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;">🗑️</button>
-        </td>
-      </tr>`).join('')
-      : '<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:40px;">אין מאמרים</td></tr>';
+    grid.innerHTML = list.map(a => `
+      <div class="article-card">
+        <div class="article-thumb">
+          ${a.thumbnail_url
+            ? `<img src="${a.thumbnail_url}" onerror="this.parentElement.innerHTML='<i class=fas fa-play-circle></i>'" />`
+            : `<i class="fas ${a.type === 'video' ? 'fa-play-circle' : a.type === 'tip' ? 'fa-lightbulb' : 'fa-newspaper'}"></i>`}
+        </div>
+        <div class="article-body">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="type-badge ${TYPE_CLASS[a.type]}">${TYPE_LABELS[a.type]}</span>
+            ${!a.is_published ? '<span style="font-size:11px;color:#9ca3af;">טיוטה</span>' : ''}
+          </div>
+          <div class="article-title">${a.title}</div>
+          ${a.description ? `<div class="article-desc">${a.description}</div>` : ''}
+        </div>
+        <div class="article-footer">
+          <div class="toggle-wrap">
+            <label class="toggle">
+              <input type="checkbox" ${a.is_published ? 'checked' : ''} onchange="togglePublish(${a.id}, this.checked)" />
+              <span class="toggle-slider"></span>
+            </label>
+            <span>${a.is_published ? 'מפורסם' : 'טיוטה'}</span>
+          </div>
+          <div class="article-actions">
+            <button class="icon-btn" onclick="openModal(${a.id})" title="עריכה"><i class="fas fa-pen"></i></button>
+            <button class="icon-btn danger" onclick="deleteArticle(${a.id})" title="מחיקה"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    `).join('');
   }
 
-  // ── פתיחת מודאל ────────────────────────────────────────────
-  function openAdd() {
-    editId = null; currentImageUrl = null;
-    document.getElementById('modalTitle').textContent = 'מאמר חדש';
-    ['f-title','f-slug','f-author','f-category','f-summary','f-content','f-meta-title','f-meta-desc','f-published-at'].forEach(id => {
-      const el = document.getElementById(id); if (el) el.value = '';
-    });
-    document.getElementById('f-status').value = 'draft';
-    document.getElementById('f-show-public').checked    = true;
-    document.getElementById('f-show-customers').checked = false;
-    document.getElementById('f-show-employees').checked = false;
-    resetImageUI();
-    updateSeoPreview();
-    switchTab('content', document.querySelector('.modal-tab'));
-    document.getElementById('articleModal').classList.add('open');
+  function onThumbFileChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    pendingThumbFile = file;
+    const preview = document.getElementById('thumb-preview');
+    preview.style.display = 'block';
+    preview.src = URL.createObjectURL(file);
   }
 
-  function openEdit(id) {
-    const a = articles.find(x => x.id === id);
-    if (!a) return;
-    editId = id; currentImageUrl = a.image_url ?? null;
-    document.getElementById('modalTitle').textContent = 'עריכת מאמר';
-    document.getElementById('f-title').value       = a.title        ?? '';
-    document.getElementById('f-slug').value        = a.slug         ?? '';
-    document.getElementById('f-author').value      = a.author       ?? '';
-    document.getElementById('f-category').value    = a.category     ?? '';
-    document.getElementById('f-summary').value     = a.summary      ?? '';
-    document.getElementById('f-content').value     = a.content      ?? '';
-    document.getElementById('f-status').value      = a.status       ?? 'draft';
-    document.getElementById('f-meta-title').value  = a.meta_title   ?? '';
-    document.getElementById('f-meta-desc').value   = a.meta_desc    ?? '';
-    document.getElementById('f-published-at').value = a.published_at
-      ? a.published_at.slice(0,16) : '';
-    document.getElementById('f-show-public').checked    = a.show_public    ?? true;
-    document.getElementById('f-show-customers').checked = a.show_customers ?? false;
-    document.getElementById('f-show-employees').checked = a.show_employees ?? false;
-    if (a.image_url) {
-      document.getElementById('img-preview').src = a.image_url;
-      document.getElementById('img-preview').style.display = 'block';
-      document.getElementById('img-placeholder').style.display = 'none';
-      document.getElementById('removeImgBtn').style.display = 'inline-block';
-    } else { resetImageUI(); }
-    updateMetaCount(document.getElementById('f-meta-desc'));
-    updateSeoPreview();
-    switchTab('content', document.querySelector('.modal-tab'));
-    document.getElementById('articleModal').classList.add('open');
+  function onVideoFileChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    pendingVideoFile = file;
+    uploadedVideoUrl = null;
+    document.getElementById('f-video-url').value = '';
+    updateVideoPreview();
+    const nameEl = document.getElementById('video-file-name');
+    document.getElementById('video-file-label').textContent = file.name;
+    nameEl.style.display = 'block';
+  }
+
+  function openModal(id = null) {
+    editingId = id;
+    pendingThumbFile = null;
+    pendingVideoFile = null;
+    uploadedVideoUrl = null;
+    document.getElementById('modal-title').textContent = id ? 'עריכת כתבה' : 'כתבה חדשה';
+    const a = id ? articles.find(x => x.id === id) : null;
+    document.getElementById('f-type').value        = a?.type        ?? 'video';
+    document.getElementById('f-title').value       = a?.title       ?? '';
+    document.getElementById('f-author').value      = a?.author      ?? '';
+    document.getElementById('f-category').value    = a?.category    ?? '';
+    document.getElementById('f-description').value = a?.description ?? '';
+    document.getElementById('f-video-url').value   = a?.video_url   ?? '';
+    document.getElementById('f-tags').value        = (a?.tags ?? []).join(', ');
+    document.getElementById('f-published').checked        = a?.is_published    ?? false;
+    document.getElementById('f-show-home').checked         = a?.show_home        ?? false;
+    document.getElementById('f-show-customers').checked    = a?.show_customers   ?? false;
+    document.getElementById('f-show-instructors').checked  = a?.show_instructors ?? false;
+    document.getElementById('f-video-file').value  = '';
+    document.getElementById('f-thumbnail-file').value = '';
+    document.getElementById('video-file-name').style.display = 'none';
+    document.getElementById('video-progress').style.display  = 'none';
+    // תמונה קיימת
+    const preview = document.getElementById('thumb-preview');
+    if (a?.thumbnail_url) { preview.src = a.thumbnail_url; preview.style.display = 'block'; }
+    else { preview.style.display = 'none'; preview.src = ''; }
+    onTypeChange();
+    updateVideoPreview();
+    document.getElementById('modal-overlay').classList.add('open');
   }
 
   function closeModal() {
-    document.getElementById('articleModal').classList.remove('open');
-    document.getElementById('imgInput').value = '';
+    document.getElementById('modal-overlay').classList.remove('open');
+    editingId = null;
   }
 
-  // ── תמונה ──────────────────────────────────────────────────
-  function previewImage(input) {
-    const file = input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      document.getElementById('img-preview').src = e.target.result;
-      document.getElementById('img-preview').style.display = 'block';
-      document.getElementById('img-placeholder').style.display = 'none';
-      document.getElementById('removeImgBtn').style.display = 'inline-block';
-    };
-    reader.readAsDataURL(file);
+  function onTypeChange() {
+    const type = document.getElementById('f-type').value;
+    document.getElementById('video-fields').style.display = type === 'video' ? 'block' : 'none';
   }
 
-  function removeImage() {
-    currentImageUrl = null;
-    document.getElementById('imgInput').value = '';
-    resetImageUI();
+  function getEmbedUrl(url) {
+    if (!url) return null;
+    // YouTube
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+    // Vimeo
+    const vm = url.match(/vimeo\.com\/(\d+)/);
+    if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
+    // כבר embed URL
+    if (url.includes('embed')) return url;
+    return null;
   }
 
-  function resetImageUI() {
-    document.getElementById('img-preview').style.display = 'none';
-    document.getElementById('img-preview').src = '';
-    document.getElementById('img-placeholder').style.display = 'flex';
-    document.getElementById('removeImgBtn').style.display = 'none';
+  function updateVideoPreview() {
+    const wrap = document.getElementById('video-preview-wrap');
+    const embed = getEmbedUrl(document.getElementById('f-video-url').value.trim());
+    if (embed) {
+      wrap.className = 'video-preview';
+      wrap.innerHTML = `<iframe src="${embed}" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
+    } else {
+      wrap.className = 'video-preview-placeholder';
+      wrap.innerHTML = '<span>תצוגה מקדימה תופיע לאחר הכנסת קישור</span>';
+    }
   }
 
-  async function uploadImage(file) {
-    const ext  = file.name.split('.').pop();
-    const path = `articles/${Date.now()}.${ext}`;
+  async function uploadArticleFile(file, folder) {
+    const ext  = file.name.split('.').pop().toLowerCase();
+    const safe = Date.now() + '.' + ext;
+    const path = `${folder}/${safe}`;
     const { error } = await window._sb.storage.from('products').upload(path, file, { upsert: true });
     if (error) throw error;
     return window._sb.storage.from('products').getPublicUrl(path).data.publicUrl;
   }
 
-  // ── slug אוטומטי ────────────────────────────────────────────
-  function autoSlug() {
-    if (editId) return; // בעריכה — לא דורסים slug קיים
-    const title = document.getElementById('f-title').value;
-    const slug = title
-      .toLowerCase()
-      .replace(/[\u0590-\u05FF]/g, '') // הסרת עברית
-      .replace(/[^a-z0-9\s-]/g, '')
-      .trim()
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .slice(0, 80);
-    document.getElementById('f-slug').value = slug;
-    updateSeoPreview();
-  }
-
-  // ── SEO preview ─────────────────────────────────────────────
-  function updateMetaCount(el) {
-    document.getElementById('meta-count').textContent = `${el.value.length} / 160`;
-    updateSeoPreview();
-  }
-
-  function updateSeoPreview() {
-    const title = document.getElementById('f-meta-title').value || document.getElementById('f-title').value || 'כותרת המאמר';
-    const slug  = document.getElementById('f-slug').value || 'slug';
-    const desc  = document.getElementById('f-meta-desc').value || document.getElementById('f-summary').value || 'תיאור המאמר יופיע כאן...';
-    document.getElementById('seo-preview-title').textContent = title;
-    document.getElementById('seo-preview-url').textContent   = `fitbalance.co.il/blog/${slug}`;
-    document.getElementById('seo-preview-desc').textContent  = desc.slice(0, 160);
-  }
-
-  // ── שמירה ──────────────────────────────────────────────────
   async function saveArticle() {
     const title = document.getElementById('f-title').value.trim();
-    const slug  = document.getElementById('f-slug').value.trim();
     if (!title) { alert('נא להזין כותרת'); return; }
-    if (!slug)  { alert('נא להזין slug'); return; }
 
-    const btn = document.getElementById('saveBtn');
-    btn.disabled = true; btn.textContent = 'שומר...';
+    const type = document.getElementById('f-type').value;
+    const saveBtn = document.querySelector('.modal .btn-primary');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'שומר...';
 
     try {
-      const file = document.getElementById('imgInput').files[0];
-      let imageUrl = currentImageUrl;
-      if (file) imageUrl = await uploadImage(file);
+      let thumbnailUrl = editingId ? articles.find(x => x.id === editingId)?.thumbnail_url : null;
+      if (pendingThumbFile) thumbnailUrl = await uploadArticleFile(pendingThumbFile, 'articles/thumbs');
 
-      const pubAt = document.getElementById('f-published-at').value;
-      const status = document.getElementById('f-status').value;
-
-      const payload = {
-        title,
-        slug,
-        summary:      document.getElementById('f-summary').value.trim()    || null,
-        content:      document.getElementById('f-content').value.trim()     || null,
-        image_url:    imageUrl,
-        author:       document.getElementById('f-author').value.trim()      || null,
-        category:     document.getElementById('f-category').value.trim()    || null,
-        status,
-        published_at: pubAt || (status === 'published' ? new Date().toISOString() : null),
-        show_public:    document.getElementById('f-show-public').checked,
-        show_customers: document.getElementById('f-show-customers').checked,
-        show_employees: document.getElementById('f-show-employees').checked,
-        meta_title:   document.getElementById('f-meta-title').value.trim()  || null,
-        meta_desc:    document.getElementById('f-meta-desc').value.trim()   || null,
-      };
-
-      if (editId) {
-        const { error } = await window._sb.from('articles').update(payload).eq('id', editId);
-        if (error) throw error;
-      } else {
-        const { error } = await window._sb.from('articles').insert(payload);
-        if (error) throw error;
+      let videoUrl = document.getElementById('f-video-url').value.trim() || null;
+      if (pendingVideoFile) {
+        const prog = document.getElementById('video-progress');
+        const bar  = document.getElementById('video-progress-bar');
+        prog.style.display = 'block'; bar.style.width = '30%';
+        videoUrl = await uploadArticleFile(pendingVideoFile, 'articles/videos');
+        bar.style.width = '100%';
+        setTimeout(() => { prog.style.display = 'none'; }, 500);
       }
 
+      const slug = title
+        .trim()
+        .toLowerCase()
+        .replace(/[\s]+/g, '-')
+        .replace(/[^a-z0-9\u0590-\u05ff-]/g, '')
+        + '-' + Date.now();
+
+      const payload = {
+        type,
+        title,
+        ...(!editingId && { slug }),
+        author:           document.getElementById('f-author').value.trim() || null,
+        category:         document.getElementById('f-category').value.trim() || null,
+        description:      document.getElementById('f-description').value.trim() || null,
+        video_url:        type === 'video' ? videoUrl : null,
+        thumbnail_url:    thumbnailUrl || null,
+        tags:             document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+        is_published:     document.getElementById('f-published').checked,
+        published_at:     document.getElementById('f-published').checked ? (editingId ? articles.find(x=>x.id===editingId)?.published_at || new Date().toISOString() : new Date().toISOString()) : null,
+        show_home:        document.getElementById('f-show-home').checked,
+        show_customers:   document.getElementById('f-show-customers').checked,
+        show_instructors: document.getElementById('f-show-instructors').checked,
+      };
+
+      let res;
+      if (editingId) {
+        res = await window._sb.from('articles').update(payload).eq('id', editingId);
+      } else {
+        res = await window._sb.from('articles').insert(payload);
+      }
+      if (res.error) {
+        console.error('Supabase error:', JSON.stringify(res.error));
+        throw new Error(res.error.message + (res.error.details ? ' — ' + res.error.details : ''));
+      }
       closeModal();
       await load();
-    } catch (err) {
-      console.error(err);
-      alert('שגיאה בשמירה: ' + (err.message ?? err));
+      showToast(editingId ? 'הכתבה עודכנה בהצלחה ✓' : 'הכתבה נוספה בהצלחה ✓');
+    } catch(e) {
+      showToast('שגיאה: ' + e.message, 'error');
     } finally {
-      btn.disabled = false; btn.textContent = 'שמור';
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fas fa-save"></i> שמור';
     }
   }
 
-  // ── מחיקה ──────────────────────────────────────────────────
-  async function deleteArticle(id) {
+  async function togglePublish(id, val) {
+    const { error } = await window._sb.from('articles').update({ is_published: val }).eq('id', id);
+    if (error) { showToast('שגיאה בעדכון', 'error'); return; }
     const a = articles.find(x => x.id === id);
-    if (!confirm(`למחוק את המאמר "${a?.title}"?`)) return;
-    const { error } = await window._sb.from('articles').delete().eq('id', id);
-    if (error) { alert('שגיאה במחיקה: ' + error.message); return; }
-    await load();
+    if (a) a.is_published = val;
+    renderList();
+    showToast(val ? 'הכתבה פורסמה ✓' : 'הכתבה הוסתרה ✓');
   }
 
-  // ── אירועים ────────────────────────────────────────────────
-  document.getElementById('addBtn').addEventListener('click', openAdd);
-  document.getElementById('searchInput').addEventListener('input', render);
-  document.getElementById('statusFilter').addEventListener('change', render);
-  document.getElementById('catFilter').addEventListener('change', render);
+  async function deleteArticle(id) {
+    if (!confirm('למחוק כתבה זו?')) return;
+    const { error } = await window._sb.from('articles').delete().eq('id', id);
+    if (error) { showToast('שגיאה במחיקה', 'error'); return; }
+    articles = articles.filter(a => a.id !== id);
+    renderList();
+    showToast('הכתבה נמחקה');
+  }
 
-  // SEO preview live update
-  ['f-title','f-slug','f-meta-title','f-summary'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', updateSeoPreview);
+  document.getElementById('modal-overlay').addEventListener('mousedown', function(e) {
+    if (e.target === this) closeModal();
   });
 
   load();

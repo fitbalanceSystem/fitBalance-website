@@ -297,15 +297,16 @@
   const sb = window._sb;
   let articles = [], activeCat = '';
   const ctx = new URLSearchParams(location.search).get('ctx');
-  const filterCol = ctx === 'customers' ? 'show_customers' : ctx === 'employees' ? 'show_employees' : 'show_public';
+  const filterCol = ctx === 'customers' ? 'show_customers' : ctx === 'instructors' ? 'show_instructors' : 'show_home';
 
   async function init() {
-    const { data, error } = await sb
+    let q = sb
       .from('articles')
-      .select('id,title,slug,summary,image_url,author,category,published_at')
-      .eq('status', 'published')
-      .eq(filterCol, true)
+      .select('id,title,description,thumbnail_url,author,category,type,tags,published_at')
+      .eq('is_published', true)
       .order('published_at', { ascending: false });
+    if (ctx) q = q.eq(filterCol, true);
+    const { data, error } = await q;
 
     document.getElementById('loading-screen').style.display = 'none';
 
@@ -318,6 +319,8 @@
     buildCatButtons();
     render();
   }
+
+  const TYPE_ICON = { video: '🎬', post: '📄', tip: '💡' };
 
   function buildCatButtons() {
     const cats = [...new Set(articles.map(a => a.category).filter(Boolean))].sort();
@@ -343,7 +346,7 @@
     const q = document.getElementById('searchInput').value.trim().toLowerCase();
     const filtered = articles.filter(a => {
       if (activeCat && a.category !== activeCat) return false;
-      if (q && !a.title?.toLowerCase().includes(q) && !a.summary?.toLowerCase().includes(q)) return false;
+      if (q && !a.title?.toLowerCase().includes(q) && !a.description?.toLowerCase().includes(q)) return false;
       return true;
     });
 
@@ -356,16 +359,16 @@
     empty.style.display = 'none';
     grid.style.display  = 'grid';
     grid.innerHTML = filtered.map((a, i) => `
-      <a class="article-card" href="article.html?slug=${encodeURIComponent(a.slug)}" style="animation-delay:${i*.06}s">
+      <a class="article-card" href="article.html?id=${a.id}" style="animation-delay:${i*.06}s">
         <div class="card-img">
-          ${a.image_url
-            ? `<img src="${a.image_url}" alt="${a.title}" />`
-            : '<span style="opacity:.35">📝</span>'}
+          ${a.thumbnail_url
+            ? `<img src="${a.thumbnail_url}" alt="${a.title}" />`
+            : `<span style="opacity:.35">${TYPE_ICON[a.type] || '📝'}</span>`}
           ${a.category ? `<span class="card-cat-overlay">${a.category}</span>` : ''}
         </div>
         <div class="card-body">
           <div class="card-title">${a.title}</div>
-          ${a.summary ? `<div class="card-summary">${a.summary.slice(0,110)}${a.summary.length>110?'…':''}</div>` : ''}
+          ${a.description ? `<div class="card-summary">${a.description.slice(0,110)}${a.description.length>110?'…':''}</div>` : ''}
           <div class="card-footer">
             <span class="author"><i class="fas fa-user-circle" style="color:#c4b5fd"></i> ${a.author || 'FitBalance'}</span>
             <span>${a.published_at ? new Date(a.published_at).toLocaleDateString('he-IL') : ''}</span>

@@ -1,0 +1,35 @@
+* [33m963b309[m[33m ([m[1;32mbugprodprogramscustomers[m[33m)[m bugprodprogramscustomers
+* [33mb46a47b[m[33m ([m[1;32mfeature/articles[m[33m)[m feature/articles
+* [33m9c57450[m[33m ([m[1;32mbugprodaddcodetable[m[33m)[m bug prod add code table
+* [33mab396c7[m[33m ([m[1;32mficherbirthday[m[33m)[m ficher birthday settings
+* [33m63de85d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mforms[m[33m)[m form digital
+* [33mc56b8fd[m[33m ([m[1;32mstaging[m[33m)[m tests cucucmber
+* [33me8ac300[m[33m ([m[1;31morigin/staging[m[33m)[m Enhance birthday gifts, store management, and admin dashboard
+* [33m6ffdd9d[m feat: shop UI, admin system-settings, products, orders, dashboard, schedule fixes + SQL & migration scripts
+* [33md4d1145[m feat: shop UI, admin system-settings, products, orders, dashboard, schedule fixes + SQL & migration scripts
+[31m|[m *   [33m8cdc45a[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m Merge branch 'staging'
+[31m|[m [32m|[m[31m\[m  
+[31m|[m [32m|[m[31m/[m  
+[31m|[m[31m/[m[32m|[m   
+* [32m|[m [33ma972b74[m inquiries and title home page
+[33m|[m *   [33m45f4ef1[m Merge branch 'staging'
+[33m|[m [34m|[m[33m\[m  
+[33m|[m [34m|[m[33m/[m  
+[33m|[m[33m/[m[34m|[m   
+* [34m|[m [33m19e32c2[m mobile home.html baner top
+[35m|[m *   [33m3f6adf1[m Merge branch 'staging'
+[35m|[m [36m|[m[35m\[m  
+[35m|[m [36m|[m[35m/[m  
+[35m|[m[35m/[m[36m|[m   
+* [36m|[m [33me1f23d0[m fichers
+[1;31m|[m *   [33m8552a72[m Merge branch 'staging'
+[1;31m|[m [1;32m|[m[1;31m\[m  
+[1;31m|[m [1;32m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[1;32m|[m   
+* [1;32m|[m [33m5d15c0b[m home page and login
+* [1;32m|[m [33mf43bd3c[m home page and login
+[1;33m|[m *   [33m96ac12d[m Merge branch 'staging'
+[1;33m|[m [1;34m|[m[1;33m\[m  
+[1;33m|[m [1;34m|[m[1;33m/[m  
+[1;33m|[m[1;33m/[m[1;34m|[m   
+* [1;34m|[m [33m49b8395[m date year

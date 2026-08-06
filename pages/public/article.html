@@ -199,6 +199,21 @@
     if (a.content) document.getElementById('article-content').innerHTML = a.content;
 
     document.getElementById('article-screen').style.display = 'block';
+    recordView(a.id);
+  }
+
+  async function recordView(articleId) {
+    const key = `viewed_article_${articleId}`;
+    const last = localStorage.getItem(key);
+    if (last && Date.now() - Number(last) < 86400000) return; // 24 שעות
+
+    try {
+      const { ip } = await fetch('https://api.ipify.org?format=json').then(r => r.json());
+      await sb.from('article_views').insert({ article_id: articleId, ip_address: ip });
+      localStorage.setItem(key, Date.now());
+    } catch(e) {
+      // שגיאה ברישום צפייה — לא קריטי
+    }
   }
 
   function getEmbedUrl(url) {

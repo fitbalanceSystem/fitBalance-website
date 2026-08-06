@@ -137,6 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       lessonInstructor.value = rowData.instructor_code || '';
       lessonStatus.value = rowData.status_code || '';
       document.getElementById('lessonPrice').value = rowData.price ?? '';
+      document.getElementById('lessonAlias').value = rowData.alias || '';
     } else {
       modalTitle.textContent = 'שיעור חדש';
       form.reset();
@@ -175,6 +176,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         // שליפת כל שדות הטופס
         const formData = {
+          alias: document.getElementById('lessonAlias').value.trim() || null,
           name: document.getElementById('lessonName').value.trim(),
           day: document.getElementById('lessonDay').value,
           time: document.getElementById('lessonTime').value,
@@ -206,31 +208,62 @@ document.addEventListener('DOMContentLoaded', async () => {
           // מזהה התוכנית החדש (או הקיים אם עדכון)
           const programId = result.data[0].id;
 
-          // מחיקה קודמת של כל המפגשים אם במצב עריכה (כדי שלא יצטברו כפולים)
-          if (mode === 'edit') {
-            await methods.deleteByFilter('program_sessions', { program_id: programId });
-          }
-
           // יצירת מפגשים לפי טווח תאריכים ויום בשבוע
           const sessionDates = getMatchingDates(
             formData.start_date,
             formData.end_date,
-            parseInt(formData.day) -1
+            parseInt(formData.day) - 1
           );
 
-          const sessions = sessionDates.map(date => ({
-            program_id: programId,
-            date: date,
-            time: formData.time,
+          if (mode === 'edit') {
+            // שליפת מפגשים קיימים
+            const { data: existingSessions } = await supabase
+              .from('program_sessions')
+              .select('id, date')
+              .eq('program_id', programId);
 
-            status: formData.status_code,
-            day: formData.day,
-            branch_code: formData.branch_code,
-            instructor_code: formData.instructor_code
-          }));
+            const existingDates = new Set((existingSessions || []).map(s => s.date));
+            const newDatesSet = new Set(sessionDates);
 
-          if (sessions.length) {
-            await upsert('program_sessions', sessions);
+            // מחיקה רק של מפגשים עתידיים שחורגים מהטווח החדש — ורק אם אין להם נוכחות
+            const toDelete = (existingSessions || []).filter(s => !newDatesSet.has(s.date) && s.date > formData.end_date);
+            for (const s of toDelete) {
+              const { data: att } = await supabase.from('session_attendance').select('id').eq('session_id', s.id).limit(1);
+              if (!att || att.length === 0) {
+                await supabase.from('program_sessions').delete().eq('id', s.id);
+              }
+            }
+
+            // הוספה רק של תאריכים חדשים שעדיין לא קיימים
+            const toInsert = sessionDates
+              .filter(date => !existingDates.has(date))
+              .map(date => ({
+                program_id: programId,
+                date,
+                time: formData.time,
+                status: formData.status_code,
+                day: formData.day,
+                branch_code: formData.branch_code,
+                instructor_code: formData.instructor_code
+              }));
+
+            if (toInsert.length) {
+              await supabase.from('program_sessions').insert(toInsert);
+            }
+          } else {
+            // תוכנית חדשה — יצירת כל המפגשים
+            const sessions = sessionDates.map(date => ({
+              program_id: programId,
+              date,
+              time: formData.time,
+              status: formData.status_code,
+              day: formData.day,
+              branch_code: formData.branch_code,
+              instructor_code: formData.instructor_code
+            }));
+            if (sessions.length) {
+              await upsert('program_sessions', sessions);
+            }
           }
 
 

@@ -7,6 +7,7 @@
   <title>ניהול כתבות</title>
   <link rel="stylesheet" href="css/admin-theme.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.7/quill.snow.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="../../services/supabaseClient.js"></script>
   <script src="../../services/uploadService.js"></script>
@@ -128,6 +129,32 @@
     .upload-progress { height:4px; background:#ede9fe; border-radius:999px; margin-top:8px; display:none; }
     .upload-progress-bar { height:100%; background:linear-gradient(135deg,#ec4899,#8b5cf6); border-radius:999px; width:0%; transition:width .3s; }
 
+    /* quill editor */
+    .quill-wrap { border:1.5px solid #e5e7eb; border-radius:10px; overflow:hidden; transition:border-color .2s; }
+    .quill-wrap:focus-within { border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.1); }
+    .ql-toolbar.ql-snow { border:none; border-bottom:1.5px solid #e5e7eb; background:#faf5ff; padding:8px; flex-wrap:wrap; direction:ltr; }
+    .ql-container.ql-snow { border:none; font-family:inherit; font-size:14px; }
+    .ql-editor { min-height:180px; direction:rtl; text-align:right; padding:12px; line-height:1.8; background:white; color:#1f2937; }
+    .ql-editor.ql-blank::before { right:12px; left:auto; font-style:normal; color:#9ca3af; }
+    .ql-snow .ql-picker { color:#374151; }
+    .ql-snow .ql-stroke { stroke:#374151; }
+    .ql-snow .ql-fill { fill:#374151; }
+    .ql-snow.ql-toolbar button:hover .ql-stroke,
+    .ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke:#8b5cf6; }
+    .ql-snow.ql-toolbar button:hover .ql-fill,
+    .ql-snow.ql-toolbar button.ql-active .ql-fill { fill:#8b5cf6; }
+
+    /* cover image */
+    .cover-preview {
+      width:100%; height:160px; object-fit:cover;
+      border-radius:10px; margin-top:10px; display:none;
+    }
+    .cover-actions { display:flex; gap:8px; margin-top:8px; }
+    .btn-sm { font-size:11px; padding:5px 12px; border-radius:8px; border:1.5px solid #e5e7eb;
+      background:white; color:#6b7280; cursor:pointer; font-family:inherit; font-weight:600; }
+    .btn-sm:hover { border-color:#8b5cf6; color:#7c3aed; }
+    .btn-sm.danger:hover { border-color:#dc2626; color:#dc2626; }
+
     /* toast */
     .toast {
       position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
@@ -197,8 +224,15 @@
     </div>
 
     <div class="field">
-      <label>תיאור / הסבר</label>
-      <textarea id="f-description" rows="4" placeholder="הסבר קצר על הכתבה..."></textarea>
+      <label>תיאור קצר (מוצג בכרטיסייה)</label>
+      <textarea id="f-description" rows="2" placeholder="תיאור קצר שיופיע בכרטיסייה..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>תוכן הכתבה</label>
+      <div class="quill-wrap">
+        <div id="quill-editor"></div>
+      </div>
     </div>
 
     <!-- שדות ייחודיים לסרטון -->
@@ -224,8 +258,25 @@
       </div>
     </div>
 
+    <!-- תמונת נושא (cover) -->
     <div class="field" style="margin-top:14px;">
-      <label>תמונת תצוגה</label>
+      <label>🖼️ תמונת נושא (Cover)</label>
+      <div class="upload-area" id="cover-upload-area">
+        <input type="file" id="f-cover-file" accept="image/*" onchange="onCoverFileChange(this)" />
+        <i class="fas fa-image"></i>
+        <span>לחצי להעלאת תמונת נושא</span>
+        <small>JPG, PNG, WEBP — מוצגת בראש הכתבה</small>
+      </div>
+      <img id="cover-preview" class="cover-preview" />
+      <div class="cover-actions" id="cover-actions" style="display:none">
+        <button type="button" class="btn-sm" onclick="document.getElementById('f-cover-file').click()"><i class="fas fa-sync-alt"></i> החלף</button>
+        <button type="button" class="btn-sm danger" onclick="removeCover()"><i class="fas fa-trash"></i> מחק</button>
+      </div>
+    </div>
+
+    <!-- תמונת תצוגה בכרטיסייה -->
+    <div class="field">
+      <label>תמונת תצוגה (כרטיסייה)</label>
       <div class="upload-area" id="thumb-upload-area">
         <input type="file" id="f-thumbnail-file" accept="image/*" onchange="onThumbFileChange(this)" />
         <i class="fas fa-image"></i>
@@ -238,6 +289,11 @@
     <div class="field">
       <label>תגיות (מופרדות בפסיק)</label>
       <input type="text" id="f-tags" placeholder="כושר, תזונה, יוגה..." />
+    </div>
+
+    <div class="field">
+      <label>סדר תצוגה</label>
+      <input type="number" id="f-sort-order" min="0" placeholder="0" style="width:100px" />
     </div>
 
     <div style="margin-bottom:20px;">
@@ -271,6 +327,20 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Views Modal -->
+<div class="modal-overlay" id="views-modal-overlay">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="views-modal-title">צפיות</div>
+      <button class="modal-close" onclick="document.getElementById('views-modal-overlay').classList.remove('open')">&#x2715;</button>
+    </div>
+    <div id="views-modal-body" style="max-height:400px;overflow-y:auto">
+      <div style="text-align:center;padding:30px;color:#9ca3af">טוען...</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script src="utilities/sidebar.js"></script>
 <script>
   function showToast(msg, type = 'success') {
@@ -288,22 +358,49 @@
 </script>
 <script>
   let articles = [];
+  let viewsMap = {};
   let editingId = null;
   let activeFilter = '';
   let pendingThumbFile = null;
+  let pendingCoverFile = null;
   let pendingVideoFile = null;
   let uploadedVideoUrl = null;
+  let removedCover = false;
+
+  // init Quill
+  const quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    placeholder: 'כתבי את תוכן הכתבה כאן... (ניתן להדביק מ-ChatGPT, Word, Google Docs)',
+    modules: {
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline'],
+        [{ color: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ size: ['small', false, 'large', 'huge'] }],
+        ['link', 'image'],
+        ['clean'],
+        ['undo', 'redo'],
+      ],
+      history: { delay: 1000, maxStack: 100, userOnly: true },
+    },
+  });
+
+  // תמיכה ב-paste מ-Word/ChatGPT — שמור HTML
+  quill.clipboard.addMatcher(Node.ELEMENT_NODE, (node, delta) => delta);
 
   const TYPE_LABELS = { video: '🎬 סרטון', post: '📄 כתבה', tip: '💡 טיפ' };
   const TYPE_CLASS  = { video: 'type-video', post: 'type-post', tip: 'type-tip' };
 
   async function load() {
-    const { data, error } = await window._sb
-      .from('articles')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const [{ data, error }, { data: views }] = await Promise.all([
+      window._sb.from('articles').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false }),
+      window._sb.from('article_views').select('article_id').then(r => r.error ? { data: [] } : r),
+    ]);
     if (error) { console.error(error); return; }
     articles = data ?? [];
+    viewsMap = {};
+    (views ?? []).forEach(v => { viewsMap[v.article_id] = (viewsMap[v.article_id] || 0) + 1; });
     renderList();
   }
 
@@ -350,6 +447,11 @@
             <span>${a.is_published ? 'מפורסם' : 'טיוטה'}</span>
           </div>
           <div class="article-actions">
+            <button class="icon-btn" onclick="openViewsModal(${a.id}, this)" title="צפיות"
+              style="display:inline-flex;align-items:center;gap:3px;">
+              <i class="fas fa-eye" style="color:#8b5cf6;font-size:12px"></i>
+              <span style="font-size:11px;font-weight:700;color:#8b5cf6">${viewsMap[a.id] || 0}</span>
+            </button>
             <button class="icon-btn" onclick="openModal(${a.id})" title="עריכה"><i class="fas fa-pen"></i></button>
             <button class="icon-btn danger" onclick="deleteArticle(${a.id})" title="מחיקה"><i class="fas fa-trash"></i></button>
           </div>
@@ -365,6 +467,25 @@
     const preview = document.getElementById('thumb-preview');
     preview.style.display = 'block';
     preview.src = URL.createObjectURL(file);
+  }
+
+  function onCoverFileChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    pendingCoverFile = file;
+    removedCover = false;
+    const preview = document.getElementById('cover-preview');
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+    document.getElementById('cover-actions').style.display = 'flex';
+  }
+
+  function removeCover() {
+    pendingCoverFile = null;
+    removedCover = true;
+    document.getElementById('cover-preview').style.display = 'none';
+    document.getElementById('cover-actions').style.display = 'none';
+    document.getElementById('f-cover-file').value = '';
   }
 
   function onVideoFileChange(input) {
@@ -397,14 +518,36 @@
     document.getElementById('f-show-home').checked         = a?.show_home        ?? false;
     document.getElementById('f-show-customers').checked    = a?.show_customers   ?? false;
     document.getElementById('f-show-instructors').checked  = a?.show_instructors ?? false;
+    document.getElementById('f-sort-order').value          = a?.sort_order ?? 0;
     document.getElementById('f-video-file').value  = '';
     document.getElementById('f-thumbnail-file').value = '';
+    document.getElementById('f-cover-file').value = '';
     document.getElementById('video-file-name').style.display = 'none';
     document.getElementById('video-progress').style.display  = 'none';
-    // תמונה קיימת
+    removedCover = false;
+    pendingCoverFile = null;
+
+    // תמונת תצוגה
     const preview = document.getElementById('thumb-preview');
     if (a?.thumbnail_url) { preview.src = a.thumbnail_url; preview.style.display = 'block'; }
     else { preview.style.display = 'none'; preview.src = ''; }
+
+    // תמונת נושא
+    const coverPreview = document.getElementById('cover-preview');
+    const coverActions = document.getElementById('cover-actions');
+    if (a?.cover_image_url) {
+      coverPreview.src = a.cover_image_url;
+      coverPreview.style.display = 'block';
+      coverActions.style.display = 'flex';
+    } else {
+      coverPreview.style.display = 'none';
+      coverPreview.src = '';
+      coverActions.style.display = 'none';
+    }
+
+    // תוכן Quill
+    quill.root.innerHTML = a?.content || '';
+
     onTypeChange();
     updateVideoPreview();
     document.getElementById('modal-overlay').classList.add('open');
@@ -467,6 +610,10 @@
       let thumbnailUrl = editingId ? articles.find(x => x.id === editingId)?.thumbnail_url : null;
       if (pendingThumbFile) thumbnailUrl = await uploadArticleFile(pendingThumbFile, 'articles/thumbs');
 
+      let coverImageUrl = editingId ? articles.find(x => x.id === editingId)?.cover_image_url : null;
+      if (removedCover) coverImageUrl = null;
+      if (pendingCoverFile) coverImageUrl = await uploadArticleFile(pendingCoverFile, 'articles/covers');
+
       let videoUrl = document.getElementById('f-video-url').value.trim() || null;
       if (pendingVideoFile) {
         const prog = document.getElementById('video-progress');
@@ -491,14 +638,17 @@
         author:           document.getElementById('f-author').value.trim() || null,
         category:         document.getElementById('f-category').value.trim() || null,
         description:      document.getElementById('f-description').value.trim() || null,
+        content:          quill.root.innerHTML === '<p><br></p>' ? null : quill.root.innerHTML,
         video_url:        type === 'video' ? videoUrl : null,
         thumbnail_url:    thumbnailUrl || null,
+        cover_image_url:  coverImageUrl || null,
         tags:             document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean),
         is_published:     document.getElementById('f-published').checked,
         published_at:     document.getElementById('f-published').checked ? (editingId ? articles.find(x=>x.id===editingId)?.published_at || new Date().toISOString() : new Date().toISOString()) : null,
         show_home:        document.getElementById('f-show-home').checked,
         show_customers:   document.getElementById('f-show-customers').checked,
         show_instructors: document.getElementById('f-show-instructors').checked,
+        sort_order:       parseInt(document.getElementById('f-sort-order').value) || 0,
       };
 
       let res;
@@ -543,6 +693,46 @@
   document.getElementById('modal-overlay').addEventListener('mousedown', function(e) {
     if (e.target === this) closeModal();
   });
+  document.getElementById('views-modal-overlay').addEventListener('mousedown', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+
+  async function openViewsModal(articleId) {
+    const article = articles.find(a => a.id === articleId);
+    document.getElementById('views-modal-title').textContent = `צפיות — ${article?.title || ''}` ;
+    document.getElementById('views-modal-overlay').classList.add('open');
+    document.getElementById('views-modal-body').innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af">טוען...</div>';
+
+    const { data, error } = await window._sb
+      .from('article_views')
+      .select('ip_address, viewed_at')
+      .eq('article_id', articleId)
+      .order('viewed_at', { ascending: false });
+
+    if (error || !data?.length) {
+      document.getElementById('views-modal-body').innerHTML =
+        '<div style="text-align:center;padding:30px;color:#9ca3af">אין צפיות עדיין</div>';
+      return;
+    }
+
+    document.getElementById('views-modal-body').innerHTML = `
+      <div style="font-size:12px;color:#6b7280;margin-bottom:12px">סה"כ: <strong style="color:#8b5cf6">${data.length}</strong> צפיות</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:#f9fafb">
+            <th style="padding:8px 12px;text-align:right;border-bottom:1px solid #f3f0ff;color:#6b7280">כתובת IP</th>
+            <th style="padding:8px 12px;text-align:right;border-bottom:1px solid #f3f0ff;color:#6b7280">תאריך ושעה</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(v => `
+            <tr style="border-bottom:1px solid #f9fafb">
+              <td style="padding:8px 12px;font-family:monospace;color:#374151">${v.ip_address || 'לא ידוע'}</td>
+              <td style="padding:8px 12px;color:#6b7280">${new Date(v.viewed_at).toLocaleString('he-IL')}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
 
   load();
 </script>

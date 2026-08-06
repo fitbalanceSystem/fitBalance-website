@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../../assets/icons/icon.png">
+  <title>ניהול כתבות</title>
+  <link rel="stylesheet" href="css/admin-theme.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.7/quill.snow.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../../services/supabaseClient.js"></script>
+  <script src="../../services/uploadService.js"></script>
+  <script>
+    (async () => {
+      const { data: { session } } = await window._sb.auth.getSession();
+      if (!session) window.location.href = '../../login.html';
+    })();
+  </script>
+  <style>
+    .card { background:white; border-radius:16px; border:1px solid #f3f0ff; box-shadow:0 2px 12px rgba(139,92,246,.07); padding:24px; margin-bottom:20px; }
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+    .field label { font-size:12px; font-weight:700; color:#6b7280; }
+    .field input, .field textarea, .field select {
+      border:1.5px solid #e5e7eb; border-radius:10px; padding:9px 12px;
+      font-size:13px; font-family:inherit; outline:none; transition:border-color .2s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.1);
+    }
+    .btn-primary { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border:none; border-radius:10px; padding:10px 22px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .btn-primary:hover { opacity:.9; }
+    .btn-ghost { background:#f3f0ff; color:#7c3aed; border:1px solid #ede9fe; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+    .btn-ghost:hover { background:#ede9fe; }
+
+    /* type badge */
+    .type-badge { display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:3px 10px; font-size:11px; font-weight:700; }
+    .type-video { background:#fce7f3; color:#be185d; }
+    .type-post  { background:#ede9fe; color:#6d28d9; }
+    .type-tip   { background:#d1fae5; color:#065f46; }
+
+    /* article cards grid */
+    .articles-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+    .article-card {
+      background:white; border-radius:14px; border:1.5px solid #f3f0ff;
+      box-shadow:0 2px 10px rgba(139,92,246,.06); overflow:hidden;
+      display:flex; flex-direction:column;
+    }
+    .article-thumb {
+      width:100%; height:160px; object-fit:cover; background:#f8f7ff;
+      display:flex; align-items:center; justify-content:center;
+      color:#c4b5fd; font-size:40px;
+    }
+    .article-thumb img { width:100%; height:100%; object-fit:cover; }
+    .article-body { padding:14px; flex:1; display:flex; flex-direction:column; gap:8px; }
+    .article-title { font-size:14px; font-weight:700; color:#1f2937; line-height:1.4; }
+    .article-desc { font-size:12px; color:#6b7280; line-height:1.5; flex:1; }
+    .article-footer { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-top:1px solid #f3f0ff; }
+    .article-actions { display:flex; gap:6px; }
+    .icon-btn { background:none; border:none; cursor:pointer; padding:5px 8px; border-radius:8px; font-size:14px; transition:background .15s; }
+    .icon-btn:hover { background:#f3f0ff; }
+    .icon-btn.danger:hover { background:#fee2e2; color:#dc2626; }
+
+    /* publish toggle */
+    .toggle-wrap { display:flex; align-items:center; gap:8px; font-size:13px; color:#374151; font-weight:600; }
+    .toggle { position:relative; display:inline-block; width:40px; height:22px; flex-shrink:0; }
+    .toggle input {
+      opacity:0 !important; width:0 !important; height:0 !important;
+      position:absolute !important; margin:0 !important; padding:0 !important;
+      border:none !important; box-shadow:none !important;
+    }
+    .toggle-slider {
+      position:absolute; inset:0; background:#d1d5db; border-radius:999px;
+      cursor:pointer; transition:.2s;
+    }
+    .toggle-slider:before {
+      content:''; position:absolute; width:16px; height:16px; left:3px; top:3px;
+      background:white; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.25);
+    }
+    .toggle input:checked + .toggle-slider { background:linear-gradient(135deg,#ec4899,#8b5cf6); }
+    .toggle input:checked + .toggle-slider:before { transform:translateX(18px); }
+
+    /* modal */
+    .modal-overlay {
+      display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(0,0,0,.5); z-index:9999;
+      align-items:center; justify-content:center;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal {
+      background:white; border-radius:20px; width:calc(100% - 40px); max-width:560px;
+      max-height:90vh; overflow-y:auto; padding:28px;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);
+      margin:auto;
+    }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+    .modal-title { font-size:17px; font-weight:800; color:#1f2937; }
+    .modal-close { background:none; border:none; font-size:20px; color:#9ca3af; cursor:pointer; }
+    .modal-close:hover { color:#374151; }
+
+    /* video preview */
+    .video-preview { border-radius:12px; overflow:hidden; background:#000; margin-bottom:14px; aspect-ratio:16/9; }
+    .video-preview iframe { width:100%; height:100%; border:none; }
+    .video-preview-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#6b7280; font-size:13px; background:#f8f7ff; border-radius:12px; aspect-ratio:16/9; }
+
+    .filter-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+    .filter-bar input { border:1.5px solid #e5e7eb; border-radius:10px; padding:8px 14px; font-size:13px; font-family:inherit; outline:none; flex:1; min-width:180px; }
+    .filter-bar input:focus { border-color:#8b5cf6; }
+    .filter-btn { border-radius:10px; border:1.5px solid #ede9fe; background:white; color:#6b7280; font-size:13px; font-weight:600; padding:8px 14px; font-family:inherit; cursor:pointer; transition:all .2s; white-space:nowrap; }
+    .filter-btn.active { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border-color:transparent; }
+    .filter-btn:hover:not(.active) { background:#f3f0ff; color:#7c3aed; }
+
+    .empty-state { text-align:center; padding:60px 20px; color:#9ca3af; }
+    .empty-state i { font-size:48px; margin-bottom:16px; display:block; }
+
+    /* upload area */
+    .upload-area {
+      border:2px dashed #d8b4fe; border-radius:12px; padding:20px;
+      text-align:center; cursor:pointer; transition:all .2s; background:#faf5ff;
+      position:relative;
+    }
+    .upload-area:hover { border-color:#8b5cf6; background:#f3f0ff; }
+    .upload-area input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .upload-area i { font-size:24px; color:#a78bfa; margin-bottom:6px; display:block; }
+    .upload-area span { font-size:12px; color:#7c3aed; font-weight:600; }
+    .upload-area small { display:block; font-size:11px; color:#9ca3af; margin-top:2px; }
+    .thumb-preview { width:100%; height:120px; object-fit:cover; border-radius:10px; margin-top:10px; display:none; }
+    .video-file-preview { margin-top:10px; padding:10px 14px; background:#f3f0ff; border-radius:10px; font-size:12px; color:#7c3aed; font-weight:600; display:none; }
+    .upload-progress { height:4px; background:#ede9fe; border-radius:999px; margin-top:8px; display:none; }
+    .upload-progress-bar { height:100%; background:linear-gradient(135deg,#ec4899,#8b5cf6); border-radius:999px; width:0%; transition:width .3s; }
+
+    /* quill editor */
+    .quill-wrap { border:1.5px solid #e5e7eb; border-radius:10px; overflow:hidden; transition:border-color .2s; }
+    .quill-wrap:focus-within { border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.1); }
+    .ql-toolbar.ql-snow { border:none; border-bottom:1.5px solid #e5e7eb; background:#faf5ff; padding:8px; flex-wrap:wrap; direction:ltr; }
+    .ql-container.ql-snow { border:none; font-family:inherit; font-size:14px; }
+    .ql-editor { min-height:180px; direction:rtl; text-align:right; padding:12px; line-height:1.8; background:white; color:#1f2937; }
+    .ql-editor.ql-blank::before { right:12px; left:auto; font-style:normal; color:#9ca3af; }
+    .ql-snow .ql-picker { color:#374151; }
+    .ql-snow .ql-stroke { stroke:#374151; }
+    .ql-snow .ql-fill { fill:#374151; }
+    .ql-snow.ql-toolbar button:hover .ql-stroke,
+    .ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke:#8b5cf6; }
+    .ql-snow.ql-toolbar button:hover .ql-fill,
+    .ql-snow.ql-toolbar button.ql-active .ql-fill { fill:#8b5cf6; }
+
+    /* cover image */
+    .cover-preview {
+      width:100%; height:160px; object-fit:cover;
+      border-radius:10px; margin-top:10px; display:none;
+    }
+    .cover-actions { display:flex; gap:8px; margin-top:8px; }
+    .btn-sm { font-size:11px; padding:5px 12px; border-radius:8px; border:1.5px solid #e5e7eb;
+      background:white; color:#6b7280; cursor:pointer; font-family:inherit; font-weight:600; }
+    .btn-sm:hover { border-color:#8b5cf6; color:#7c3aed; }
+    .btn-sm.danger:hover { border-color:#dc2626; color:#dc2626; }
+
+    /* toast */
+    .toast {
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+      background:#1f2937; color:white; padding:12px 24px; border-radius:12px;
+      font-size:14px; font-weight:600; z-index:99999;
+      display:flex; align-items:center; gap:8px;
+      opacity:0; transition:opacity .25s, transform .25s; pointer-events:none;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast.success { background:linear-gradient(135deg,#059669,#10b981); }
+    .toast.error   { background:linear-gradient(135deg,#dc2626,#ef4444); }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <h1>📝 כתבות ותוכן</h1>
+      <button class="btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> כתבה חדשה</button>
+    </header>
+
+    <div class="filter-bar">
+      <input type="text" id="search-input" placeholder="🔍 חיפוש לפי כותרת..." oninput="renderList()" />
+      <button class="filter-btn active" data-type="" onclick="setFilter('',this)">הכל</button>
+      <button class="filter-btn" data-type="video" onclick="setFilter('video',this)">🎬 סרטונים</button>
+      <button class="filter-btn" data-type="post" onclick="setFilter('post',this)">📄 כתבות</button>
+      <button class="filter-btn" data-type="tip" onclick="setFilter('tip',this)">💡 טיפים</button>
+    </div>
+
+    <div id="articles-grid" class="articles-grid"></div>
+  </main>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">כתבה חדשה</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="field">
+      <label>סוג כתבה</label>
+      <select id="f-type" onchange="onTypeChange()">
+        <option value="video">🎬 סרטון</option>
+        <option value="post">📄 כתבה</option>
+        <option value="tip">💡 טיפ</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>כותרת</label>
+      <input type="text" id="f-title" placeholder="כותרת הכתבה..." />
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field">
+        <label>מחבר/ת</label>
+        <input type="text" id="f-author" placeholder="שם המחבר/ת..." />
+      </div>
+      <div class="field">
+        <label>קטגוריה</label>
+        <input type="text" id="f-category" placeholder="כושר, תזונה..." />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>תיאור קצר (מוצג בכרטיסייה)</label>
+      <textarea id="f-description" rows="2" placeholder="תיאור קצר שיופיע בכרטיסייה..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>תוכן הכתבה</label>
+      <div class="quill-wrap">
+        <div id="quill-editor"></div>
+      </div>
+    </div>
+
+    <!-- שדות ייחודיים לסרטון -->
+    <div id="video-fields">
+      <div class="field">
+        <label>סרטון — קישור YouTube / Vimeo</label>
+        <input type="text" id="f-video-url" placeholder="https://www.youtube.com/watch?v=..." oninput="updateVideoPreview()" />
+      </div>
+      <div style="text-align:center;font-size:12px;color:#9ca3af;margin:-8px 0 10px;">— או —</div>
+      <div class="field">
+        <label>העלאת קובץ סרטון</label>
+        <div class="upload-area" id="video-upload-area">
+          <input type="file" id="f-video-file" accept="video/*" onchange="onVideoFileChange(this)" />
+          <i class="fas fa-film"></i>
+          <span>לחצי להעלאת סרטון</span>
+          <small>MP4, MOV, AVI עד 200MB</small>
+        </div>
+        <div class="video-file-preview" id="video-file-name"><i class="fas fa-check-circle"></i> <span id="video-file-label"></span></div>
+        <div class="upload-progress" id="video-progress"><div class="upload-progress-bar" id="video-progress-bar"></div></div>
+      </div>
+      <div id="video-preview-wrap" class="video-preview-placeholder">
+        <span>תצוגה מקדימה תופיע לאחר הכנסת קישור YouTube/Vimeo</span>
+      </div>
+    </div>
+
+    <!-- תמונת נושא (cover) -->
+    <div class="field" style="margin-top:14px;">
+      <label>🖼️ תמונת נושא (Cover)</label>
+      <div class="upload-area" id="cover-upload-area">
+        <input type="file" id="f-cover-file" accept="image/*" onchange="onCoverFileChange(this)" />
+        <i class="fas fa-image"></i>
+        <span>לחצי להעלאת תמונת נושא</span>
+        <small>JPG, PNG, WEBP — מוצגת בראש הכתבה</small>
+      </div>
+      <img id="cover-preview" class="cover-preview" />
+      <div class="cover-actions" id="cover-actions" style="display:none">
+        <button type="button" class="btn-sm" onclick="document.getElementById('f-cover-file').click()"><i class="fas fa-sync-alt"></i> החלף</button>
+        <button type="button" class="btn-sm danger" onclick="removeCover()"><i class="fas fa-trash"></i> מחק</button>
+      </div>
+    </div>
+
+    <!-- תמונת תצוגה בכרטיסייה -->
+    <div class="field">
+      <label>תמונת תצוגה (כרטיסייה)</label>
+      <div class="upload-area" id="thumb-upload-area">
+        <input type="file" id="f-thumbnail-file" accept="image/*" onchange="onThumbFileChange(this)" />
+        <i class="fas fa-image"></i>
+        <span>לחצי להעלאת תמונה</span>
+        <small>JPG, PNG, WEBP</small>
+      </div>
+      <img id="thumb-preview" class="thumb-preview" />
+    </div>
+
+    <div class="field">
+      <label>תגיות (מופרדות בפסיק)</label>
+      <input type="text" id="f-tags" placeholder="כושר, תזונה, יוגה..." />
+    </div>
+
+    <div class="field">
+      <label>סדר תצוגה</label>
+      <input type="number" id="f-sort-order" min="0" placeholder="0" style="width:100px" />
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:10px;">הצגה</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#374151;font-weight:600;">
+          <input type="checkbox" id="f-published" style="width:18px;height:18px;accent-color:#8b5cf6;cursor:pointer;" />
+          פרסם כתבה (גלויה בכלל)
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#374151;">
+          <input type="checkbox" id="f-show-home" style="width:18px;height:18px;accent-color:#8b5cf6;cursor:pointer;" />
+          🏠 הצג בדף הבית
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#374151;">
+          <input type="checkbox" id="f-show-customers" style="width:18px;height:18px;accent-color:#8b5cf6;cursor:pointer;" />
+          👤 הצג באזור אישי לקוחות
+        </label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#374151;">
+          <input type="checkbox" id="f-show-instructors" style="width:18px;height:18px;accent-color:#8b5cf6;cursor:pointer;" />
+          🏋️ הצג באזור אישי מדריכות
+        </label>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-ghost" onclick="closeModal()">ביטול</button>
+      <button class="btn-primary" onclick="saveArticle()"><i class="fas fa-save"></i> שמור</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Views Modal -->
+<div class="modal-overlay" id="views-modal-overlay">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="views-modal-title">צפיות</div>
+      <button class="modal-close" onclick="document.getElementById('views-modal-overlay').classList.remove('open')">&#x2715;</button>
+    </div>
+    <div id="views-modal-body" style="max-height:400px;overflow-y:auto">
+      <div style="text-align:center;padding:30px;color:#9ca3af">טוען...</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script src="utilities/sidebar.js"></script>
+<script>
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = '';
+    t.className = `toast ${type}`;
+    const icon = document.createElement('i');
+    icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+    t.appendChild(icon);
+    t.appendChild(document.createTextNode(' ' + msg));
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+<script>
+  let articles = [];
+  let viewsMap = {};
+  let editingId = null;
+  let activeFilter = '';
+  let pendingThumbFile = null;
+  let pendingCoverFile = null;
+  let pendingVideoFile = null;
+  let uploadedVideoUrl = null;
+  let removedCover = false;
+
+  // init Quill
+  const quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    placeholder: 'כתבי את תוכן הכתבה כאן... (ניתן להדביק מ-ChatGPT, Word, Google Docs)',
+    modules: {
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline'],
+        [{ color: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ size: ['small', false, 'large', 'huge'] }],
+        ['link', 'image'],
+        ['clean'],
+        ['undo', 'redo'],
+      ],
+      history: { delay: 1000, maxStack: 100, userOnly: true },
+    },
+  });
+
+  // תמיכה ב-paste מ-Word/ChatGPT — שמור HTML
+  quill.clipboard.addMatcher(Node.ELEMENT_NODE, (node, delta) => delta);
+
+  const TYPE_LABELS = { video: '🎬 סרטון', post: '📄 כתבה', tip: '💡 טיפ' };
+  const TYPE_CLASS  = { video: 'type-video', post: 'type-post', tip: 'type-tip' };
+
+  async function load() {
+    const [{ data, error }, { data: views }] = await Promise.all([
+      window._sb.from('articles').select('*').order('sort_order', { ascending: true }).order('created_at', { ascending: false }),
+      window._sb.from('article_views').select('article_id').then(r => r.error ? { data: [] } : r),
+    ]);
+    if (error) { console.error(error); return; }
+    articles = data ?? [];
+    viewsMap = {};
+    (views ?? []).forEach(v => { viewsMap[v.article_id] = (viewsMap[v.article_id] || 0) + 1; });
+    renderList();
+  }
+
+  function setFilter(type, btn) {
+    activeFilter = type;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderList();
+  }
+
+  function renderList() {
+    const q = document.getElementById('search-input').value.trim().toLowerCase();
+    const grid = document.getElementById('articles-grid');
+    let list = articles;
+    if (activeFilter) list = list.filter(a => a.type === activeFilter);
+    if (q) list = list.filter(a => a.title?.toLowerCase().includes(q) || a.description?.toLowerCase().includes(q));
+
+    if (!list.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-newspaper"></i>אין כתבות להצגה</div>`;
+      return;
+    }
+
+    grid.innerHTML = list.map(a => `
+      <div class="article-card">
+        <div class="article-thumb">
+          ${a.thumbnail_url
+            ? `<img src="${a.thumbnail_url}" onerror="this.parentElement.innerHTML='<i class=fas fa-play-circle></i>'" />`
+            : `<i class="fas ${a.type === 'video' ? 'fa-play-circle' : a.type === 'tip' ? 'fa-lightbulb' : 'fa-newspaper'}"></i>`}
+        </div>
+        <div class="article-body">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="type-badge ${TYPE_CLASS[a.type]}">${TYPE_LABELS[a.type]}</span>
+            ${!a.is_published ? '<span style="font-size:11px;color:#9ca3af;">טיוטה</span>' : ''}
+          </div>
+          <div class="article-title">${a.title}</div>
+          ${a.description ? `<div class="article-desc">${a.description}</div>` : ''}
+        </div>
+        <div class="article-footer">
+          <div class="toggle-wrap">
+            <label class="toggle">
+              <input type="checkbox" ${a.is_published ? 'checked' : ''} onchange="togglePublish(${a.id}, this.checked)" />
+              <span class="toggle-slider"></span>
+            </label>
+            <span>${a.is_published ? 'מפורסם' : 'טיוטה'}</span>
+          </div>
+          <div class="article-actions">
+            <button class="icon-btn" onclick="openViewsModal(${a.id}, this)" title="צפיות"
+              style="display:inline-flex;align-items:center;gap:3px;">
+              <i class="fas fa-eye" style="color:#8b5cf6;font-size:12px"></i>
+              <span style="font-size:11px;font-weight:700;color:#8b5cf6">${viewsMap[a.id] || 0}</span>
+            </button>
+            <button class="icon-btn" onclick="openModal(${a.id})" title="עריכה"><i class="fas fa-pen"></i></button>
+            <button class="icon-btn danger" onclick="deleteArticle(${a.id})" title="מחיקה"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function onThumbFileChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    pendingThumbFile = file;
+    const preview = document.getElementById('thumb-preview');
+    preview.style.display = 'block';
+    preview.src = URL.createObjectURL(file);
+  }
+
+  function onCoverFileChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    pendingCoverFile = file;
+    removedCover = false;
+    const preview = document.getElementById('cover-preview');
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+    document.getElementById('cover-actions').style.display = 'flex';
+  }
+
+  function removeCover() {
+    pendingCoverFile = null;
+    removedCover = true;
+    document.getElementById('cover-preview').style.display = 'none';
+    document.getElementById('cover-actions').style.display = 'none';
+    document.getElementById('f-cover-file').value = '';
+  }
+
+  function onVideoFileChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    pendingVideoFile = file;
+    uploadedVideoUrl = null;
+    document.getElementById('f-video-url').value = '';
+    updateVideoPreview();
+    const nameEl = document.getElementById('video-file-name');
+    document.getElementById('video-file-label').textContent = file.name;
+    nameEl.style.display = 'block';
+  }
+
+  function openModal(id = null) {
+    editingId = id;
+    pendingThumbFile = null;
+    pendingVideoFile = null;
+    uploadedVideoUrl = null;
+    document.getElementById('modal-title').textContent = id ? 'עריכת כתבה' : 'כתבה חדשה';
+    const a = id ? articles.find(x => x.id === id) : null;
+    document.getElementById('f-type').value        = a?.type        ?? 'video';
+    document.getElementById('f-title').value       = a?.title       ?? '';
+    document.getElementById('f-author').value      = a?.author      ?? '';
+    document.getElementById('f-category').value    = a?.category    ?? '';
+    document.getElementById('f-description').value = a?.description ?? '';
+    document.getElementById('f-video-url').value   = a?.video_url   ?? '';
+    document.getElementById('f-tags').value        = (a?.tags ?? []).join(', ');
+    document.getElementById('f-published').checked        = a?.is_published    ?? false;
+    document.getElementById('f-show-home').checked         = a?.show_home        ?? false;
+    document.getElementById('f-show-customers').checked    = a?.show_customers   ?? false;
+    document.getElementById('f-show-instructors').checked  = a?.show_instructors ?? false;
+    document.getElementById('f-sort-order').value          = a?.sort_order ?? 0;
+    document.getElementById('f-video-file').value  = '';
+    document.getElementById('f-thumbnail-file').value = '';
+    document.getElementById('f-cover-file').value = '';
+    document.getElementById('video-file-name').style.display = 'none';
+    document.getElementById('video-progress').style.display  = 'none';
+    removedCover = false;
+    pendingCoverFile = null;
+
+    // תמונת תצוגה
+    const preview = document.getElementById('thumb-preview');
+    if (a?.thumbnail_url) { preview.src = a.thumbnail_url; preview.style.display = 'block'; }
+    else { preview.style.display = 'none'; preview.src = ''; }
+
+    // תמונת נושא
+    const coverPreview = document.getElementById('cover-preview');
+    const coverActions = document.getElementById('cover-actions');
+    if (a?.cover_image_url) {
+      coverPreview.src = a.cover_image_url;
+      coverPreview.style.display = 'block';
+      coverActions.style.display = 'flex';
+    } else {
+      coverPreview.style.display = 'none';
+      coverPreview.src = '';
+      coverActions.style.display = 'none';
+    }
+
+    // תוכן Quill
+    quill.root.innerHTML = a?.content || '';
+
+    onTypeChange();
+    updateVideoPreview();
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    editingId = null;
+  }
+
+  function onTypeChange() {
+    const type = document.getElementById('f-type').value;
+    document.getElementById('video-fields').style.display = type === 'video' ? 'block' : 'none';
+  }
+
+  function getEmbedUrl(url) {
+    if (!url) return null;
+    // YouTube
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+    // Vimeo
+    const vm = url.match(/vimeo\.com\/(\d+)/);
+    if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
+    // כבר embed URL
+    if (url.includes('embed')) return url;
+    return null;
+  }
+
+  function updateVideoPreview() {
+    const wrap = document.getElementById('video-preview-wrap');
+    const embed = getEmbedUrl(document.getElementById('f-video-url').value.trim());
+    if (embed) {
+      wrap.className = 'video-preview';
+      wrap.innerHTML = `<iframe src="${embed}" allowfullscreen sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>`;
+    } else {
+      wrap.className = 'video-preview-placeholder';
+      wrap.innerHTML = '<span>תצוגה מקדימה תופיע לאחר הכנסת קישור</span>';
+    }
+  }
+
+  async function uploadArticleFile(file, folder) {
+    const ext  = file.name.split('.').pop().toLowerCase();
+    const safe = Date.now() + '.' + ext;
+    const path = `${folder}/${safe}`;
+    const { error } = await window._sb.storage.from('products').upload(path, file, { upsert: true });
+    if (error) throw error;
+    return window._sb.storage.from('products').getPublicUrl(path).data.publicUrl;
+  }
+
+  async function saveArticle() {
+    const title = document.getElementById('f-title').value.trim();
+    if (!title) { alert('נא להזין כותרת'); return; }
+
+    const type = document.getElementById('f-type').value;
+    const saveBtn = document.querySelector('.modal .btn-primary');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'שומר...';
+
+    try {
+      let thumbnailUrl = editingId ? articles.find(x => x.id === editingId)?.thumbnail_url : null;
+      if (pendingThumbFile) thumbnailUrl = await uploadArticleFile(pendingThumbFile, 'articles/thumbs');
+
+      let coverImageUrl = editingId ? articles.find(x => x.id === editingId)?.cover_image_url : null;
+      if (removedCover) coverImageUrl = null;
+      if (pendingCoverFile) coverImageUrl = await uploadArticleFile(pendingCoverFile, 'articles/covers');
+
+      let videoUrl = document.getElementById('f-video-url').value.trim() || null;
+      if (pendingVideoFile) {
+        const prog = document.getElementById('video-progress');
+        const bar  = document.getElementById('video-progress-bar');
+        prog.style.display = 'block'; bar.style.width = '30%';
+        videoUrl = await uploadArticleFile(pendingVideoFile, 'articles/videos');
+        bar.style.width = '100%';
+        setTimeout(() => { prog.style.display = 'none'; }, 500);
+      }
+
+      const slug = title
+        .trim()
+        .toLowerCase()
+        .replace(/[\s]+/g, '-')
+        .replace(/[^a-z0-9\u0590-\u05ff-]/g, '')
+        + '-' + Date.now();
+
+      const payload = {
+        type,
+        title,
+        ...(!editingId && { slug }),
+        author:           document.getElementById('f-author').value.trim() || null,
+        category:         document.getElementById('f-category').value.trim() || null,
+        description:      document.getElementById('f-description').value.trim() || null,
+        content:          quill.root.innerHTML === '<p><br></p>' ? null : quill.root.innerHTML,
+        video_url:        type === 'video' ? videoUrl : null,
+        thumbnail_url:    thumbnailUrl || null,
+        cover_image_url:  coverImageUrl || null,
+        tags:             document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean),
+        is_published:     document.getElementById('f-published').checked,
+        published_at:     document.getElementById('f-published').checked ? (editingId ? articles.find(x=>x.id===editingId)?.published_at || new Date().toISOString() : new Date().toISOString()) : null,
+        show_home:        document.getElementById('f-show-home').checked,
+        show_customers:   document.getElementById('f-show-customers').checked,
+        show_instructors: document.getElementById('f-show-instructors').checked,
+        sort_order:       parseInt(document.getElementById('f-sort-order').value) || 0,
+      };
+
+      let res;
+      if (editingId) {
+        res = await window._sb.from('articles').update(payload).eq('id', editingId);
+      } else {
+        res = await window._sb.from('articles').insert(payload);
+      }
+      if (res.error) {
+        console.error('Supabase error:', JSON.stringify(res.error));
+        throw new Error(res.error.message + (res.error.details ? ' — ' + res.error.details : ''));
+      }
+      closeModal();
+      await load();
+      showToast(editingId ? 'הכתבה עודכנה בהצלחה ✓' : 'הכתבה נוספה בהצלחה ✓');
+    } catch(e) {
+      showToast('שגיאה: ' + e.message, 'error');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fas fa-save"></i> שמור';
+    }
+  }
+
+  async function togglePublish(id, val) {
+    const { error } = await window._sb.from('articles').update({ is_published: val }).eq('id', id);
+    if (error) { showToast('שגיאה בעדכון', 'error'); return; }
+    const a = articles.find(x => x.id === id);
+    if (a) a.is_published = val;
+    renderList();
+    showToast(val ? 'הכתבה פורסמה ✓' : 'הכתבה הוסתרה ✓');
+  }
+
+  async function deleteArticle(id) {
+    if (!confirm('למחוק כתבה זו?')) return;
+    const { error } = await window._sb.from('articles').delete().eq('id', id);
+    if (error) { showToast('שגיאה במחיקה', 'error'); return; }
+    articles = articles.filter(a => a.id !== id);
+    renderList();
+    showToast('הכתבה נמחקה');
+  }
+
+  document.getElementById('modal-overlay').addEventListener('mousedown', function(e) {
+    if (e.target === this) closeModal();
+  });
+  document.getElementById('views-modal-overlay').addEventListener('mousedown', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+
+  async function openViewsModal(articleId) {
+    const article = articles.find(a => a.id === articleId);
+    document.getElementById('views-modal-title').textContent = `צפיות — ${article?.title || ''}` ;
+    document.getElementById('views-modal-overlay').classList.add('open');
+    document.getElementById('views-modal-body').innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af">טוען...</div>';
+
+    const { data, error } = await window._sb
+      .from('article_views')
+      .select('ip_address, viewed_at')
+      .eq('article_id', articleId)
+      .order('viewed_at', { ascending: false });
+
+    if (error || !data?.length) {
+      document.getElementById('views-modal-body').innerHTML =
+        '<div style="text-align:center;padding:30px;color:#9ca3af">אין צפיות עדיין</div>';
+      return;
+    }
+
+    document.getElementById('views-modal-body').innerHTML = `
+      <div style="font-size:12px;color:#6b7280;margin-bottom:12px">סה"כ: <strong style="color:#8b5cf6">${data.length}</strong> צפיות</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:#f9fafb">
+            <th style="padding:8px 12px;text-align:right;border-bottom:1px solid #f3f0ff;color:#6b7280">כתובת IP</th>
+            <th style="padding:8px 12px;text-align:right;border-bottom:1px solid #f3f0ff;color:#6b7280">תאריך ושעה</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(v => `
+            <tr style="border-bottom:1px solid #f9fafb">
+              <td style="padding:8px 12px;font-family:monospace;color:#374151">${v.ip_address || 'לא ידוע'}</td>
+              <td style="padding:8px 12px;color:#6b7280">${new Date(v.viewed_at).toLocaleString('he-IL')}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  load();
+</script>
+</body>
+</html>

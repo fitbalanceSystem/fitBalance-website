@@ -25,4 +25,13 @@ window.uploadService = {
     const { data } = window._sb.storage.from('products').getPublicUrl(path);
     return data.publicUrl;
   },
+
+  async uploadArticle(file, folder = 'articles/thumbs') {
+    const ext  = file.name.split('.').pop();
+    const path = `${folder}/${Date.now()}.${ext}`;
+    const { error } = await window._sb.storage.from('products').upload(path, file, { upsert: true });
+    if (error) throw error;
+    const { data } = window._sb.storage.from('products').getPublicUrl(path);
+    return data.publicUrl;
+  },
 };

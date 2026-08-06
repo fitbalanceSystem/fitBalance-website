@@ -545,10 +545,16 @@ async function saveCTModal() {
   const toDelete = [...existingIds].filter(id => !seenIds.has(id));
   if (toDelete.length) await sb.from('codetables').delete().in('id', toDelete);
 
-  // upsert שורות קיימות וחדשות
-  if (toUpsert.length) {
-    const { error } = await sb.from('codetables').upsert(toUpsert, { onConflict: 'id' });
-    if (error) { alert('שגיאה בשמירה: ' + error.message); return; }
+  // עדכון שורות קיימות + הוספת שורות חדשות בנפרד
+  const toUpdate = toUpsert.filter(r => r.id);
+  const toInsert = toUpsert.filter(r => !r.id).map(({ id, ...rest }) => rest);
+  if (toUpdate.length) {
+    const { error } = await sb.from('codetables').upsert(toUpdate, { onConflict: 'id' });
+    if (error) { alert('שגיאה בעדכון: ' + error.message); return; }
+  }
+  if (toInsert.length) {
+    const { error } = await sb.from('codetables').insert(toInsert);
+    if (error) { alert('שגיאה בהוספה: ' + error.message); return; }
   }
 
   closeCTModal();

@@ -8,6 +8,7 @@ window.renderLayout = function(activeId) {
     { id: 'schedule', label: 'מערכת שעות',      icon: 'fa-calendar-alt', href: 'schedule.html' },
     { id: 'plans',    label: 'תוכניות ונוכחות', icon: 'fa-dumbbell',     href: 'plans.html' },
     { id: 'shop',     label: 'חנות',            icon: 'fa-shopping-bag', href: 'shop.html', badge: true },
+    { id: 'blog',     label: 'מאמרים',           icon: 'fa-newspaper',    href: '../../pages/customer/blog.html' },
   ];
 
   const navHTML = NAV.map(n => {
@@ -417,6 +418,7 @@ window.renderEmployeeLayout = function(activeId) {
     { id: 'profile',  label: 'פרופיל',       icon: 'fa-user',         href: 'profile.html' },
     { id: 'schedule', label: 'מערכת שעות',    icon: 'fa-calendar-alt', href: 'schedule.html' },
     { id: 'attendance', label: 'נוכחות',      icon: 'fa-clipboard-list', href: 'attendance.html' },
+    { id: 'blog',       label: 'מאמרים',        icon: 'fa-newspaper',      href: '../../pages/customer/blog.html' },
   ];
 
   const navHTML = NAV.map(n => {

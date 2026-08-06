@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FitBalance | מאמרים</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    .filters-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 28px; }
+    .search-wrap { flex: 1; min-width: 200px; position: relative; }
+    .search-wrap i { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 14px; pointer-events: none; }
+    .search-wrap input {
+      width: 100%; padding: 10px 40px 10px 14px;
+      border: 1.5px solid #e5e7eb; border-radius: 12px;
+      font-size: 14px; font-family: inherit; outline: none;
+      background: white; transition: border-color .2s;
+    }
+    .search-wrap input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,.08); }
+    .cat-btn {
+      border: 1.5px solid #e5e7eb; border-radius: 999px;
+      background: white; color: #6b7280;
+      font-size: 13px; font-weight: 600; padding: 7px 16px;
+      font-family: inherit; cursor: pointer; transition: all .2s; white-space: nowrap;
+    }
+    .cat-btn:hover { border-color: #8b5cf6; color: #7c3aed; }
+    .cat-btn.active {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 14px rgba(236,72,153,.3);
+    }
+    .sort-bar { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+    .sort-btn {
+      border: 1.5px solid #e5e7eb; border-radius: 999px;
+      background: white; color: #6b7280;
+      font-size: 13px; font-weight: 600; padding: 7px 16px;
+      font-family: inherit; cursor: pointer; transition: all .2s; white-space: nowrap;
+    }
+    .sort-btn:hover { border-color: #8b5cf6; color: #7c3aed; }
+    .sort-btn.active {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 14px rgba(236,72,153,.3);
+    }
+    .articles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .article-card {
+      background: white; border-radius: 16px;
+      border: 1px solid #f0eeff;
+      box-shadow: 0 2px 16px rgba(139,92,246,.05);
+      overflow: hidden; text-decoration: none; color: inherit;
+      display: flex; flex-direction: column;
+      transition: transform .25s ease, box-shadow .25s ease;
+      animation: fadeUp .45s ease both;
+    }
+    .article-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(139,92,246,.12); }
+    .card-img {
+      height: 180px;
+      background: linear-gradient(135deg, #f5f3ff, #fce7f3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px; overflow: hidden; flex-shrink: 0; position: relative;
+    }
+    .card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card-cat-overlay {
+      position: absolute; bottom: 10px; right: 10px;
+      background: rgba(255,255,255,.92); backdrop-filter: blur(8px);
+      color: #7c3aed; font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 999px;
+      border: 1px solid rgba(139,92,246,.2);
+    }
+    .card-body { padding: 18px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .card-title { font-size: 16px; font-weight: 800; color: #111827; line-height: 1.4; }
+    .card-summary { font-size: 13px; color: #6b7280; line-height: 1.7; flex: 1; }
+    .card-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 12px; border-top: 1px solid #f3f0ff;
+      font-size: 12px; color: #9ca3af;
+    }
+    .card-footer .author { display: flex; align-items: center; gap: 5px; }
+    .state-msg { text-align: center; padding: 60px 20px; color: #9ca3af; }
+    .spinner {
+      width: 32px; height: 32px; border: 3px solid #ede9fe;
+      border-top-color: #8b5cf6; border-radius: 50%;
+      animation: spin .7s linear infinite; margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  </style>
+</head>
+<body>
+
+<div class="page-content p-5">
+
+  <!-- כותרת -->
+  <div class="card p-5 mb-5 fade-in">
+    <h1 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+      <i class="fas fa-newspaper text-pink-500"></i> מאמרים
+    </h1>
+  </div>
+
+    <!-- Filters -->
+    <div class="filters-bar fade-in" id="filters-bar">
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="חיפוש מאמרים..." oninput="render()" />
+      </div>
+      <button class="cat-btn active" data-cat="" onclick="selectCat('', this)">הכל</button>
+    </div>
+
+    <!-- Sort -->
+    <div class="sort-bar fade-in">
+      <button class="sort-btn active" onclick="setSort('recommended', this)">⭐ מומלצים</button>
+      <button class="sort-btn" onclick="setSort('newest', this)">🆕 הכי חדש</button>
+      <button class="sort-btn" onclick="setSort('popular', this)">🔥 הכי פופולרי</button>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading-screen" class="state-msg">
+      <div class="spinner"></div>
+      <p style="font-size:14px">טוען מאמרים...</p>
+    </div>
+
+    <!-- Empty -->
+    <div id="empty-screen" class="state-msg" style="display:none">
+      <div style="font-size:40px;margin-bottom:10px;opacity:.4">📭</div>
+      <p style="font-size:15px">לא נמצאו מאמרים</p>
+    </div>
+
+    <!-- Grid -->
+    <div class="articles-grid" id="articles-grid" style="display:none"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="../../services/supabaseClient.js"></script>
+<script src="../../utils/constants.js"></script>
+<script src="../../utils/storage.js"></script>
+<script src="../../utils/cart.js"></script>
+<script src="../../utils/formatter.js"></script>
+<script src="../../utils/helpers.js"></script>
+<script src="../../utils/popup.js"></script>
+<script src="../../services/authService.js"></script>
+<script src="../../services/customerService.js"></script>
+<script src="../../middleware/auth.js"></script>
+<script>
+  window.authMiddleware.requireAuth = async () => window.storageUtil?.load() || null;
+</script>
+<script src="../../layouts/layout.js"></script>
+<script>
+  renderLayout('blog');
+
+  const sb = window._sb;
+  let articles = [], activeCat = '', activeSort = 'recommended', viewsMap = {};
+
+  async function init() {
+    const [{ data, error }, { data: views }] = await Promise.all([
+      sb.from('articles')
+        .select('id,title,description,thumbnail_url,author,category,type,published_at,sort_order')
+        .eq('is_published', true)
+        .eq('show_customers', true)
+        .order('sort_order', { ascending: true })
+        .order('published_at', { ascending: false }),
+      sb.from('article_views_count').select('article_id,views_count'),
+    ]);
+
+    document.getElementById('loading-screen').style.display = 'none';
+
+    if (error || !data?.length) {
+      document.getElementById('empty-screen').style.display = 'block';
+      return;
+    }
+
+    articles = data;
+    viewsMap = {};
+    (views ?? []).forEach(v => { viewsMap[v.article_id] = Number(v.views_count) || 0; });
+    buildCatButtons();
+    render();
+  }
+
+  function setSort(sort, btn) {
+    activeSort = sort;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  const TYPE_ICON = { video: '🎬', post: '📄', tip: '💡' };
+
+  function buildCatButtons() {
+    const cats = [...new Set(articles.map(a => a.category).filter(Boolean))].sort();
+    const bar = document.getElementById('filters-bar');
+    cats.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'cat-btn';
+      btn.dataset.cat = cat;
+      btn.textContent = cat;
+      btn.onclick = () => selectCat(cat, btn);
+      bar.appendChild(btn);
+    });
+  }
+
+  function selectCat(cat, btn) {
+    activeCat = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function render() {
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    let filtered = articles.filter(a => {
+      if (activeCat && a.category !== activeCat) return false;
+      if (q && !a.title?.toLowerCase().includes(q) && !a.description?.toLowerCase().includes(q)) return false;
+      return true;
+    });
+
+    if (activeSort === 'newest') {
+      filtered = [...filtered].sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
+    } else if (activeSort === 'popular') {
+      filtered = [...filtered].sort((a, b) => (viewsMap[b.id] || 0) - (viewsMap[a.id] || 0));
+    }
+
+    const grid  = document.getElementById('articles-grid');
+    const empty = document.getElementById('empty-screen');
+
+    if (!filtered.length) {
+      grid.style.display = 'none'; empty.style.display = 'block'; return;
+    }
+    empty.style.display = 'none';
+    grid.style.display  = 'grid';
+    grid.innerHTML = filtered.map((a, i) => `
+      <a class="article-card" href="article.html?id=${a.id}" style="animation-delay:${i*.06}s">
+        <div class="card-img">
+          ${a.thumbnail_url
+            ? `<img src="${a.thumbnail_url}" alt="${a.title}" />`
+            : `<span style="opacity:.35">${TYPE_ICON[a.type] || '📝'}</span>`}
+          ${a.category ? `<span class="card-cat-overlay">${a.category}</span>` : ''}
+        </div>
+        <div class="card-body">
+          <div class="card-title">${a.title}</div>
+          ${a.description ? `<div class="card-summary">${a.description.slice(0,110)}${a.description.length>110?'…':''}</div>` : ''}
+          <div class="card-footer">
+            <span class="author"><i class="fas fa-user-circle" style="color:#c4b5fd"></i> ${a.author || 'FitBalance'}</span>
+            <span>${a.published_at ? new Date(a.published_at).toLocaleDateString('he-IL') : ''}</span>
+          </div>
+        </div>
+      </a>`).join('');
+  }
+
+  init();
+</script>
+</body>
+</html>

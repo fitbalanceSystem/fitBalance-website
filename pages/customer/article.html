@@ -5,220 +5,103 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>מאמר | FitBalance</title>
   <meta name="description" content="" id="meta-desc" />
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Heebo', sans-serif; background: #fafafa; color: #1a1a2e; direction: rtl; }
-
-    /* ── Header ── */
-    #main-header {
-      position: fixed; top: 0; right: 0; left: 0;
-      background: white; z-index: 50; height: 64px;
-      display: flex; align-items: center; padding: 0 24px;
-      justify-content: space-between;
-      border-bottom: 1px solid #f0eeff;
-      box-shadow: 0 1px 20px rgba(139,92,246,.06);
-      transition: box-shadow .3s;
-    }
-    #main-header.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,.1); }
-    .header-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-    .header-logo img { height: 36px; border-radius: 8px; }
-    .gradient-text {
-      background: linear-gradient(135deg, #ec4899, #8b5cf6);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      font-size: 20px; font-weight: 800;
-    }
-    .header-nav { display: flex; align-items: center; gap: 28px; }
-    .nav-link {
-      font-size: 14px; font-weight: 500; color: #4b5563;
-      text-decoration: none; position: relative; transition: color .2s;
-    }
-    .nav-link::after {
-      content: ''; position: absolute; bottom: -4px; right: 0;
-      width: 0; height: 2px; background: #ec4899; transition: width .3s;
-    }
-    .nav-link:hover { color: #ec4899; }
-    .nav-link:hover::after { width: 100%; }
-    .nav-link.active { color: #ec4899; font-weight: 700; }
-    .nav-cta {
-      background: linear-gradient(135deg, #ec4899, #8b5cf6);
-      color: white; padding: 8px 20px; border-radius: 999px;
-      font-size: 14px; font-weight: 600; text-decoration: none;
-      transition: opacity .2s, transform .2s;
-    }
-    .nav-cta:hover { opacity: .9; transform: translateY(-1px); }
-    #menu-btn { display: none; background: none; border: none; font-size: 22px; color: #4b5563; cursor: pointer; }
-    #mobile-menu {
-      display: none; position: fixed; top: 64px; right: 0; left: 0;
-      background: white; z-index: 40; padding: 20px 24px;
-      flex-direction: column; gap: 4px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.1);
-    }
-    #mobile-menu.open { display: flex; }
-    .mobile-link {
-      display: block; padding: 12px 0; border-bottom: 1px solid #f3f0ff;
-      font-size: 15px; font-weight: 500; color: #374151; text-decoration: none;
-    }
-    .mobile-link:hover { color: #ec4899; }
-
-    /* ── Article layout ── */
     .article-wrap {
-      margin-top: 64px;
-      max-width: 760px; margin-left: auto; margin-right: auto;
-      padding: 56px 24px 96px;
+      max-width: 760px; margin: 0 auto;
+      padding: 88px 24px 80px;
       animation: fadeUp .5s ease both;
     }
-
-    /* ── Breadcrumb ── */
     .breadcrumb {
       display: flex; align-items: center; gap: 8px;
-      font-size: 13px; color: #9ca3af; margin-bottom: 36px;
+      font-size: 13px; color: #9ca3af; margin-bottom: 32px;
     }
     .breadcrumb a { color: #7c3aed; text-decoration: none; font-weight: 600; }
     .breadcrumb a:hover { color: #ec4899; }
-    .breadcrumb span { color: #d1d5db; }
-
-    /* ── Hero image ── */
     .hero-img {
-      width: 100%; height: 380px; object-fit: cover;
-      border-radius: 20px; margin-bottom: 40px;
-      box-shadow: 0 12px 40px rgba(0,0,0,.12);
-      display: block;
+      width: 100%; height: 360px; object-fit: cover;
+      border-radius: 20px; margin-bottom: 36px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.12); display: block;
     }
     .hero-placeholder {
-      width: 100%; height: 240px; border-radius: 20px;
+      width: 100%; height: 220px; border-radius: 20px;
       background: linear-gradient(135deg, #f5f3ff, #fce7f3);
       display: flex; align-items: center; justify-content: center;
-      font-size: 64px; margin-bottom: 40px; opacity: .6;
+      font-size: 60px; margin-bottom: 36px; opacity: .6;
     }
-
-    /* ── Meta row ── */
-    .article-meta {
-      display: flex; flex-wrap: wrap; gap: 14px;
-      align-items: center; margin-bottom: 20px;
-    }
+    .article-meta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 18px; }
     .cat-badge {
       font-size: 11px; font-weight: 700; letter-spacing: .05em;
       background: linear-gradient(135deg, #fce7f3, #ede9fe);
-      color: #7c3aed; border-radius: 999px; padding: 5px 14px;
+      color: #7c3aed; border-radius: 999px; padding: 4px 12px;
       border: 1px solid rgba(139,92,246,.15);
     }
     .meta-item { font-size: 13px; color: #9ca3af; display: flex; align-items: center; gap: 5px; }
     .meta-item i { color: #c4b5fd; }
-
-    /* ── Title ── */
     .article-title {
-      font-size: clamp(26px, 4vw, 40px);
-      font-weight: 900; line-height: 1.25;
-      color: #111827; margin-bottom: 20px;
-      letter-spacing: -.02em;
+      font-size: clamp(24px, 4vw, 38px); font-weight: 900; line-height: 1.25;
+      color: #111827; margin-bottom: 18px; letter-spacing: -.02em;
     }
-
-    /* ── Divider ── */
     .divider {
-      width: 48px; height: 3px; border-radius: 2px;
-      background: linear-gradient(90deg, #ec4899, #8b5cf6);
-      margin: 28px 0;
+      width: 44px; height: 3px; border-radius: 2px;
+      background: linear-gradient(90deg, #ec4899, #8b5cf6); margin: 24px 0;
     }
-
-    /* ── Summary ── */
     .article-summary {
-      font-size: 18px; color: #374151; line-height: 1.8;
-      font-weight: 500;
-      border-right: 3px solid #ec4899;
-      padding-right: 18px;
-      margin-bottom: 32px;
+      font-size: 17px; color: #374151; line-height: 1.8; font-weight: 500;
+      border-right: 3px solid #ec4899; padding-right: 16px; margin-bottom: 28px;
     }
-
-    /* ── Content ── */
-    .article-content {
-      font-size: 16px; line-height: 2; color: #374151;
-      white-space: pre-wrap;
-    }
-
-    /* ── Back button ── */
+    .article-content { font-size: 16px; line-height: 2; color: #374151; }
+    .article-content h1 { font-size:26px; font-weight:900; color:#111827; margin:24px 0 10px; }
+    .article-content h2 { font-size:21px; font-weight:800; color:#1f2937; margin:20px 0 8px; }
+    .article-content h3 { font-size:17px; font-weight:700; color:#374151; margin:18px 0 6px; }
+    .article-content p  { margin-bottom:14px; }
+    .article-content ul, .article-content ol { padding-right:22px; margin-bottom:14px; }
+    .article-content li { margin-bottom:5px; }
+    .article-content strong { font-weight:700; }
+    .article-content em { font-style:italic; }
+    .article-content u  { text-decoration:underline; }
+    .article-content a  { color:#7c3aed; text-decoration:underline; }
+    .article-content a:hover { color:#ec4899; }
+    .article-content img { max-width:100%; border-radius:12px; margin:14px 0; }
+    .article-content .ql-size-small  { font-size:12px; }
+    .article-content .ql-size-large  { font-size:20px; }
+    .article-content .ql-size-huge   { font-size:26px; }
     .back-btn {
       display: inline-flex; align-items: center; gap: 8px;
-      margin-top: 56px; padding: 12px 24px;
+      margin-top: 48px; padding: 11px 22px;
       border: 1.5px solid #e5e7eb; border-radius: 12px;
       font-size: 14px; font-weight: 600; color: #6b7280;
-      text-decoration: none; transition: all .2s;
-      background: white;
+      text-decoration: none; transition: all .2s; background: white;
     }
     .back-btn:hover { border-color: #8b5cf6; color: #7c3aed; transform: translateX(4px); }
-
-    /* ── States ── */
-    .state-msg {
-      margin-top: 64px; text-align: center;
-      padding: 100px 24px; color: #9ca3af;
-    }
+    .state-msg { text-align: center; padding: 80px 24px; color: #9ca3af; }
     .spinner {
-      width: 36px; height: 36px; border: 3px solid #ede9fe;
+      width: 32px; height: 32px; border: 3px solid #ede9fe;
       border-top-color: #8b5cf6; border-radius: 50%;
-      animation: spin .7s linear infinite; margin: 0 auto 16px;
+      animation: spin .7s linear infinite; margin: 0 auto 14px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
-
-    /* ── Footer ── */
-    footer {
-      background: #111827; color: #6b7280;
-      padding: 48px 24px 32px; text-align: center;
-    }
-    footer a { color: #9ca3af; text-decoration: none; }
-    footer a:hover { color: #ec4899; }
-
-    @media (max-width: 768px) {
-      .header-nav { display: none; }
-      #menu-btn { display: block; }
-    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
   </style>
 </head>
 <body>
 
-<!-- Header -->
-<header id="main-header">
-  <a href="../../home.html" class="header-logo">
-    <img src="../../assets/icons/logo.jpg" onerror="this.style.display='none'" alt="FitBalance" />
-    <span class="gradient-text">FitBalance</span>
-  </a>
-  <nav class="header-nav">
-    <a href="../../home.html" class="nav-link">דף הבית</a>
-    <a href="../../home.html#classes" class="nav-link">שיעורים</a>
-    <a href="../../home.html#shop" class="nav-link">חנות</a>
-    <a href="../../about.html" class="nav-link">אודות</a>
-    <a href="blog.html" class="nav-link active">מאמרים</a>
-    <a href="../../login.html" class="nav-cta"><i class="fas fa-user" style="margin-left:6px"></i>כניסה לאזור אישי</a>
-  </nav>
-  <button id="menu-btn"><i class="fas fa-bars"></i></button>
-</header>
-
-<!-- Mobile menu -->
-<div id="mobile-menu">
-  <a href="../../home.html" class="mobile-link">דף הבית</a>
-  <a href="../../home.html#classes" class="mobile-link">שיעורים</a>
-  <a href="../../home.html#shop" class="mobile-link">חנות</a>
-  <a href="../../about.html" class="mobile-link">אודות</a>
-  <a href="blog.html" class="mobile-link" style="color:#ec4899;font-weight:700">מאמרים</a>
-  <a href="../../login.html" class="mobile-link" style="color:#8b5cf6;font-weight:700">כניסה לאזור אישי</a>
-</div>
-
 <!-- Loading -->
-<div id="loading-screen" class="state-msg">
+<div id="loading-screen" class="state-msg" style="padding-top: 120px;">
   <div class="spinner"></div>
   <p style="font-size:14px">טוען מאמר...</p>
 </div>
 
 <!-- Error -->
-<div id="error-screen" class="state-msg" style="display:none">
-  <div style="font-size:44px;margin-bottom:16px;opacity:.4">😕</div>
+<div id="error-screen" class="state-msg" style="display:none; padding-top: 120px;">
+  <div style="font-size:40px;margin-bottom:14px;opacity:.4">😕</div>
   <p style="font-size:16px;font-weight:600;color:#374151;margin-bottom:8px">המאמר לא נמצא</p>
   <a href="blog.html" style="color:#7c3aed;font-size:14px;font-weight:600;text-decoration:none">← חזרה לכל המאמרים</a>
 </div>
 
 <!-- Article -->
-<div id="article-screen" style="display:none">
+<div id="article-screen" class="page-content" style="display:none">
   <div class="article-wrap">
 
     <div class="breadcrumb">
@@ -243,25 +126,25 @@
   </div>
 </div>
 
-<!-- Footer -->
-<footer>
-  <div style="font-size:18px;font-weight:800;color:white;margin-bottom:8px">FitBalance</div>
-  <p style="font-size:13px;margin-bottom:20px">חוגי ספורט לנשים, ילדות ונערות</p>
-  <div style="display:flex;justify-content:center;gap:24px;font-size:13px;flex-wrap:wrap">
-    <a href="../../home.html">דף הבית</a>
-    <a href="../../about.html">אודות</a>
-    <a href="blog.html">מאמרים</a>
-    <a href="../../login.html">אזור אישי</a>
-  </div>
-  <div style="margin-top:24px;padding-top:20px;border-top:1px solid #1f2937;font-size:12px">
-    © 2026 FitBalance – כל הזכויות שמורות
-  </div>
-</footer>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="../../services/supabaseClient.js"></script>
+<script src="../../utils/constants.js"></script>
+<script src="../../utils/storage.js"></script>
+<script src="../../utils/cart.js"></script>
+<script src="../../utils/formatter.js"></script>
+<script src="../../utils/helpers.js"></script>
+<script src="../../utils/popup.js"></script>
+<script src="../../services/authService.js"></script>
+<script src="../../services/customerService.js"></script>
+<script src="../../middleware/auth.js"></script>
 <script>
-  const sb   = window._sb;
+  window.authMiddleware.requireAuth = async () => window.storageUtil?.load() || null;
+</script>
+<script src="../../layouts/layout.js"></script>
+<script>
+  renderLayout('blog');
+
+  const sb = window._sb;
   const id = new URLSearchParams(location.search).get('id');
 
   async function init() {
@@ -276,35 +159,30 @@
 
     document.getElementById('loading-screen').style.display = 'none';
     if (error || !data) { showError(); return; }
-    render(data);
+    renderArticle(data);
   }
 
   const TYPE_LABEL = { video: '🎬 סרטון', post: '📄 כתבה', tip: '💡 טיפ' };
 
-  function render(a) {
+  function renderArticle(a) {
     document.title = a.title + ' | FitBalance';
     document.getElementById('meta-desc').setAttribute('content', a.description || '');
     document.getElementById('bc-title').textContent = a.title;
 
-    // Hero — video or image
     const heroWrap = document.getElementById('hero-wrap');
+    const heroImg = a.cover_image_url || a.thumbnail_url;
     if (a.type === 'video' && a.video_url) {
       const embed = getEmbedUrl(a.video_url);
       if (embed) {
-        heroWrap.innerHTML = `<div style="border-radius:20px;overflow:hidden;aspect-ratio:16/9;margin-bottom:40px;box-shadow:0 12px 40px rgba(0,0,0,.12)"><iframe src="${embed}" style="width:100%;height:100%;border:none" allowfullscreen></iframe></div>`;
+        heroWrap.innerHTML = `<div style="border-radius:20px;overflow:hidden;aspect-ratio:16/9;margin-bottom:36px;box-shadow:0 12px 40px rgba(0,0,0,.12)"><iframe src="${embed}" style="width:100%;height:100%;border:none" allowfullscreen></iframe></div>`;
       } else {
         const ext = a.video_url.split('.').pop().toLowerCase().split('?')[0];
-        const mimeMap = { mp4:'video/mp4', mov:'video/mp4', webm:'video/webm', ogg:'video/ogg', ogv:'video/ogg', avi:'video/x-msvideo', mkv:'video/x-matroska' };
-        const mime = mimeMap[ext] || 'video/mp4';
-        heroWrap.innerHTML = `
-          <video controls style="width:100%;border-radius:20px;margin-bottom:40px;max-height:480px;background:#000"
-            onerror="this.outerHTML='<div style=padding:40px;text-align:center;color:#9ca3af;background:#f8f7ff;border-radius:20px;margin-bottom:40px>⚠️ לא ניתן להפעיל את הסרטון</div>'">
-            <source src="${a.video_url}" type="${mime}" />
-            הדפדפן שלך אינו תומך בהפעלת וידאו
-          </video>`;
+        const mimeMap = { mp4:'video/mp4', mov:'video/mp4', webm:'video/webm', ogg:'video/ogg', ogv:'video/ogg' };
+        heroWrap.innerHTML = `<video controls style="width:100%;border-radius:20px;margin-bottom:36px;max-height:460px;background:#000"><source src="${a.video_url}" type="${mimeMap[ext]||'video/mp4'}" /></video>`;
       }
-    } else if (a.thumbnail_url) {
-      heroWrap.innerHTML = `<img class="hero-img" src="${a.thumbnail_url}" alt="${a.title}" />`;
+      if (heroImg) heroWrap.innerHTML += `<img class="hero-img" src="${heroImg}" alt="${a.title}" style="margin-top:0" />`;
+    } else if (heroImg) {
+      heroWrap.innerHTML = `<img class="hero-img" src="${heroImg}" alt="${a.title}" />`;
     } else {
       heroWrap.innerHTML = `<div class="hero-placeholder">${TYPE_LABEL[a.type]?.split(' ')[0] || '📝'}</div>`;
     }
@@ -313,9 +191,7 @@
     if (a.type)        parts.push(`<span class="cat-badge">${TYPE_LABEL[a.type] || a.type}</span>`);
     if (a.category)    parts.push(`<span class="cat-badge" style="background:#f0fdf4;color:#166534;border-color:rgba(22,101,52,.15)">${a.category}</span>`);
     if (a.author)      parts.push(`<span class="meta-item"><i class="fas fa-user-circle"></i>${a.author}</span>`);
-    if (a.published_at) {
-      parts.push(`<span class="meta-item"><i class="fas fa-calendar-alt"></i>${new Date(a.published_at).toLocaleDateString('he-IL')}</span>`);
-    }
+    if (a.published_at) parts.push(`<span class="meta-item"><i class="fas fa-calendar-alt"></i>${new Date(a.published_at).toLocaleDateString('he-IL')}</span>`);
     document.getElementById('article-meta').innerHTML = parts.join('');
     document.getElementById('article-title').textContent = a.title;
 
@@ -323,8 +199,8 @@
       document.getElementById('article-summary').textContent = a.description;
       document.getElementById('article-summary').style.display = 'block';
     }
+    if (a.content) document.getElementById('article-content').innerHTML = a.content;
 
-    document.getElementById('article-content').textContent = '';
     document.getElementById('article-screen').style.display = 'block';
   }
 
@@ -341,14 +217,6 @@
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('error-screen').style.display  = 'block';
   }
-
-  window.addEventListener('scroll', () => {
-    document.getElementById('main-header').classList.toggle('scrolled', window.scrollY > 20);
-  });
-
-  document.getElementById('menu-btn').addEventListener('click', () => {
-    document.getElementById('mobile-menu').classList.toggle('open');
-  });
 
   init();
 </script>

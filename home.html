@@ -224,7 +224,7 @@
       <a href="#shop" class="nav-link hover:text-pink-600">חנות</a>
       <a href="#testimonials" class="nav-link hover:text-pink-600">המלצות</a>
       <a href="about.html" class="nav-link hover:text-pink-600">אודות</a>
-      <a href="pages/customer/blog.html" class="nav-link hover:text-pink-600">מאמרים</a>
+      <a href="pages/public/articles.html" class="nav-link hover:text-pink-600">מאמרים</a>
       <a href="login.html" class="bg-pink-600 text-white px-5 py-2 rounded-full hover:bg-pink-700 transition-colors shadow-md">
         <i class="fas fa-user ml-1"></i> כניסה לאזור אישי
       </a>
@@ -239,7 +239,7 @@
     <a href="#shop" class="block py-2 border-b hover:text-pink-600">חנות</a>
     <a href="#testimonials" class="block py-2 border-b hover:text-pink-600">המלצות</a>
     <a href="about.html" class="block py-2 border-b hover:text-pink-600">אודות</a>
-    <a href="pages/customer/blog.html" class="block py-2 border-b hover:text-pink-600">מאמרים</a>
+    <a href="pages/public/articles.html" class="block py-2 border-b hover:text-pink-600">מאמרים</a>
     <a href="login.html" class="mt-2 block bg-pink-600 text-white px-5 py-3 rounded-full text-center hover:bg-pink-700">כניסה לאזור אישי</a>
   </div>
 
@@ -976,7 +976,24 @@
     </div>
   </footer>
 
-  <!-- View Schedule Modal -->
+  <!-- Articles Modal -->
+  <div id="articles-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" onclick="closeArticlesModal()"></div>
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full flex flex-col" style="max-width:900px;max-height:92vh;">
+      <div class="bg-gradient-to-r from-pink-600 to-purple-600 p-5 text-white flex items-center justify-between flex-shrink-0 rounded-t-3xl">
+        <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-newspaper"></i> מאמרים</h2>
+        <button onclick="closeArticlesModal()" class="bg-white bg-opacity-20 hover:bg-opacity-30 w-9 h-9 rounded-full flex items-center justify-center text-lg">✕</button>
+      </div>
+      <div class="flex items-center gap-2 px-5 py-3 border-b flex-shrink-0 flex-wrap">
+        <input type="text" id="am-search" placeholder="חיפוש..." oninput="amRender()"
+          class="flex-1 min-w-0 border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-purple-400" />
+        <div id="am-cats" class="flex gap-2 flex-wrap"></div>
+      </div>
+      <div id="am-content" class="flex-1 overflow-auto p-5">
+        <div class="text-center py-10 text-gray-400">⏳ טוען...</div>
+      </div>
+    </div>
+  </div>
   <div id="view-schedule-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" onclick="closeViewScheduleModal()"></div>
     <div class="relative bg-white rounded-3xl shadow-2xl w-full flex flex-col" style="max-width:900px;max-height:92vh;">
@@ -1226,5 +1243,74 @@
     </div>
   </div>
 
+  <script>
+  let amArticles = null, amActiveCat = '';
+
+  window.openArticlesModal = async function() {
+    document.getElementById('articles-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    if (amArticles) return;
+    try {
+      const { data } = await window._sb.from('articles')
+        .select('id,title,description,thumbnail_url,author,category,type,published_at,sort_order')
+        .eq('is_published', true)
+        .order('sort_order', { ascending: true })
+        .order('published_at', { ascending: false });
+      amArticles = data ?? [];
+      const cats = [...new Set(amArticles.map(a => a.category).filter(Boolean))].sort();
+      const catsEl = document.getElementById('am-cats');
+      catsEl.innerHTML = `<button onclick="amSetCat('',this)" class="am-cat px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 hover:border-pink-400" style="background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border-color:transparent">הכל</button>`
+        + cats.map(c => `<button onclick="amSetCat('${c}',this)" class="am-cat px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-white text-gray-600 hover:border-pink-400">${c}</button>`).join('');
+      amRender();
+    } catch(e) {
+      document.getElementById('am-content').innerHTML = '<div class="text-center py-10 text-red-400">שגיאה בטעינה</div>';
+    }
+  };
+
+  window.closeArticlesModal = function() {
+    document.getElementById('articles-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+  };
+
+  window.amSetCat = function(cat, btn) {
+    amActiveCat = cat;
+    document.querySelectorAll('.am-cat').forEach(b => {
+      b.style.background = ''; b.style.color = ''; b.style.borderColor = '';
+    });
+    btn.style.background = 'linear-gradient(135deg,#ec4899,#8b5cf6)';
+    btn.style.color = 'white'; btn.style.borderColor = 'transparent';
+    amRender();
+  };
+
+  window.amRender = function() {
+    const q = document.getElementById('am-search')?.value.trim().toLowerCase() || '';
+    let list = (amArticles || []).filter(a => {
+      if (amActiveCat && a.category !== amActiveCat) return false;
+      if (q && !a.title?.toLowerCase().includes(q) && !a.description?.toLowerCase().includes(q)) return false;
+      return true;
+    });
+    const TYPE_ICON = { video: '🎦', post: '📰', tip: '💡' };
+    const el = document.getElementById('am-content');
+    if (!list.length) { el.innerHTML = '<div class="text-center py-10 text-gray-400">אין מאמרים</div>'; return; }
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px">${
+      list.map(a => `
+        <a href="pages/customer/blog.html" onclick="closeArticlesModal()" target="_self"
+          style="background:white;border-radius:14px;border:1px solid #f0eeff;box-shadow:0 2px 12px rgba(139,92,246,.06);overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;transition:transform .2s"
+          onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform=''">
+          <div style="height:140px;background:linear-gradient(135deg,#f5f3ff,#fce7f3);display:flex;align-items:center;justify-content:center;font-size:40px;overflow:hidden">
+            ${a.thumbnail_url ? `<img src="${a.thumbnail_url}" style="width:100%;height:100%;object-fit:cover" />` : `<span style="opacity:.4">${TYPE_ICON[a.type]||'📝'}</span>`}
+          </div>
+          <div style="padding:14px;flex:1;display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:14px;font-weight:800;color:#111827;line-height:1.4">${a.title}</div>
+            ${a.description ? `<div style="font-size:12px;color:#6b7280;line-height:1.6;flex:1">${a.description.slice(0,90)}${a.description.length>90?'…':''}</div>` : ''}
+            <div style="font-size:11px;color:#9ca3af;display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid #f3f0ff">
+              <span>${a.author || 'FitBalance'}</span>
+              <span>${a.published_at ? new Date(a.published_at).toLocaleDateString('he-IL') : ''}</span>
+            </div>
+          </div>
+        </a>`).join('')
+    }</div>`;
+  };
+  </script>
 </body>
 </html>

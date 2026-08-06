@@ -44,7 +44,7 @@
       { data: enrollments },
       { data: makeups },
     ] = await Promise.all([
-      window._sb.from('program_sessions').select('id, program_id, date, time, instructor_code, branch_code, status, notes'),
+      window._sb.from('program_sessions').select('id, program_id, date, time, instructor_code, branch_code, status, notes').gte('date', new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0]).lte('date', new Date(today.getFullYear() + 2, 11, 31).toISOString().split('T')[0]),
       window._sb.from('programs').select('id, name, alias, status_code').eq('status_code', 1),
       window._sb.from('instructors').select('id, firstName'),
       window._sb.from('codetables').select('name, code, descriptionCode').eq('name', 'branch'),
@@ -53,14 +53,14 @@
     ]);
 
     const progMap = {};
-    (programs ?? []).forEach(p => { progMap[p.id] = p.alias ?? p.name ?? ''; });
+    (programs ?? []).forEach(p => { progMap[p.id] = (p.alias && p.alias.trim()) ? p.alias : (p.name ?? ''); });
     (instructors ?? []).forEach(i => { instrMap[i.id] = i.firstName ?? ''; });
     (codes ?? []).forEach(r => { branchMap[r.code] = r.descriptionCode; });
     enrolledProgramIds = new Set((enrollments ?? []).map(e => e.program_id));
     makeupSessionIds   = new Set((makeups ?? []).map(m => m.session_id));
 
     allSessions = (sessions ?? [])
-      .filter(s => progMap[s.program_id])
+      .filter(s => progMap[s.program_id] != null)
       .map(s => ({
         ...s,
         programName:    progMap[s.program_id] ?? '',
@@ -97,16 +97,16 @@
       const sessions = allSessions.filter(s => s.date === ds).sort((a,b) => a.time.localeCompare(b.time));
 
       container.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px">
-          <button id="day-prev" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #e5e7eb;background:white;font-size:16px;cursor:pointer;" ${dayIdx===0?'disabled style="opacity:.3"':''}>›</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px">
+          <button id="day-prev" style="width:40px;height:40px;border-radius:50%;border:none;background:linear-gradient(135deg,#fce7f3,#ede9fe);font-size:18px;cursor:pointer;color:#9333ea;box-shadow:0 2px 8px rgba(236,72,153,.15);transition:all .2s" ${dayIdx===0?'disabled style="opacity:.3"':''}>›</button>
           <div style="text-align:center;flex:1">
-            <div style="font-size:15px;font-weight:800;color:${isToday?'#ec4899':'#1f2937'}">יום ${DAYS[d.getDay()]}</div>
-            <div style="font-size:12px;color:#9ca3af">${d.getDate()}/${d.getMonth()+1}</div>
+            <div style="font-size:16px;font-weight:800;color:${isToday?'#ec4899':'#1f2937'};letter-spacing:.3px">יום ${DAYS[d.getDay()]}</div>
+            <div style="font-size:12px;color:#a78bfa;font-weight:600">${d.getDate()}/${d.getMonth()+1}</div>
           </div>
-          <button id="day-next" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #e5e7eb;background:white;font-size:16px;cursor:pointer;" ${dayIdx===5?'disabled style="opacity:.3"':''}>‹</button>
+          <button id="day-next" style="width:40px;height:40px;border-radius:50%;border:none;background:linear-gradient(135deg,#fce7f3,#ede9fe);font-size:18px;cursor:pointer;color:#9333ea;box-shadow:0 2px 8px rgba(236,72,153,.15);transition:all .2s" ${dayIdx===5?'disabled style="opacity:.3"':''}>‹</button>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          ${sessions.length ? sessions.map(s => sessionCard(s, ds)).join('') : '<div style="text-align:center;color:#9ca3af;padding:40px 0">אין שיעורים ביום זה</div>'}
+        <div style="display:flex;flex-direction:column;gap:12px">
+          ${sessions.length ? sessions.map(s => sessionCard(s, ds)).join('') : '<div style="text-align:center;color:#d1d5db;padding:48px 0;font-size:13px">🌙 אין שיעורים ביום זה</div>'}
         </div>`;
 
       container.querySelector('#day-prev')?.addEventListener('click', () => {
@@ -122,16 +122,19 @@
         const isToday = ds === todayStr;
         const sessions = allSessions.filter(s => s.date === ds).sort((a,b) => a.time.localeCompare(b.time));
         return `
-          <div class="min-w-0">
-            <div class="text-center mb-2 py-1.5 rounded-xl text-xs font-bold ${isToday ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white' : 'bg-gray-100 text-gray-600'}">
-              יום ${DAYS[d.getDay()]}<br/><span class="font-normal">${d.getDate()}/${d.getMonth()+1}</span>
+          <div style="min-width:0">
+            <div style="text-align:center;margin-bottom:10px;padding:8px 4px;border-radius:14px;font-size:11px;font-weight:800;letter-spacing:.3px;
+              ${isToday
+                ? 'background:linear-gradient(135deg,#ec4899,#9333ea);color:white;box-shadow:0 4px 14px rgba(236,72,153,.35)'
+                : 'background:linear-gradient(135deg,#f9fafb,#f3f4f6);color:#6b7280;border:1px solid #e5e7eb'}">
+              יום ${DAYS[d.getDay()]}<br/><span style="font-weight:500;opacity:.85">${d.getDate()}/${d.getMonth()+1}</span>
             </div>
-            <div class="space-y-2">
-              ${sessions.length ? sessions.map(s => sessionCard(s, ds)).join('') : '<div class="text-center text-gray-300 text-xs py-4">—</div>'}
+            <div style="display:flex;flex-direction:column;gap:8px">
+              ${sessions.length ? sessions.map(s => sessionCard(s, ds)).join('') : '<div style="text-align:center;color:#e5e7eb;font-size:11px;padding:20px 0">—</div>'}
             </div>
           </div>`;
       });
-      container.innerHTML = `<div class="grid grid-cols-6 gap-2">${cols.join('')}</div>`;
+      container.innerHTML = `<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px">${cols.join('')}</div>`;
     }
 
     container.querySelectorAll('.action-btn').forEach(btn => {
@@ -147,39 +150,45 @@
 
     if (isCancelled) {
       return `
-        <div class="rounded-xl p-2 text-xs border border-gray-200 bg-gray-100 shadow-sm opacity-70">
-          ${s.notes ? `<div class="text-gray-500 text-xs mb-1 italic">${s.notes}</div>` : ''}
-          <div class="font-bold text-gray-400 truncate line-through">${s.programName}</div>
-          <div class="text-gray-400 mt-0.5">${fmt(s.time)}</div>
-          <div class="text-gray-400 font-semibold mt-1">❌ מבוטל</div>
+        <div style="border-radius:14px;padding:10px;font-size:11px;background:white;border:1.5px solid #fecaca;box-shadow:0 2px 8px rgba(0,0,0,.05);opacity:.8">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f87171;flex-shrink:0"></span>
+            <span style="font-size:10px;font-weight:700;color:#ef4444">מבוטל</span>
+          </div>
+          <div style="font-weight:800;color:#9ca3af;text-decoration:line-through;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px">${s.programName}</div>
+          <div style="display:flex;align-items:center;gap:4px;color:#d1d5db;margin-top:4px"><i class="fas fa-clock" style="font-size:9px"></i>${fmt(s.time)}</div>
+          ${s.notes ? `<div style="margin-top:5px;font-size:10px;color:#f87171;background:#fef2f2;border-radius:8px;padding:4px 7px;font-style:italic">${s.notes}</div>` : ''}
         </div>`;
     }
+
+    const cardBg = isEnrolled
+      ? 'background:linear-gradient(135deg,#fdf2f8,#fce7f3);border:1.5px solid #f9a8d4'
+      : isMakeup
+      ? 'background:linear-gradient(135deg,#faf5ff,#ede9fe);border:1.5px solid #c4b5fd'
+      : 'background:white;border:1.5px solid #f3f4f6';
 
     let actionBtn = '';
     if (!isPast) {
       if (isEnrolled) {
-        // משובצת — אפשרות לבטל שיבוץ (מסיר רשומת נוכחות)
-        actionBtn = `<button class="action-btn mt-1.5 w-full py-1 rounded-lg text-xs font-semibold bg-red-50 text-red-500 hover:bg-red-100 transition-all"
+        actionBtn = `<button class="action-btn" style="margin-top:8px;width:100%;padding:5px 0;border-radius:10px;font-size:10px;font-weight:700;border:none;background:#fee2e2;color:#ef4444;cursor:pointer;transition:all .2s"
           data-sid="${s.id}" data-type="cancel-enrolled">ביטול שיבוץ</button>`;
       } else if (isMakeup) {
-        // נרשמה להשלמה — אפשרות לבטל
-        actionBtn = `<button class="action-btn mt-1.5 w-full py-1 rounded-lg text-xs font-semibold bg-red-50 text-red-500 hover:bg-red-100 transition-all"
+        actionBtn = `<button class="action-btn" style="margin-top:8px;width:100%;padding:5px 0;border-radius:10px;font-size:10px;font-weight:700;border:none;background:#fee2e2;color:#ef4444;cursor:pointer;transition:all .2s"
           data-sid="${s.id}" data-type="cancel-makeup">ביטול השלמה</button>`;
       } else {
-        // לא רשומה — אפשרות להירשם להשלמה
-        actionBtn = `<button class="action-btn mt-1.5 w-full py-1 rounded-lg text-xs font-semibold bg-pink-100 text-pink-600 hover:bg-pink-200 transition-all"
-          data-sid="${s.id}" data-type="add-makeup">הרשמה להשלמה</button>`;
+        actionBtn = `<button class="action-btn" style="margin-top:8px;width:100%;padding:5px 0;border-radius:10px;font-size:10px;font-weight:700;border:none;background:linear-gradient(135deg,#fce7f3,#ede9fe);color:#9333ea;cursor:pointer;transition:all .2s"
+          data-sid="${s.id}" data-type="add-makeup">+ הרשמה להשלמה</button>`;
       }
     }
 
     return `
-      <div class="rounded-xl p-2 text-xs border ${isEnrolled ? 'border-pink-300 bg-pink-50' : isMakeup ? 'border-purple-300 bg-purple-50' : 'border-gray-100 bg-white'} shadow-sm">
-        ${isEnrolled ? '<div class="text-pink-600 font-bold mb-1">✦ את משובצת כאן</div>' : ''}
-        ${isMakeup   ? '<div class="text-purple-600 font-bold mb-1">🔄 השלמה</div>' : ''}
-        <div class="font-bold text-gray-800 truncate">${s.programName}</div>
-        <div class="text-gray-500 mt-0.5 flex items-center gap-1"><i class="fas fa-clock text-pink-400" style="font-size:9px"></i>${fmt(s.time)}</div>
-        <div class="text-gray-500 truncate flex items-center gap-1"><i class="fas fa-map-marker-alt text-purple-400" style="font-size:9px"></i>${s.branchName}</div>
-        <div class="text-gray-500 truncate flex items-center gap-1"><i class="fas fa-user text-pink-400" style="font-size:9px"></i>${s.instructorName}</div>
+      <div style="border-radius:14px;padding:10px 10px 8px;font-size:11px;${cardBg};box-shadow:0 2px 10px rgba(0,0,0,.06);transition:box-shadow .2s">
+        ${isEnrolled ? '<div style="font-size:10px;font-weight:800;color:#ec4899;margin-bottom:5px;letter-spacing:.2px">✦ את משובצת כאן</div>' : ''}
+        ${isMakeup   ? '<div style="font-size:10px;font-weight:800;color:#9333ea;margin-bottom:5px">🔄 השלמה</div>' : ''}
+        <div style="font-weight:800;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px">${s.programName}</div>
+        <div style="display:flex;align-items:center;gap:4px;color:#6b7280;margin-top:4px"><i class="fas fa-clock" style="color:#f472b6;font-size:9px"></i>${fmt(s.time)}</div>
+        ${s.branchName ? `<div style="display:flex;align-items:center;gap:4px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><i class="fas fa-map-marker-alt" style="color:#a78bfa;font-size:9px"></i>${s.branchName}</div>` : ''}
+        ${s.instructorName ? `<div style="display:flex;align-items:center;gap:4px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><i class="fas fa-user" style="color:#f472b6;font-size:9px"></i>${s.instructorName}</div>` : ''}
         ${actionBtn}
       </div>`;
   }

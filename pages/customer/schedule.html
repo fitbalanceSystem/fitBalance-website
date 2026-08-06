@@ -6,6 +6,13 @@
   <title>FitBalance | מערכת שעות</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    .schedule-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.1) !important; transform: translateY(-1px); }
+    .action-btn:hover { filter: brightness(.93); transform: scale(1.02); }
+    #schedule-grid { background: linear-gradient(135deg,#fdf2f8 0%,#faf5ff 100%); border-radius: 20px; padding: 16px; }
+    #prev-week, #next-week { transition: all .2s; }
+    #prev-week:hover, #next-week:hover { background: linear-gradient(135deg,#fce7f3,#ede9fe) !important; border-color: #f9a8d4 !important; }
+  </style>
 </head>
 <body>
 

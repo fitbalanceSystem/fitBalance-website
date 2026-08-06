@@ -213,7 +213,7 @@
     empty.style.display = 'none';
     grid.style.display = 'grid';
     grid.innerHTML = list.map((a, i) => `
-      <a class="article-card fade-up" href="../customer/article.html?id=${a.id}" style="animation-delay:${i * .05}s">
+      <a class="article-card fade-up" href="article.html?id=${a.id}" style="animation-delay:${i * .05}s">
         <div class="card-img">
           ${a.thumbnail_url
             ? `<img src="${a.thumbnail_url}" alt="${a.title}" />`

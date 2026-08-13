@@ -24,40 +24,211 @@
   <style>
     html, body { height: 100%; }
 
+    /* ── Numpad ── */
     .numpad-btn {
-  font-size: clamp(1.2rem, 3vw, 2.2rem);
-  min-height: clamp(2.8rem, 6vh, 4.2rem);
-}
+      font-size: clamp(1.2rem, 3vw, 2.2rem);
+      min-height: clamp(2.8rem, 6vh, 4.2rem);
+    }
 
+    /* ── Input ── */
     #numberInput {
       font-size: clamp(1.5rem, 4vw, 3rem);
       height: clamp(2.8rem, 7vh, 4.5rem);
     }
 
+    /* ── Header text ── */
     .header-text {
       font-size: clamp(0.9rem, 2.2vw, 1.875rem);
     }
 
-    @media (max-height: 800px) {
+    /* ── Touch targets: כפתורים קריטיים לפחות 44px ── */
+    #btnSubmit, #btndeleteChar,
+    #btninstructorLogin, #btnchangeLesson, #btnRefresh,
+    #btnCloseUnclosedSession, #btnCancelUnclosedModal,
+    #btnConfirmPassword, #btnCancelPassword,
+    #btnConfirmCloseSession, #btnCancelCloseSession,
+    #btnStopAlert, #btnRemindLater, #btnCloseSessionFromEnding,
+    #btnChooseLesson, #btnCloseNoSessionModal,
+    #btnCloseChangeLesson,
+    #btnConfirmCloseFromList, #btnCancelAttendanceList,
+    #btnSavePendingChanges, #btnAddAttendanceFromModal {
+      min-height: 44px;
+    }
 
-.numpad-btn {
-  min-height: 3rem;
-}
+    /* ── כפתורי ת.ז / נייד — אזור מגע נוח ── */
+    .id-type-label div {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
 
-#numberInput {
-  height: 3rem;
-}
+    /* ── Portrait טאבלט: ניצול רוחב מלא, כפתורים גדולים ── */
+    @media (min-width: 600px) and (orientation: portrait) {
+      .numpad-btn {
+        min-height: clamp(5rem, max(11vw, 9vh), 8rem);
+        font-size: clamp(1.8rem, 5.5vw, 3.2rem);
+      }
+      .numpad-wrap {
+        gap: clamp(0.6rem, max(1.8vw, 1.5vh), 1.2rem);
+      }
+      #numberInput {
+        height: clamp(4rem, max(9vw, 7vh), 6rem);
+        font-size: clamp(2rem, 5.5vw, 3.2rem);
+      }
+      .id-type-label div {
+        min-height: clamp(2.8rem, 6vw, 3.5rem);
+        font-size: clamp(1.05rem, 2.5vw, 1.4rem);
+        padding-left: clamp(1.5rem, 4vw, 2.5rem);
+        padding-right: clamp(1.5rem, 4vw, 2.5rem);
+      }
+      #btninstructorLogin, #btnchangeLesson, #btnRefresh {
+        height: clamp(3.8rem, 8vw, 5rem);
+        font-size: clamp(0.9rem, 2.2vw, 1.2rem);
+      }
+      .header-text {
+        font-size: clamp(1.2rem, 3.2vw, 2rem);
+      }
+      /* ברוכה הבאה + תת-כותרת */
+      .welcome-title  { font-size: clamp(1.8rem, 4.5vw, 3rem) !important; }
+      .welcome-sub    { font-size: clamp(1.1rem, 2.8vw, 1.6rem) !important; }
+      /* ⌫ ואישור */
+      #btndeleteChar  { font-size: clamp(1.4rem, 3.5vw, 2.2rem) !important; }
+      #btnSubmit      { font-size: clamp(1.1rem, 2.8vw, 1.8rem) !important; }
+    }
 
-.header-text {
-  font-size: 0.9rem;
-}
-}
+    /* ── Landscape טאבלט (גובה 601px+): ניצול רוחב + גובה ── */
+    @media (orientation: landscape) and (min-height: 601px) {
+      .numpad-btn {
+        min-height: clamp(3.5rem, 8vh, 5.5rem);
+        font-size: clamp(1.3rem, 3.5vw, 2.2rem);
+      }
+      .numpad-wrap {
+        gap: clamp(0.4rem, 1vw, 0.75rem);
+      }
+      #numberInput {
+        height: clamp(3rem, 7vh, 4rem);
+        font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+      }
+      #btninstructorLogin, #btnchangeLesson, #btnRefresh {
+        height: clamp(3rem, 6vh, 4rem);
+        font-size: clamp(0.85rem, 1.8vw, 1rem);
+      }
+      .header-text {
+        font-size: clamp(0.95rem, 2vw, 1.3rem);
+      }
+    }
+
+    /* ── Landscape מסך נמוך (טלפון Landscape, max-height 600px) ── */
+    @media (orientation: landscape) and (max-height: 600px) {
+      .numpad-btn {
+        min-height: 3rem;
+        font-size: clamp(1rem, 2.5vw, 1.6rem);
+      }
+      #numberInput {
+        height: 2.8rem;
+        font-size: clamp(1.2rem, 3vw, 2rem);
+      }
+      .header-text {
+        font-size: 0.85rem;
+      }
+    }
+
+    /* ── Portrait גובה בינוני (מובייל Portrait) ── */
+    @media (max-height: 800px) and (orientation: portrait) and (max-width: 599px) {
+      .numpad-btn { min-height: 3rem; }
+      #numberInput { height: 3rem; }
+      .header-text { font-size: 0.9rem; }
+    }
+
+    /* ── attendanceCard: מניעת חפיפה עם Header ── */
+    @media (max-width: 1023px) and (orientation: portrait) {
+      #attendanceCard {
+        top: auto !important;
+        bottom: 5.5rem;
+        left: 0.75rem;
+      }
+    }
+
+    /* ── unclosedBell: מניעת חפיפה עם Header ── */
+    @media (max-width: 1023px) and (orientation: portrait) {
+      #unclosedBell {
+        top: auto !important;
+        bottom: 5.5rem;
+        right: 0.75rem;
+      }
+    }
+
+    /* ── Modals: התאמה לטאבלט ── */
+    @media (min-width: 600px) and (max-width: 1023px) {
+      /* רוחב modals */
+      #changeLessonModal > div    { max-width: 36rem; }
+      #passwordModal > div        { max-width: 28rem; }
+      #closeSessionModal > div    { max-width: 32rem; }
+      #unclosedModal > div        { max-width: 28rem; }
+      #sessionEndingModal > div   { max-width: 28rem; }
+
+      /* כפתורים ראשיים — 48px+ */
+      #btnConfirmCloseSession, #btnCancelCloseSession,
+      #btnConfirmPassword, #btnCancelPassword,
+      #btnCloseUnclosedSession, #btnCancelUnclosedModal,
+      #btnStopAlert, #btnRemindLater, #btnCloseSessionFromEnding,
+      #btnChooseLesson, #btnCloseNoSessionModal,
+      #btnCloseChangeLesson {
+        min-height: 48px;
+        font-size: clamp(0.95rem, 2.2vw, 1.2rem);
+      }
+
+      /* sessionAttendanceListModal — תיקון כפתורים קטנים */
+      #sessionAttendanceListModal > div {
+        max-height: 85dvh;
+        max-width: 36rem;
+      }
+      #attendanceAddInput, #btnAddAttendanceFromModal {
+        height: 2.75rem;
+        font-size: 0.95rem;
+      }
+      #btnSavePendingChanges, #btnCancelAttendanceList, #btnConfirmCloseFromList {
+        min-height: 48px;
+        font-size: clamp(0.9rem, 2vw, 1.1rem);
+      }
+      #sessionAttendanceListModal h2 { font-size: 1.1rem; }
+      #sessionAttendanceListModal .text-base { font-size: 1rem; }
+      #changeLessonModal #sessionsList {
+        max-height: min(55vh, 320px);
+      }
+    }
+
+    @media (max-width: 1023px) {
+      #sessionAttendanceListModal > div { max-height: 85dvh; }
+      #changeLessonModal #sessionsList  { max-height: min(55vh, 320px); }
+    }
+
+    @media (max-width: 1023px) and (orientation: landscape) {
+      #sessionAttendanceListModal > div {
+        max-height: 92dvh;
+        padding: 0.75rem;
+      }
+      #changeLessonModal > div {
+        padding: 1rem 1.5rem;
+      }
+      #changeLessonModal #sessionsList {
+        max-height: min(45vh, 240px);
+      }
+    }
   </style>
 </head>
 
 <body class="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-100 select-none touch-manipulation overflow-x-hidden">
 
   <div class="min-h-screen flex flex-col gap-2 sm:gap-3 p-2 sm:p-3 md:p-4">
+
+    <!-- LOGO -->
+    <div class="flex justify-center pt-1">
+      <img src="../../assets/icons/logo.jpg" alt="FitBalance Logo" class="h-16 sm:h-20 md:h-24 w-auto object-contain drop-shadow-md">
+    </div>
 
     <!-- HEADER -->
     <div class="bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-lg py-3 sm:py-5 text-center">
@@ -76,20 +247,20 @@
 
       <!-- WELCOME -->
       <div class="text-center mb-2 sm:mb-4">
-        <h2 class="font-extrabold text-rose-700" style="font-size: clamp(1.6rem, 4vw, 2.5rem)">🌸 ברוכה הבאה</h2>
-        <p class="text-gray-500 font-medium mt-1" style="font-size: clamp(1rem, 2.5vw, 1.4rem)">הזיני מספר נייד או תעודת זהות</p>
+        <h2 class="welcome-title font-extrabold text-rose-700" style="font-size: clamp(1.6rem, 4vw, 2.5rem)">🌸 ברוכה הבאה</h2>
+        <p class="welcome-sub text-gray-500 font-medium mt-1" style="font-size: clamp(1rem, 2.5vw, 1.4rem)">הזיני מספר נייד או תעודת זהות</p>
       </div>
 
       <!-- TYPE SELECT -->
       <div class="flex justify-center gap-3 sm:gap-6 mb-2 sm:mb-3">
-        <label class="cursor-pointer">
+        <label class="cursor-pointer id-type-label">
           <input type="radio" name="idType" value="id" class="peer hidden" checked>
-          <div class="px-4 sm:px-6 py-1.5 sm:py-2 rounded-2xl border border-rose-200 text-rose-700 font-semibold text-sm sm:text-base
+          <div class="px-5 sm:px-7 rounded-2xl border border-rose-200 text-rose-700 font-semibold text-sm sm:text-base
                   peer-checked:bg-rose-500 peer-checked:text-white peer-checked:shadow-lg transition">ת.ז</div>
         </label>
-        <label class="cursor-pointer">
+        <label class="cursor-pointer id-type-label">
           <input type="radio" name="idType" value="phone" class="peer hidden">
-          <div class="px-4 sm:px-6 py-1.5 sm:py-2 rounded-2xl border border-rose-200 text-rose-700 font-semibold text-sm sm:text-base
+          <div class="px-5 sm:px-7 rounded-2xl border border-rose-200 text-rose-700 font-semibold text-sm sm:text-base
                   peer-checked:bg-rose-500 peer-checked:text-white peer-checked:shadow-lg transition">נייד</div>
         </label>
       </div>
@@ -99,7 +270,7 @@
         class="w-full rounded-2xl sm:rounded-3xl border-2 border-pink-200 bg-white text-center font-bold shadow-inner focus:outline-none mb-2 sm:mb-0">
 
       <!-- NUMPAD -->
-      <div class="grid grid-cols-3 gap-2 sm:gap-3 mt-2 sm:mt-4" dir="ltr">
+      <div class="numpad-wrap grid grid-cols-3 gap-2 sm:gap-3 mt-2 sm:mt-4" dir="ltr">
 
         <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">1</button>
         <button class="btndigit numpad-btn rounded-2xl sm:rounded-3xl bg-white font-extrabold text-rose-700 shadow-lg active:scale-95 transition">2</button>
@@ -129,13 +300,13 @@
     <div class="grid grid-cols-3 gap-2">
       <button id="btninstructorLogin"
         class="h-11 sm:h-14 rounded-xl sm:rounded-2xl bg-white text-rose-700 border border-rose-200 font-semibold shadow-sm hover:shadow transition"
-        style="font-size: clamp(0.75rem, 1.8vw, 1rem)">🔒 סגור שיעור</button>
+        style="font-size: clamp(1rem, 2.5vw, 1.3rem)">🔒 סגור שיעור</button>
       <button id="btnchangeLesson"
         class="h-11 sm:h-14 rounded-xl sm:rounded-2xl bg-white text-sky-700 border border-sky-200 font-semibold shadow-sm hover:shadow transition"
-        style="font-size: clamp(0.75rem, 1.8vw, 1rem)">החלף שיעור</button>
+        style="font-size: clamp(1rem, 2.5vw, 1.3rem)">החלף שיעור</button>
       <button id="btnRefresh"
         class="h-11 sm:h-14 rounded-xl sm:rounded-2xl bg-white text-gray-500 border border-gray-200 font-semibold shadow-sm hover:shadow transition"
-        style="font-size: clamp(0.75rem, 1.8vw, 1rem)">🔄 רענן</button>
+        style="font-size: clamp(1rem, 2.5vw, 1.3rem)">🔄 רענן</button>
     </div>
 
   </div>
@@ -262,12 +433,12 @@
         </div>
         <div class="flex gap-1.5">
           <input id="attendanceAddInput" type="text" placeholder="הקלדי לחיפוש..." dir="ltr" autocomplete="off"
-            class="flex-1 h-8 rounded-xl border-2 border-green-200 bg-white text-center font-semibold text-xs shadow-inner focus:outline-none focus:border-green-400">
+            class="flex-1 h-11 rounded-xl border-2 border-green-200 bg-white text-center font-semibold text-sm shadow-inner focus:outline-none focus:border-green-400">
           <button id="btnAddAttendanceFromModal"
-            class="h-8 px-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold shadow active:scale-95 transition text-xs">הוסף</button>
+            class="h-11 px-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold shadow active:scale-95 transition text-sm">הוסף</button>
         </div>
         <div id="attendanceLiveSearch" class="hidden flex-col gap-0.5 max-h-20 overflow-y-auto rounded-xl border border-green-100 bg-white shadow-sm px-2 py-1"></div>
-        <p id="attendanceAddError" class="text-red-500 text-xs min-h-[0.8rem] leading-none"></p>
+        <p id="attendanceAddError" class="text-red-500 text-sm min-h-[0.8rem] leading-none"></p>
       </div>
 
       <!-- PENDING NOTE -->
@@ -281,11 +452,11 @@
       <!-- BUTTONS -->
       <div class="flex flex-col gap-1.5 shrink-0">
         <div class="grid gap-1.5" id="attendanceActionBtns" style="grid-template-columns:1fr 1fr">
-          <button id="btnSavePendingChanges" class="hidden h-8 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold shadow active:scale-95 transition text-xs">✔ שמור</button>
-          <button id="btnCancelAttendanceList" class="h-8 col-span-2 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold active:scale-95 transition text-xs">ביטול</button>
+          <button id="btnSavePendingChanges" class="hidden min-h-[48px] rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold shadow active:scale-95 transition text-sm">✔ שמור</button>
+          <button id="btnCancelAttendanceList" class="min-h-[48px] col-span-2 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold active:scale-95 transition text-sm">ביטול</button>
         </div>
         <button id="btnConfirmCloseFromList"
-          class="w-full h-8 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold shadow active:scale-95 transition text-xs">🔒 סגור שיעור</button>
+          class="w-full min-h-[48px] rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold shadow active:scale-95 transition text-sm">🔒 סגור שיעור</button>
       </div>
 
     </div>

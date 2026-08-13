@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="../../assets/icons/icon.png">
+  <title>ניהול אירועים</title>
+  <link rel="stylesheet" href="css/admin-theme.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../../services/supabaseClient.js"></script>
+  <script src="../../services/uploadService.js"></script>
+  <script>
+    (async () => {
+      const { data: { session } } = await window._sb.auth.getSession();
+      if (!session) window.location.href = '../../login.html';
+    })();
+  </script>
+  <style>
+    .card { background:white; border-radius:16px; border:1px solid #f3f0ff; box-shadow:0 2px 12px rgba(139,92,246,.07); padding:24px; margin-bottom:20px; }
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+    .field label { font-size:12px; font-weight:700; color:#6b7280; }
+    .field input, .field textarea, .field select {
+      border:1.5px solid #e5e7eb; border-radius:10px; padding:9px 12px;
+      font-size:13px; font-family:inherit; outline:none; transition:border-color .2s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.1);
+    }
+    .btn-primary { background:linear-gradient(135deg,#ec4899,#8b5cf6); color:white; border:none; border-radius:10px; padding:10px 22px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .btn-primary:hover { opacity:.9; }
+    .btn-ghost { background:#f3f0ff; color:#7c3aed; border:1px solid #ede9fe; border-radius:10px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; }
+    .btn-ghost:hover { background:#ede9fe; }
+
+    .events-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+    .event-card {
+      background:white; border-radius:14px; border:1.5px solid #f3f0ff;
+      box-shadow:0 2px 10px rgba(139,92,246,.06); overflow:hidden;
+      display:flex; flex-direction:column;
+    }
+    .event-thumb {
+      width:100%; height:160px; object-fit:cover; background:#f8f7ff;
+      display:flex; align-items:center; justify-content:center;
+      color:#c4b5fd; font-size:40px;
+    }
+    .event-thumb img { width:100%; height:100%; object-fit:cover; }
+    .event-body { padding:14px; flex:1; display:flex; flex-direction:column; gap:6px; }
+    .event-title { font-size:14px; font-weight:700; color:#1f2937; line-height:1.4; }
+    .event-meta { font-size:12px; color:#6b7280; display:flex; flex-direction:column; gap:3px; }
+    .event-meta span { display:flex; align-items:center; gap:5px; }
+    .event-meta i { color:#a78bfa; width:12px; }
+    .event-footer { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-top:1px solid #f3f0ff; }
+    .event-actions { display:flex; gap:6px; }
+    .icon-btn { background:none; border:none; cursor:pointer; padding:5px 8px; border-radius:8px; font-size:14px; transition:background .15s; }
+    .icon-btn:hover { background:#f3f0ff; }
+    .icon-btn.danger:hover { background:#fee2e2; color:#dc2626; }
+
+    .toggle-wrap { display:flex; align-items:center; gap:8px; font-size:13px; color:#374151; font-weight:600; }
+    .toggle { position:relative; display:inline-block; width:40px; height:22px; flex-shrink:0; }
+    .toggle input { opacity:0 !important; width:0 !important; height:0 !important; position:absolute !important; }
+    .toggle-slider { position:absolute; inset:0; background:#d1d5db; border-radius:999px; cursor:pointer; transition:.2s; }
+    .toggle-slider:before { content:''; position:absolute; width:16px; height:16px; left:3px; top:3px; background:white; border-radius:50%; transition:.2s; box-shadow:0 1px 3px rgba(0,0,0,.25); }
+    .toggle input:checked + .toggle-slider { background:linear-gradient(135deg,#ec4899,#8b5cf6); }
+    .toggle input:checked + .toggle-slider:before { transform:translateX(18px); }
+
+    .modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.5); z-index:9999; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:white; border-radius:20px; width:calc(100% - 40px); max-width:560px; max-height:90vh; overflow-y:auto; padding:28px; box-shadow:0 20px 60px rgba(0,0,0,.25); margin:auto; }
+    .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+    .modal-title { font-size:17px; font-weight:800; color:#1f2937; }
+    .modal-close { background:none; border:none; font-size:20px; color:#9ca3af; cursor:pointer; }
+    .modal-close:hover { color:#374151; }
+
+    .filter-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+    .filter-bar input { border:1.5px solid #e5e7eb; border-radius:10px; padding:8px 14px; font-size:13px; font-family:inherit; outline:none; flex:1; min-width:180px; }
+    .filter-bar input:focus { border-color:#8b5cf6; }
+
+    .empty-state { text-align:center; padding:60px 20px; color:#9ca3af; }
+    .empty-state i { font-size:48px; margin-bottom:16px; display:block; }
+
+    .upload-area {
+      border:2px dashed #d8b4fe; border-radius:12px; padding:20px;
+      text-align:center; cursor:pointer; transition:all .2s; background:#faf5ff;
+      position:relative;
+    }
+    .upload-area:hover { border-color:#8b5cf6; background:#f3f0ff; }
+    .upload-area input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .upload-area i { font-size:24px; color:#a78bfa; margin-bottom:6px; display:block; }
+    .upload-area span { font-size:12px; color:#7c3aed; font-weight:600; }
+    .upload-area small { display:block; font-size:11px; color:#9ca3af; margin-top:2px; }
+    .thumb-preview { width:100%; height:120px; object-fit:cover; border-radius:10px; margin-top:10px; display:none; }
+
+    .toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:#1f2937; color:white; padding:12px 24px; border-radius:12px; font-size:14px; font-weight:600; z-index:99999; display:flex; align-items:center; gap:8px; opacity:0; transition:opacity .25s, transform .25s; pointer-events:none; }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast.success { background:linear-gradient(135deg,#059669,#10b981); }
+    .toast.error   { background:linear-gradient(135deg,#dc2626,#ef4444); }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <h1>🗓️ אירועים בקהילה</h1>
+      <button class="btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> אירוע חדש</button>
+    </header>
+
+    <div class="filter-bar">
+      <input type="text" id="search-input" placeholder="🔍 חיפוש לפי כותרת..." oninput="renderList()" />
+    </div>
+
+    <div id="events-grid" class="events-grid"></div>
+  </main>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">אירוע חדש</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="field">
+      <label>כותרת</label>
+      <input type="text" id="f-title" placeholder="שם האירוע..." />
+    </div>
+
+    <div class="field">
+      <label>קטגוריה</label>
+      <input type="text" id="f-category" placeholder="סדנה, מפגש, אירוע..." />
+    </div>
+
+    <div class="field">
+      <label>תיאור קצר</label>
+      <textarea id="f-description" rows="2" placeholder="תיאור קצר שיופיע בכרטיסייה..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>תוכן מלא</label>
+      <textarea id="f-content" rows="4" placeholder="פרטים נוספים על האירוע..."></textarea>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field">
+        <label>תאריך ושעת התחלה</label>
+        <input type="datetime-local" id="f-event-date" />
+      </div>
+      <div class="field">
+        <label>שעת סיום</label>
+        <input type="datetime-local" id="f-event-end" />
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field">
+        <label>מיקום</label>
+        <input type="text" id="f-location" placeholder="כתובת / שם המקום..." />
+      </div>
+      <div class="field">
+        <label>מקסימום משתתפים</label>
+        <input type="number" id="f-max-spots" min="1" placeholder="ללא הגבלה" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>תמונת תצוגה</label>
+      <div class="upload-area">
+        <input type="file" id="f-thumb-file" accept="image/*" onchange="onThumbChange(this)" />
+        <i class="fas fa-image"></i>
+        <span>לחצי להעלאת תמונה</span>
+        <small>JPG, PNG, WEBP</small>
+      </div>
+      <img id="thumb-preview" class="thumb-preview" />
+    </div>
+
+    <div class="field">
+      <label>סדר תצוגה</label>
+      <input type="number" id="f-sort-order" min="0" placeholder="0" style="width:100px" />
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:#374151;font-weight:600;">
+        <input type="checkbox" id="f-published" style="width:18px;height:18px;accent-color:#8b5cf6;cursor:pointer;" />
+        פרסם אירוע (גלוי ללקוחות)
+      </label>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-ghost" onclick="closeModal()">ביטול</button>
+      <button class="btn-primary" onclick="saveEvent()"><i class="fas fa-save"></i> שמור</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="utilities/sidebar.js"></script>
+<script>
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = '';
+    t.className = `toast ${type}`;
+    const icon = document.createElement('i');
+    icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+    t.appendChild(icon);
+    t.appendChild(document.createTextNode(' ' + msg));
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  let events = [], editingId = null, pendingThumbFile = null;
+
+  async function load() {
+    const { data, error } = await window._sb.from('community_events')
+      .select('*').order('sort_order', { ascending: true }).order('event_date', { ascending: true });
+    if (error) { console.error(error); return; }
+    events = data ?? [];
+    renderList();
+  }
+
+  function renderList() {
+    const q = document.getElementById('search-input').value.trim().toLowerCase();
+    const grid = document.getElementById('events-grid');
+    let list = events;
+    if (q) list = list.filter(e => e.title?.toLowerCase().includes(q) || e.description?.toLowerCase().includes(q));
+
+    if (!list.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-calendar-times"></i>אין אירועים להצגה</div>`;
+      return;
+    }
+
+    grid.innerHTML = list.map(e => `
+      <div class="event-card">
+        <div class="event-thumb">
+          ${e.thumbnail_url
+            ? `<img src="${e.thumbnail_url}" onerror="this.parentElement.innerHTML='<i class=fas fa-calendar></i>'" />`
+            : `<i class="fas fa-calendar-alt"></i>`}
+        </div>
+        <div class="event-body">
+          <div class="event-title">${e.title}</div>
+          <div class="event-meta">
+            ${e.event_date ? `<span><i class="fas fa-calendar"></i>${new Date(e.event_date).toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'})}</span>` : ''}
+            ${e.event_date ? `<span><i class="fas fa-clock"></i>${new Date(e.event_date).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}${e.event_end?' — '+new Date(e.event_end).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}):''}</span>` : ''}
+            ${e.location   ? `<span><i class="fas fa-map-marker-alt"></i>${e.location}</span>` : ''}
+            ${e.category   ? `<span><i class="fas fa-tag"></i>${e.category}</span>` : ''}
+          </div>
+        </div>
+        <div class="event-footer">
+          <div class="toggle-wrap">
+            <label class="toggle">
+              <input type="checkbox" ${e.is_published ? 'checked' : ''} onchange="togglePublish(${e.id}, this.checked)" />
+              <span class="toggle-slider"></span>
+            </label>
+            <span>${e.is_published ? 'מפורסם' : 'טיוטה'}</span>
+          </div>
+          <div class="event-actions">
+            <button class="icon-btn" onclick="openModal(${e.id})" title="עריכה"><i class="fas fa-pen"></i></button>
+            <button class="icon-btn danger" onclick="deleteEvent(${e.id})" title="מחיקה"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function toLocalDatetimeValue(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function openModal(id = null) {
+    editingId = id;
+    pendingThumbFile = null;
+    document.getElementById('modal-title').textContent = id ? 'עריכת אירוע' : 'אירוע חדש';
+    const e = id ? events.find(x => x.id === id) : null;
+    document.getElementById('f-title').value       = e?.title       ?? '';
+    document.getElementById('f-category').value    = e?.category    ?? '';
+    document.getElementById('f-description').value = e?.description ?? '';
+    document.getElementById('f-content').value     = e?.content     ?? '';
+    document.getElementById('f-event-date').value  = toLocalDatetimeValue(e?.event_date);
+    document.getElementById('f-event-end').value   = toLocalDatetimeValue(e?.event_end);
+    document.getElementById('f-location').value    = e?.location    ?? '';
+    document.getElementById('f-max-spots').value   = e?.max_spots   ?? '';
+    document.getElementById('f-sort-order').value  = e?.sort_order  ?? 0;
+    document.getElementById('f-published').checked = e?.is_published ?? false;
+    document.getElementById('f-thumb-file').value  = '';
+    const preview = document.getElementById('thumb-preview');
+    if (e?.thumbnail_url) { preview.src = e.thumbnail_url; preview.style.display = 'block'; }
+    else { preview.style.display = 'none'; preview.src = ''; }
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    editingId = null;
+  }
+
+  function onThumbChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    pendingThumbFile = file;
+    const preview = document.getElementById('thumb-preview');
+    preview.style.display = 'block';
+    preview.src = URL.createObjectURL(file);
+  }
+
+  async function uploadFile(file) {
+    const ext  = file.name.split('.').pop().toLowerCase();
+    const path = `events/thumbs/${Date.now()}.${ext}`;
+    const { error } = await window._sb.storage.from('products').upload(path, file, { upsert: true });
+    if (error) throw error;
+    return window._sb.storage.from('products').getPublicUrl(path).data.publicUrl;
+  }
+
+  async function saveEvent() {
+    const title = document.getElementById('f-title').value.trim();
+    if (!title) { alert('נא להזין כותרת'); return; }
+
+    const saveBtn = document.querySelector('.modal .btn-primary');
+    saveBtn.disabled = true; saveBtn.textContent = 'שומר...';
+
+    try {
+      let thumbnailUrl = editingId ? events.find(x => x.id === editingId)?.thumbnail_url : null;
+      if (pendingThumbFile) thumbnailUrl = await uploadFile(pendingThumbFile);
+
+      const payload = {
+        title,
+        category:    document.getElementById('f-category').value.trim()    || null,
+        description: document.getElementById('f-description').value.trim() || null,
+        content:     document.getElementById('f-content').value.trim()     || null,
+        event_date:  document.getElementById('f-event-date').value         || null,
+        event_end:   document.getElementById('f-event-end').value          || null,
+        location:    document.getElementById('f-location').value.trim()    || null,
+        max_spots:   parseInt(document.getElementById('f-max-spots').value) || null,
+        thumbnail_url: thumbnailUrl || null,
+        sort_order:  parseInt(document.getElementById('f-sort-order').value) || 0,
+        is_published: document.getElementById('f-published').checked,
+      };
+
+      const res = editingId
+        ? await window._sb.from('community_events').update(payload).eq('id', editingId)
+        : await window._sb.from('community_events').insert(payload);
+
+      if (res.error) throw new Error(res.error.message);
+      closeModal();
+      await load();
+      showToast(editingId ? 'האירוע עודכן בהצלחה ✓' : 'האירוע נוסף בהצלחה ✓');
+    } catch(e) {
+      showToast('שגיאה: ' + e.message, 'error');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fas fa-save"></i> שמור';
+    }
+  }
+
+  async function togglePublish(id, val) {
+    const { error } = await window._sb.from('community_events').update({ is_published: val }).eq('id', id);
+    if (error) { showToast('שגיאה בעדכון', 'error'); return; }
+    const e = events.find(x => x.id === id);
+    if (e) e.is_published = val;
+    renderList();
+    showToast(val ? 'האירוע פורסם ✓' : 'האירוע הוסתר ✓');
+  }
+
+  async function deleteEvent(id) {
+    if (!confirm('למחוק אירוע זה?')) return;
+    const { error } = await window._sb.from('community_events').delete().eq('id', id);
+    if (error) { showToast('שגיאה במחיקה', 'error'); return; }
+    events = events.filter(e => e.id !== id);
+    renderList();
+    showToast('האירוע נמחק');
+  }
+
+  document.getElementById('modal-overlay').addEventListener('mousedown', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  load();
+</script>
+</body>
+</html>

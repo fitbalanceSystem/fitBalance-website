@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // attachParticipantsLinks();
 
   // עכשיו מאזין ללחצן "הוסף מפגש"
-  newSessionBtn.addEventListener("click", async () => {
+  if (newSessionBtn) newSessionBtn.addEventListener("click", async () => {
     // בדיקה אם יש תוכניות
     if (!allPrograms || allPrograms.length === 0) {
       alert("אין תוכניות זמינות.");
@@ -109,7 +109,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       programSelectModal.style.display = "none"; // להסתיר מודאל
       openSessionModal(selectedProgramId, '', '', '', null);
     });
-
   });
 });
 
@@ -189,8 +188,8 @@ function renderCalendar() {
         const program = allPrograms.find(p => p.id === session.program_id && p.status_code === 1);
         if (!program) return;
 
-        const countPresent = allAttendance.filter(att => att.session_id === session.id && att.is_present).length;
         const countTotal = allAttendance.filter(att => att.session_id === session.id).length;
+        const countPresent = allAttendance.filter(att => att.session_id === session.id && att.is_present).length;
 
         // ספירת ניסיונות למפגש זה
         const trialCount = allTrials.filter(t => t.session_id === session.id).length;

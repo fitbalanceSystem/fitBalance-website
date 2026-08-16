@@ -1,7 +1,7 @@
 import { supabase, fetchItems, updateItem, upsert } from '../utilities/db.js';
 import * as methods from '../utilities/methods.js';
 import '../utilities/main.js';
-import { populateSelectFromCodeTable, loadAllCodeTables} from '../utilities/code-tables.js';
+import { populateSelectFromCodeTable, loadAllCodeTables, getNameFromCodeTable} from '../utilities/code-tables.js';
 
 // import { supabase, fetchItems, insertItem, updateItem, deleteItem } from '../utilities/db.js';
 // import '../utilities/main.js';
@@ -23,6 +23,8 @@ window.updateSchoolYearLabel = updateSchoolYearLabel;
 document.addEventListener('DOMContentLoaded', async () => {
   
 console.log("YYY1");
+
+  await loadAllCodeTables();
 
   const params = new URLSearchParams(window.location.search);
   const customerId = parseInt(params.get('id'), 10);
@@ -184,19 +186,32 @@ console.log(customerId);
     // }
   }
 
-  // מחבר את כפתור השמירה לאירוע
+  // שמור וסגור
   document.querySelectorAll('.save-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
       await saveCustomer();
       sessionStorage.setItem('reloadCustomers', 'true');
-      close();
+      window.history.back();
     });
   });
-  
+
+  // שמור בלבד
+  document.querySelectorAll('.save-only-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await saveCustomer();
+    });
+  });
 
   // ביטול
   document.querySelector('.cancel-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    close();
+  });
+
+  // חזרה
+  document.getElementById('backBtn')?.addEventListener('click', (e) => {
     e.preventDefault();
     close();
   });
@@ -313,7 +328,8 @@ async function loadCustomerProgramsBySchoolYear(customerId, schoolYearStart) {
         time,
         start_date,
         end_date,
-        price
+        price,
+        branch_code
       )
     `)
     .eq('customer_id', customerId)
@@ -336,6 +352,8 @@ async function loadCustomerProgramsBySchoolYear(customerId, schoolYearStart) {
   const noProgramsRow = tbody.querySelector('.no-programs');
   if (noProgramsRow) noProgramsRow.remove();
 
+  const dayNames = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
   data.forEach(enrollment => {
     const tr = document.createElement('tr');
 
@@ -351,14 +369,17 @@ async function loadCustomerProgramsBySchoolYear(customerId, schoolYearStart) {
     tr.dataset.enrollmentId = enrollment.id;
     tr.dataset.code = enrollment.programs?.id;
 
+    const dayNum = parseInt(enrollment.programs?.day);
+    const dayDisplay = (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 7) ? dayNames[dayNum - 1] : (enrollment.programs?.day || '');
+
     tr.innerHTML = `
       <td>
         <input type="hidden" class="program-id" value="${enrollment.programs?.id || ''}">
         ${enrollment.programs?.type_code || ''}
       </td>
       <td>${enrollment.programs?.name || ''}</td>
-      <td>${enrollment.programs?.branch || ''}</td>
-      <td>${enrollment.programs?.day || ''}</td>
+      <td>${getNameFromCodeTable('branch', enrollment.programs?.branch_code) || ''}</td>
+      <td>${dayDisplay}</td>
       <td>${enrollment.programs?.time || ''}</td>
       <td><input type="date" class="start-date" value="${startDate}"></td>
       <td><input type="date" class="end-date" value="${endDate}"></td>
@@ -446,8 +467,7 @@ async function loadDB1(nameTable) {
 
 // ??
 async function close() {
-  sessionStorage.setItem('resetSearch', 'true');
-    window.history.back();
+  window.history.back();
 }
 
 
@@ -675,6 +695,7 @@ async function addSelectedPrograms() {
 
   closeModal1();
   await loadCustomerPrograms(idCustomer);
+  await ensureAttendanceRecords(idCustomer);
   alert("התוכניות נוספו בהצלחה ✅");
 }
 
@@ -884,6 +905,7 @@ if (existingPrograms.length > 0) {
     // עדכון בזיכרון
     allProgram = programsToSave;
 
+    await ensureAttendanceRecords(idCustomer);
     Swal.fire('השינויים נשמרו', 'התוכניות עודכנו בהצלחה ✅', 'success');
     methods.hideLoader();
 
@@ -913,109 +935,117 @@ async function getAllSessionIdsForProgram(programId) {
 // מחיקת תוכנית של לקוחה (כולל טיפול בנוכחויות)
 async function deleteCustomerProgram(programEnrollmentId, customerId, programId) {
   try {
-    // 1️⃣ שליפת כל המפגשים של התוכנית
+    // 1️⃣ שליפת תאריכי השיבוץ הספציפי
+    const { data: enrollment, error: enError } = await supabase
+      .from('program_enrollments')
+      .select('start_date, end_date')
+      .eq('id', programEnrollmentId)
+      .single();
+    if (enError) throw enError;
+
+    // 2️⃣ שליפת מפגשים בתוכנית בתוך טווח תאריכי השיבוץ בלבד
     const { data: sessions, error: sessionsError } = await supabase
       .from('program_sessions')
       .select('id')
-      .eq('program_id', programId);
-
+      .eq('program_id', programId)
+      .gte('date', enrollment.start_date)
+      .lte('date', enrollment.end_date);
     if (sessionsError) throw sessionsError;
 
-    // אין מפגשים כלל → מחיקה ישירה של ההרשמה בלבד
+    // אין מפגשים בתקופה → מחיקה ישירה
     if (!sessions || sessions.length === 0) {
       await supabase.from('program_enrollments').delete().eq('id', programEnrollmentId);
-      Swal.fire('נמחק', 'התוכנית הוסרה (לא נמצאו מפגשים)', 'success');
-      
-    loadCustomerPrograms(idCustomer);
+      Swal.fire('נמחק', 'השיבוץ הוסר (לא נמצאו מפגשים בתקופה זו)', 'success');
+      loadCustomerPrograms(idCustomer);
       return;
     }
 
     const sessionIds = sessions.map(s => s.id);
 
-    // 2️⃣ שליפת נוכחויות של הלקוחה בתוכנית זו
+    // 3️⃣ שליפת נוכחויות של הלקוחה במפגשים אלו בלבד
     const { data: attendanceData, error: attendanceError } = await supabase
       .from('session_attendance')
       .select('id, is_present')
       .in('session_id', sessionIds)
       .eq('customer_id', customerId);
-
     if (attendanceError) throw attendanceError;
 
-    // 3️⃣ אין כלל רשומות נוכחות → מחיקה פשוטה של ההרשמה
+    // אין נוכחויות כלל → מחיקה פשוטה
     if (!attendanceData || attendanceData.length === 0) {
       await supabase.from('program_enrollments').delete().eq('id', programEnrollmentId);
-      Swal.fire('נמחק', 'התוכנית הוסרה (לא נמצאו נוכחויות)', 'success');
+      Swal.fire('נמחק', 'השיבוץ הוסר', 'success');
+      loadCustomerPrograms(idCustomer);
       return;
     }
 
-    // 4️⃣ יש רשומות נוכחות, נבדוק אם קיימת לפחות אחת TRUE
-    const hasTrue = attendanceData.some(a => a.is_present === true);
+    // 4️⃣ בדיקה אם יש שיעורים שדווחה בהם נוכחות (is_present = true) בתקופת השיבוץ
+    const presentIds = attendanceData.filter(a => a.is_present === true || a.is_present === 1).map(a => a.id);
+    const absentIds  = attendanceData.filter(a => !a.is_present).map(a => a.id);
 
-    if (hasTrue) {
-      // יש TRUE — שואלים את המשתמשת מה לעשות
+    if (presentIds.length > 0) {
       const result = await Swal.fire({
-        title: 'נמצאו נוכחויות פעילות',
-        text: 'בחרי מה לעשות עם הנוכחויות של תוכנית זו:',
+        title: 'נמצאו נוכחויות בתקופת השיבוץ',
+        html: `נמצאו <strong>${presentIds.length}</strong> שיעורים שדווח שהגיעה אליהם.<br>מה לעשות עם נוכחויות אלו?`,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'הפוך נוכחויות TRUE להשלמות',
+        confirmButtonText: 'העבר להשלמות',
+        confirmButtonColor: '#8b5cf6',
+        denyButtonText: 'מחק הכול',
+        denyButtonColor: '#dc2626',
         cancelButtonText: 'ביטול',
         showDenyButton: true,
-        denyButtonText: 'מחק הכול לגמרי',
       });
 
       if (result.isConfirmed) {
-        // ✅ הפוך TRUE להשלמות, מחק את כל השאר
-        await supabase
+        // העבר נוכחויות TRUE → status_code=2 (השלמה), is_present=false, מחק את השאר
+        const { error: updateErr } = await supabase
           .from('session_attendance')
-          .update({ status_code: 2 })
+          .update({ status_code: 2, is_present: false })
           .in('session_id', sessionIds)
           .eq('customer_id', customerId)
-          .eq('is_present', true);
+          .or('is_present.eq.true,is_present.eq.1');
+        if (updateErr) throw updateErr;
 
-        await supabase
-          .from('session_attendance')
-          .delete()
-          .in('session_id', sessionIds)
-          .eq('customer_id', customerId)
-          .eq('is_present', false);
-
-        await supabase.from('program_enrollments').delete().eq('id', programEnrollmentId);
-        Swal.fire('עודכן', 'נוכחויות TRUE הוסבו להשלמות, והשאר נמחקו.', 'success');
-      } 
-      else if (result.isDenied) {
-        // ✅ מחיקה מוחלטת של הכול
+        if (absentIds.length > 0) {
+          const { error: delErr } = await supabase
+            .from('session_attendance')
+            .delete()
+            .in('session_id', sessionIds)
+            .eq('customer_id', customerId)
+            .or('is_present.eq.false,is_present.eq.0,is_present.is.null');
+          if (delErr) throw delErr;
+        }
+        const { error: enDelErr } = await supabase
+          .from('program_enrollments').delete().eq('id', programEnrollmentId);
+        if (enDelErr) throw enDelErr;
+        Swal.fire('בוצע', `${presentIds.length} נוכחויות הועברו להשלמות והשיבוץ הוסר.`, 'success');
+        loadCustomerPrograms(idCustomer);
+      } else if (result.isDenied) {
+        // מחק הכול
         await supabase
           .from('session_attendance')
           .delete()
           .in('session_id', sessionIds)
           .eq('customer_id', customerId);
-
         await supabase.from('program_enrollments').delete().eq('id', programEnrollmentId);
-        Swal.fire('נמחק', 'כל הנוכחויות והתוכנית נמחקו.', 'success');
-      } 
-      else {
-        Swal.fire('בוטל', 'לא בוצעה פעולה.', 'info');
+        Swal.fire('נמחק', 'כל הנוכחויות והשיבוץ נמחקו.', 'success');
+        loadCustomerPrograms(idCustomer);
       }
-    } 
-    else {
-      // ✅ אין אף TRUE — כל הרשומות FALSE או NULL ⇒ מוחקים הכול אוטומטית
+      // ביטול — לא עושים כלום
+    } else {
+      // אין נוכחויות TRUE — מוחקים הכול אוטומטית
       await supabase
         .from('session_attendance')
         .delete()
         .in('session_id', sessionIds)
         .eq('customer_id', customerId);
-
-      await supabase
-        .from('program_enrollments')
-        .delete()
-        .eq('id', programEnrollmentId);
-
-      Swal.fire('נמחק בהצלחה', 'כל רשומות הנוכחות של התוכנית נמחקו (לא נמצאו TRUE).', 'success');
+      await supabase.from('program_enrollments').delete().eq('id', programEnrollmentId);
+      Swal.fire('נמחק', 'השיבוץ הוסר (לא היו נוכחויות מדווחות).', 'success');
+      loadCustomerPrograms(idCustomer);
     }
 
   } catch (error) {
-    console.error('❌ שגיאה במחיקת תוכנית:', error);
+    console.error('❌ שגיאה במחיקת שיבוץ:', error);
     Swal.fire('שגיאה', 'אירעה שגיאה בעת המחיקה: ' + error.message, 'error');
   }
 }
@@ -1214,13 +1244,55 @@ links.forEach(link => {
   });
 });
 
-// ======= פונקציה מרכזית לטעינת תוכניות לפי idCustomer =======
+// ======= יצירת רשומות נוכחות חסרות =======
+async function ensureAttendanceRecords(customerId) {
+  // שלוף את כל ההרשמות הפעילות של הלקוחה
+  const { data: enrollments, error: enError } = await supabase
+    .from('program_enrollments')
+    .select('program_id, start_date, end_date')
+    .eq('customer_id', customerId);
+  if (enError || !enrollments?.length) return;
+
+  for (const en of enrollments) {
+    // שלוף את כל המפגשים של התוכנית בטווח ההרשמה
+    const { data: sessions, error: sError } = await supabase
+      .from('program_sessions')
+      .select('id')
+      .eq('program_id', en.program_id)
+      .gte('date', en.start_date)
+      .lte('date', en.end_date);
+    if (sError || !sessions?.length) continue;
+
+    // שלוף רשומות קיימות
+    const { data: existing } = await supabase
+      .from('session_attendance')
+      .select('session_id')
+      .eq('customer_id', customerId)
+      .in('session_id', sessions.map(s => s.id));
+
+    const existingIds = new Set((existing || []).map(a => a.session_id));
+
+    // צור רשומות חסרות
+    const toInsert = sessions
+      .filter(s => !existingIds.has(s.id))
+      .map(s => ({ customer_id: customerId, session_id: s.id, is_present: false, status_code: 1 }));
+
+    if (toInsert.length > 0) {
+      await supabase.from('session_attendance').insert(toInsert);
+    }
+  }
+}
+let schoolYearNavigationInitialized = false;
+
 async function loadCustomerPrograms(customerId) {
   if (!customerId) return;
 
   currentSchoolYearStart = getCurrentSchoolYear();
   updateSchoolYearLabel(currentSchoolYearStart);
-  setupSchoolYearNavigation();
+  if (!schoolYearNavigationInitialized) {
+    setupSchoolYearNavigation();
+    schoolYearNavigationInitialized = true;
+  }
   await loadCustomerProgramsBySchoolYear(customerId, currentSchoolYearStart);
 }
 

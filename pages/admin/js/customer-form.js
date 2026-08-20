@@ -91,6 +91,11 @@ console.log("YYY");
     document.getElementById('arnonaMobile').value = dataCustomers.payerMobile || '';
     document.getElementById('arnonaEmail').value = dataCustomers.payerEmail || '';
 
+    if (dataCustomers.created_at) {
+      document.getElementById('createdAtDisplay').value =
+        new Date(dataCustomers.created_at).toLocaleDateString('he-IL', { day:'numeric', month:'long', year:'numeric' });
+    }
+
     document.getElementById('checkbox1').checked = !!dataCustomers.isSignedHealthForm;
     document.getElementById('checkbox2').checked = !!dataCustomers.issignedRegisTrationPolicy;
     document.getElementById('checkbox3').checked = !!dataCustomers.inWhatsAppList;

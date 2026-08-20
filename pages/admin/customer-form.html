@@ -9,6 +9,124 @@
   <link rel="stylesheet" href="css/admin-theme.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .section-card {
+      background: white;
+      border-radius: 14px;
+      border: 1.5px solid #ede9fe;
+      box-shadow: 0 2px 12px rgba(139,92,246,.07);
+      padding: 20px 22px;
+      margin-bottom: 18px;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #7c3aed;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border-bottom: 1.5px solid #f3f0ff;
+      padding-bottom: 10px;
+    }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .field-block { display: flex; flex-direction: column; gap: 5px; }
+    .field-block label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .field-block input,
+    .field-block select {
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 13px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      background: #fafafa;
+      transition: border-color .2s, box-shadow .2s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .field-block input:focus,
+    .field-block select:focus {
+      border-color: #8b5cf6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(139,92,246,.1);
+    }
+    .field-block input[readonly] {
+      background: #f3f0ff;
+      color: #7c3aed;
+      font-weight: 700;
+      cursor: default;
+    }
+    .notes-toolbar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+    .btn-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn-note-add  { background: #f3f0ff; color: #7c3aed; }
+    .btn-note-save { background: linear-gradient(135deg,#ec4899,#8b5cf6); color: white; }
+    .btn-note-add:hover, .btn-note-save:hover { opacity: .85; }
+    #notesTable { width: 100%; border-collapse: collapse; font-size: 13px; }
+    #notesTable thead th {
+      background: #f8f7ff;
+      color: #6b7280;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 9px 12px;
+      text-align: right;
+      border-bottom: 2px solid #ede9fe;
+    }
+    #notesTable tbody td { padding: 8px 10px; border-bottom: 1px solid #f3f0ff; vertical-align: top; }
+    #notesTable .note-date {
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      width: 148px;
+    }
+    #notesTable .note-date:focus { border-color: #8b5cf6; }
+    #notesTable .note-text {
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      width: 100%;
+      min-height: 72px;
+      resize: vertical;
+      line-height: 1.65;
+      box-sizing: border-box;
+    }
+    #notesTable .note-text:focus { border-color: #8b5cf6; }
+    .delete-note-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: background .15s;
+    }
+    .delete-note-btn:hover { background: #fee2e2; }
+  </style>
 </head>
 <body>
   <div id="global-spinner" class="spinner-overlay hidden"></div>
@@ -36,70 +154,99 @@
 
       <div class="tab-content" id="tab1">
         <form id="customerForm">
-          <div class="form-grid">
-            <div>
-              <label for="idNumber">ת.ז</label>
-              <input type="text" id="idNumber" />
-            </div>
-            <div>
-              <label for="firstName">שם פרטי</label>
-              <input type="text" id="firstName" />
-            </div>
-            <div>
-              <label for="lastName">שם משפחה</label>
-              <input type="text" id="lastName" />
-            </div>
-            <div>
-              <label for="birthDate">תאריך לידה</label>
-              <input type="date" id="birthDate" />
-            </div>
-            <div>
-              <label for="city">עיר</label>
-              <input type="text" id="city" />
-            </div>
-            <div>
-              <label for="street">רחוב</label>
-              <input type="text" id="street" />
-            </div>
-            <div>
-              <label for="houseNumber">מספר בית</label>
-              <input type="text" id="houseNumber" />
-            </div>
-            <div>
-              <label for="mobile">נייד</label>
-              <input type="tel" id="mobile" />
-            </div>
-            <div>
-              <label for="email">אימייל</label>
-              <input type="email" id="email" />
-            </div>
-            <div>
-              <label for="arnonaId">ת.ז משלם ארנונה</label>
-              <input type="text" id="arnonaId" />
-            </div>
-            <div>
-              <label for="arnonaFirstName">שם משלם ארנונה</label>
-              <input type="text" id="arnonaFirstName" />
-            </div>
-            <div>
-              <label for="arnonaLastName">משפחה משלם ארנונה</label>
-              <input type="text" id="arnonaLastName" />
-            </div>
-            <div>
-              <label for="arnonaMobile">נייד משלם ארנונה</label>
-              <input type="tel" id="arnonaMobile" />
-            </div>
-            <div>
-              <label for="arnonaEmail">אימייל משלם ארנונה</label>
-              <input type="email" id="arnonaEmail" />
-            </div>
-            <div>
-              <label for="status">סטטוס</label>
-              <select id="status"></select>
+
+          <!-- תאריך יצירה + סטטוס -->
+          <div class="section-card">
+            <div class="form-grid-2">
+              <div class="field-block">
+                <label>📅 תאריך יצירה</label>
+                <input type="text" id="createdAtDisplay" readonly placeholder="יוצג אוטומטית..." />
+              </div>
+              <div class="field-block">
+                <label>🏷️ סטטוס</label>
+                <select id="status"></select>
+              </div>
             </div>
           </div>
-        </form>
 
+          <!-- פרטים אישיים -->
+          <div class="section-card">
+            <div class="section-title">👤 פרטים אישיים</div>
+            <div class="form-grid-3">
+              <div class="field-block">
+                <label>ת.ז</label>
+                <input type="text" id="idNumber" placeholder="000000000" />
+              </div>
+              <div class="field-block">
+                <label>שם פרטי</label>
+                <input type="text" id="firstName" placeholder="שם פרטי" />
+              </div>
+              <div class="field-block">
+                <label>שם משפחה</label>
+                <input type="text" id="lastName" placeholder="שם משפחה" />
+              </div>
+              <div class="field-block">
+                <label>תאריך לידה</label>
+                <input type="date" id="birthDate" />
+              </div>
+              <div class="field-block">
+                <label>נייד</label>
+                <input type="tel" id="mobile" placeholder="05X-XXXXXXX" />
+              </div>
+              <div class="field-block">
+                <label>אימייל</label>
+                <input type="email" id="email" placeholder="your@email.com" />
+              </div>
+            </div>
+          </div>
+
+          <!-- כתובת -->
+          <div class="section-card">
+            <div class="section-title">🏠 כתובת</div>
+            <div class="form-grid-3">
+              <div class="field-block">
+                <label>עיר</label>
+                <input type="text" id="city" placeholder="עיר" />
+              </div>
+              <div class="field-block">
+                <label>רחוב</label>
+                <input type="text" id="street" placeholder="רחוב" />
+              </div>
+              <div class="field-block">
+                <label>מספר בית</label>
+                <input type="text" id="houseNumber" placeholder="מס׳" />
+              </div>
+            </div>
+          </div>
+
+          <!-- פרטי משלם ארנונה -->
+          <div class="section-card">
+            <div class="section-title">🏛️ פרטי משלם ארנונה</div>
+            <div class="form-grid-3">
+              <div class="field-block">
+                <label>ת.ז משלם ארנונה</label>
+                <input type="text" id="arnonaId" placeholder="000000000" />
+              </div>
+              <div class="field-block">
+                <label>שם פרטי</label>
+                <input type="text" id="arnonaFirstName" placeholder="שם פרטי" />
+              </div>
+              <div class="field-block">
+                <label>שם משפחה</label>
+                <input type="text" id="arnonaLastName" placeholder="שם משפחה" />
+              </div>
+              <div class="field-block">
+                <label>נייד</label>
+                <input type="tel" id="arnonaMobile" placeholder="05X-XXXXXXX" />
+              </div>
+              <div class="field-block">
+                <label>אימייל</label>
+                <input type="email" id="arnonaEmail" placeholder="your@email.com" />
+              </div>
+            </div>
+          </div>
+
+        </form>
       </div>
 
       <div class="tab-content" id="tab2" style="display: none;">
@@ -117,20 +264,20 @@
           </div>
         </div>
 
-        <button class="add-note-btn" id="addNoteBtn">+ הוסף הערה</button>
-        <button class="add-note-btn" id="saveNotesBtn">שמור הערות</button>
+        <div class="notes-toolbar">
+          <button class="btn-note btn-note-add" id="addNoteBtn"><i class="fas fa-plus"></i> הוסף הערה</button>
+          <button class="btn-note btn-note-save" id="saveNotesBtn"><i class="fas fa-save"></i> שמור הערות</button>
+        </div>
 
-        <table class="notes-table" id="notesTable">
+        <table id="notesTable">
           <thead>
             <tr>
-              <th>תאריך</th>
+              <th style="width:155px">תאריך</th>
               <th>הערה</th>
-              <th></th>
+              <th style="width:44px"></th>
             </tr>
           </thead>
-          <tbody>
-            <!-- שורות דינמיות יתווספו כאן -->
-          </tbody>
+          <tbody></tbody>
         </table>
       </div>
 

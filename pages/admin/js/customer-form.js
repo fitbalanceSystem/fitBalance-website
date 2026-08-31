@@ -124,6 +124,7 @@ console.log("YYY");
 
 
     toggleDueDate(); // להריץ שוב בהתאם לערך isPregnant
+    await loadDigitalForms(customerId);
   }
 
   // שמירת הנתונים בטופס
@@ -1240,6 +1241,11 @@ links.forEach(link => {
     // אם האלמנט קיים, מציגים אותו
     if (target) target.style.display = "block";
 
+    // אם הקישור שנלחץ הוא לטאב מספר 3 (href="#tab3")
+    if (link.getAttribute("href") === "#tab3") {
+      loadAllDocs(parseInt(idCustomer, 10));
+    }
+
     // אם הקישור שנלחץ הוא לטאב מספר 4 (href="#tab4")
     if (link.getAttribute("href") === "#tab4") {
       // קוראים לפונקציה loadCustomerPrograms עם מזהה הלקוח
@@ -1817,3 +1823,375 @@ async function calcAutoStatus(customerId) {
 
   return 'interested'; // מתעניינת
 }
+
+
+// ======= הודעת שיבוץ =======
+{
+  const _DAY = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  let _token = null, _link = null, _bodyHtml = '';
+
+  function _programsHtml() {
+    return (allProgram || []).filter(e => e.programs?.type_code == 1).map(e => {
+      const n = e.programs?.name || '';
+      const d = parseInt(e.programs?.day);
+      const day = (!isNaN(d) && d >= 1 && d <= 7) ? _DAY[d-1] : '';
+      const t = e.programs?.time ? e.programs.time.slice(0,5) : '';
+      return `• ${n} — יום ${day} ${t}`;
+    }).join('<br>') || 'טרם נוספו תוכניות';
+  }
+
+  function _updatePreview() {
+    const firstName = document.getElementById('firstName').value.trim();
+    const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
+    const override  = document.getElementById('assignmentBodyOverride');
+    let html;
+    if (override && override.style.display !== 'none' && override.value.trim()) {
+      html = '<div style="white-space:pre-wrap">' + override.value + '</div>';
+    } else {
+      const linkHtml = _link
+        ? _link
+        : '<em style="color:#9ca3af">קישור ייווצר בעת השליחה</em>';
+      html = (_bodyHtml || '<p>{{firstName}}, שיבוצך לשנת {{activityYear}}:<br>{{programs}}<br>{{formLink}}</p>')
+        .replace(/\{\{firstName\}\}/g,    firstName)
+        .replace(/\{\{activityYear\}\}/g, yearLabel)
+        .replace(/\{\{programs\}\}/g,     _programsHtml())
+        .replace(/\{\{formLink\}\}/g,     linkHtml);
+    }
+    const box = document.getElementById('assignmentPreviewBox');
+    if (box) box.innerHTML = html;
+  }
+
+  function _decodeHtml(str) {
+    const ta = document.createElement('textarea');
+    ta.innerHTML = str;
+    return ta.value;
+  }
+
+  function _buildFinalHtml() {
+    const override = document.getElementById('assignmentBodyOverride');
+    if (override && override.style.display !== 'none' && override.value.trim()) {
+      return '<div style="direction:rtl;font-family:Arial,sans-serif;white-space:pre-wrap">' + override.value + '</div>';
+    }
+    const firstName = document.getElementById('firstName').value.trim();
+    const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
+    const linkUrl   = _link || '';
+    const decoded = _decodeHtml(_bodyHtml || '<p>{{firstName}}, שיבוצך לשנת {{activityYear}}:<br>{{programs}}<br><a href="{{formLink}}">{{formLink}}</a></p>');
+    return decoded
+      .replace(/\{\{firstName\}\}/g,    firstName)
+      .replace(/\{\{activityYear\}\}/g, yearLabel)
+      .replace(/\{\{programs\}\}/g,     _programsHtml())
+      .replace(/\{\{formLink\}\}/g,     linkUrl);
+  }
+
+  async function _createToken() {
+    if (_token) return _token;
+    const formId = parseInt(document.getElementById('assignmentFormSelect').value);
+    if (!formId) throw new Error('בחרי טופס');
+    const result = await window.formsService.createFormRequest(idCustomer, formId, currentSchoolYearStart);
+    _token = result.token;
+    _link  = `${location.origin}/pages/public/sign.html?token=${result.token}`;
+    _updatePreview();
+    return _token;
+  }
+
+  document.getElementById('assignmentEmailBtn')?.addEventListener('click', async () => {
+    const firstName = document.getElementById('firstName').value.trim();
+    const email     = document.getElementById('email').value.trim();
+    const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
+
+    _token = null; _link = null; _bodyHtml = '';
+
+    document.getElementById('assignmentModalTitle').textContent = `📨 הודעת שיבוץ — ${firstName} | ${yearLabel}`;
+    document.getElementById('assignmentEmail').value   = email;
+    document.getElementById('assignmentLinkRow').style.display = 'none';
+    const overrideEl = document.getElementById('assignmentBodyOverride');
+    if (overrideEl) overrideEl.style.display = 'none';
+    const toggleBtn = document.getElementById('assignmentEditToggleBtn');
+    if (toggleBtn) toggleBtn.textContent = '✏️ ערוך טקסט';
+
+    try {
+      const tmpl = await window.getEmailTemplate('assignment');
+      const _ta = document.createElement('textarea'); _ta.innerHTML = tmpl?.body_html || ''; _bodyHtml = _ta.value;
+      document.getElementById('assignmentSubject').value = (tmpl?.subject || 'שיבוצך לשנת {{activityYear}} 🎉')
+        .replace('{{activityYear}}', yearLabel).replace('{{firstName}}', firstName);
+    } catch(e) {
+      document.getElementById('assignmentSubject').value = `שיבוצך לשנת ${yearLabel} 🎉`;
+    }
+
+    const sel = document.getElementById('assignmentFormSelect');
+    sel.innerHTML = '<option value="">טוען...</option>';
+    try {
+      const forms = await window.formsService.getActiveForms();
+      sel.innerHTML = forms.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+      const def = forms.find(f => f.form_key === 'registration_and_health') || forms[0];
+      if (def) sel.value = def.id;
+    } catch(e) { sel.innerHTML = '<option value="">שגיאה בטעינה</option>'; }
+
+    _updatePreview();
+    document.getElementById('assignmentModal').style.display = 'flex';
+  });
+
+  window.assignmentUpdatePreview = _updatePreview;
+
+  window.assignmentToggleEdit = function() {
+    const override = document.getElementById('assignmentBodyOverride');
+    const btn      = document.getElementById('assignmentEditToggleBtn');
+    if (!override) return;
+    if (override.style.display === 'none') {
+      override.value = document.getElementById('assignmentPreviewBox').innerText;
+      override.style.display = '';
+      if (btn) btn.textContent = '👁️ תצוגה מקדימה';
+    } else {
+      override.style.display = 'none';
+      if (btn) btn.textContent = '✏️ ערוך טקסט';
+      _updatePreview();
+    }
+  };
+
+  window.closeAssignmentModal = function() {
+    document.getElementById('assignmentModal').style.display = 'none';
+  };
+
+  document.getElementById('assignmentCreateForm')?.addEventListener('change', function() {
+    const row = document.getElementById('assignmentFormRow');
+    if (row) row.style.display = this.checked ? '' : 'none';
+    _updatePreview();
+  });
+
+  document.getElementById('assignmentFormSelect')?.addEventListener('change', _updatePreview);
+
+  window.copyAssignmentLinkOnly = async function() {
+    try {
+      if (document.getElementById('assignmentCreateForm').checked) await _createToken();
+      if (_link) {
+        await navigator.clipboard.writeText(_link);
+        _showLink(_link);
+      } else { alert('אין קישור להעתקה'); }
+    } catch(e) { alert('שגיאה: ' + e.message); }
+  };
+
+  window.sendAssignmentEmail = async function() {
+    const email = document.getElementById('assignmentEmail').value.trim();
+    if (!email) return alert('אין כתובת מייל');
+    const btn = document.getElementById('assignmentSendBtn');
+    btn.disabled = true; btn.textContent = '⏳ שולח...';
+    try {
+      if (document.getElementById('assignmentCreateForm').checked) await _createToken();
+      await emailjs.init(EMAILJS_KEY);
+
+      const finalHtml = _buildFinalHtml();
+
+console.log('[EmailJS] HTML size:', {
+  bytes: new Blob([finalHtml]).size,
+  kb: (new Blob([finalHtml]).size / 1024).toFixed(2),
+  chars: finalHtml.length
+});
+      // _buildFinalHtml() מחזיר HTML נקי לאחר decode של entities
+      // ומשתמש ב-_link האמיתי שנוצר עבור הלקוחה
+      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+        to_email: email,
+        subject:  document.getElementById('assignmentSubject').value,
+        message:  _buildFinalHtml(),
+      });
+      const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
+      await supabase.from('customer_notes').insert({
+        customer_code: idCustomer,
+        dateNote: new Date().toISOString().split('T')[0],
+        noteText: `נשלחה הודעת שיבוץ לשנת ${yearLabel}${_link ? ' + קישור לטופס נהלי רישום' : ''}`,
+      });
+      if (_link) _showLink(_link);
+      btn.textContent = '✅ נשלח!';
+      setTimeout(() => { btn.disabled = false; btn.textContent = '📨 שלח'; }, 3000);
+    } catch(err) {
+      console.error(err);
+      alert('שגיאה בשליחה: ' + (err?.text || err?.message || JSON.stringify(err)));
+      btn.disabled = false; btn.textContent = '📨 שלח';
+    }
+  };
+
+  function _showLink(link) {
+    document.getElementById('assignmentLinkText').textContent = link;
+    document.getElementById('assignmentLinkRow').style.display = 'flex';
+  }
+
+  window.copyAssignmentLink = function() {
+    navigator.clipboard.writeText(_link || '');
+  };
+}
+
+window.getEmailTemplate = async function(key) {
+  return window.formsService?.getEmailTemplate?.(key);
+};
+// ======= סיום הודעת שיבוץ =======
+
+// ======= טפסים דיגיטליים =======
+async function loadDigitalForms(customerId) {
+  const section = document.getElementById('digitalFormsSection');
+  if (!section || !customerId) return;
+
+  const forms = await window.formsService.getCustomerForms(customerId);
+  const signed = forms.filter(f => f.status === 'signed');
+  const pending = forms.filter(f => f.status === 'pending');
+
+  if (!forms.length) {
+    section.innerHTML = '<div style="color:#9ca3af;font-size:13px;padding:8px 0">אין טפסים</div>';
+    return;
+  }
+
+  section.innerHTML = [...signed, ...pending].map(f => {
+    const name     = f.digital_forms?.name || 'טופס';
+    const isSigned = f.status === 'signed';
+    const date     = isSigned
+      ? (f.signed_at ? new Date(f.signed_at).toLocaleDateString('he-IL') : 'נחתם')
+      : ('נשלח ' + (f.sent_at ? new Date(f.sent_at).toLocaleDateString('he-IL') : ''));
+    const badge = isSigned
+      ? '<span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px">✓ נחתם</span>'
+      : '<span style="background:#fef9c3;color:#92400e;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px">⏳ ממתין</span>';
+    const viewBtn = isSigned && f.pdf_url
+      ? `<button data-path="${f.pdf_url}" data-name="${name}" onclick="window.openPdfView(this.dataset.path, this.dataset.name)" style="background:#f3f0ff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#7c3aed;cursor:pointer">👁️ צפייה</button>`
+      : '';
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:#faf9ff;border:1px solid #f3f0ff;margin-bottom:8px">
+        <span style="font-size:20px">📄</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:#1f2937">${name}</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:2px">${date}</div>
+        </div>
+        ${badge}
+        ${viewBtn}
+      </div>`;
+  }).join('');
+}
+
+window.openPdfView = async function(pdfPath, formName) {
+  const modal = document.getElementById('pdfViewModal');
+  const frame = document.getElementById('pdfViewFrame');
+  document.getElementById('pdfViewTitle').textContent = formName || 'מסמך';
+  frame.src = '';
+  modal.style.display = 'flex';
+  const { data } = window._sb.storage.from('form-pdfs').getPublicUrl(pdfPath);
+  if (data?.publicUrl) {
+    frame.src = data.publicUrl;
+  } else {
+    modal.style.display = 'none';
+    alert('לא ניתן לטעון את ה-PDF');
+  }
+};
+
+document.getElementById('pdfViewClose')?.addEventListener('click', () => {
+  document.getElementById('pdfViewModal').style.display = 'none';
+  document.getElementById('pdfViewFrame').src = '';
+});
+document.getElementById('pdfViewModal')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('pdfViewModal')) {
+    document.getElementById('pdfViewModal').style.display = 'none';
+    document.getElementById('pdfViewFrame').src = '';
+  }
+});
+
+// ======= כל המסמכים — מאוחד =======
+async function loadAllDocs(customerId) {
+  const section = document.getElementById('allDocsSection');
+  if (!section || !customerId) return;
+  section.innerHTML = '<div style="color:#9ca3af;font-size:13px;padding:8px 0">טוען...</div>';
+
+  const [digitalForms, manualDocs] = await Promise.all([
+    window.formsService.getCustomerForms(customerId).catch(() => []),
+    window._sb.from('customer_documents').select('id,name,file_path,created_at')
+      .eq('customer_id', customerId).order('created_at', { ascending: false })
+      .then(r => r.data || []).catch(() => []),
+  ]);
+
+  const rows = [
+    ...digitalForms.map(f => ({
+      type    : 'digital',
+      name    : f.digital_forms?.name || 'טופס',
+      status  : f.status,
+      date    : f.status === 'signed' ? f.signed_at : f.sent_at,
+      pdfPath : f.pdf_url || null,
+      id      : null,
+    })),
+    ...manualDocs.map(d => ({
+      type    : 'manual',
+      name    : d.name,
+      status  : 'manual',
+      date    : d.created_at,
+      pdfPath : d.file_path,
+      id      : d.id,
+    })),
+  ];
+
+  if (!rows.length) {
+    section.innerHTML = '<div style="color:#9ca3af;font-size:13px;padding:8px 0">אין מסמכים</div>';
+    return;
+  }
+
+  const badgeMap = {
+    signed  : '<span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px">✓ דיגיטלי</span>',
+    pending : '<span style="background:#fef9c3;color:#92400e;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px">⏳ ממתין</span>',
+    manual  : '<span style="background:#ede9fe;color:#7c3aed;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px">📁 טופס שנטען</span>',
+  };
+
+  section.innerHTML = rows.map(r => {
+    const dateStr = r.date ? new Date(r.date).toLocaleDateString('he-IL') : '—';
+    const badge   = badgeMap[r.status] || '';
+    const viewBtn = r.pdfPath
+      ? `<button data-path="${r.pdfPath}" data-name="${r.name}" onclick="window.openPdfView(this.dataset.path,this.dataset.name)" style="background:#f3f0ff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#7c3aed;cursor:pointer">👁️ צפייה</button>`
+      : '';
+    const delBtn = r.type === 'manual'
+      ? `<button data-id="${r.id}" data-path="${r.pdfPath}" onclick="window.deleteManualDoc(this)" style="background:#fee2e2;border:none;border-radius:8px;padding:5px 10px;font-size:12px;color:#dc2626;cursor:pointer">🗑️</button>`
+      : '';
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:#faf9ff;border:1px solid #f3f0ff;margin-bottom:8px">
+        <span style="font-size:20px">📄</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:#1f2937">${r.name}</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:2px">${dateStr}</div>
+        </div>
+        ${badge}
+        ${viewBtn}
+        ${delBtn}
+      </div>`;
+  }).join('');
+}
+
+document.getElementById('uploadDocBtn')?.addEventListener('click', async () => {
+  const name   = document.getElementById('uploadDocName').value.trim();
+  const file   = document.getElementById('uploadDocFile').files[0];
+  const status = document.getElementById('uploadDocStatus');
+  if (!name)        return alert('הזן שם למסמך');
+  if (!file)        return alert('בחר קובץ PDF');
+  if (!idCustomer)  return alert('שמור את הלקוחה תחילה');
+
+  const btn = document.getElementById('uploadDocBtn');
+  btn.disabled = true;
+  status.style.display = 'inline';
+  status.textContent = '⏳ מעלה...';
+  try {
+    const safeName = file.name.replace(/\s+/g, '_');
+    const path = `manual/${idCustomer}/${Date.now()}_${safeName}`;
+    const { error: upErr } = await window._sb.storage.from('form-pdfs')
+      .upload(path, file, { contentType: 'application/pdf', upsert: true });
+    if (upErr) throw upErr;
+    const { error: dbErr } = await window._sb.from('customer_documents')
+      .insert({ customer_id: idCustomer, name, file_path: path });
+    if (dbErr) throw dbErr;
+    status.textContent = '✅ נשמר!';
+    document.getElementById('uploadDocName').value = '';
+    document.getElementById('uploadDocFile').value = '';
+    setTimeout(() => { status.style.display = 'none'; }, 2000);
+    await loadAllDocs(idCustomer);
+  } catch(e) {
+    alert('שגיאה: ' + e.message);
+    status.style.display = 'none';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+window.deleteManualDoc = async function(btn) {
+  if (!confirm('למחוק מסמך זה?')) return;
+  await window._sb.storage.from('form-pdfs').remove([btn.dataset.path]);
+  await window._sb.from('customer_documents').delete().eq('id', btn.dataset.id);
+  await loadAllDocs(idCustomer);
+};

@@ -4,7 +4,7 @@
 
 window.pdfService = {
 
-  async generate({ formName, formKey, formContent, fieldValues, signatureDataUrl, activityYear, signedAt }) {
+  async generate({ formName, formContent, fieldValues, signatureDataUrl, activityYear, signedAt }) {
     await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
     await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
 
@@ -93,18 +93,21 @@ window.pdfService = {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-      const pageW  = 210;
-      const pageH  = 297;
-      const margin = 10;
-      const imgW   = pageW - margin * 2;
-      const imgH   = (canvas.height / canvas.width) * imgW;
+      const pageW    = 210;
+      const pageH    = 297;
+      const margin   = 10;
+      const imgW     = pageW - margin * 2;
+      const imgH     = (canvas.height / canvas.width) * imgW;
+      const pageImgH = pageH - margin * 2;
+      const totalPages = Math.ceil(imgH / pageImgH);
 
-      // פיצול לעמודים אם צריך
-      let yOffset = 0;
-      while (yOffset < imgH) {
-        if (yOffset > 0) doc.addPage();
-        doc.addImage(imgData, 'JPEG', margin, margin - yOffset, imgW, imgH);
-        yOffset += pageH - margin * 2;
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) doc.addPage();
+        doc.addImage(imgData, 'JPEG', margin, margin - i * pageImgH, imgW, imgH);
+        // חיתוך — מסתיר את מה שמחוץ לעמוד
+        doc.setFillColor(255, 255, 255);
+        doc.rect(0, 0, pageW, margin, 'F');
+        doc.rect(0, pageH - margin, pageW, margin, 'F');
       }
 
       return doc.output('blob');
@@ -134,12 +137,28 @@ window.pdfService = {
     };
   },
 
-  async getSignedUrl(path) {
-    const { data, error } = await window._sb.storage
-      .from('form-pdfs')
-      .createSignedUrl(path, 3600);
-    if (error) throw error;
-    return data.signedUrl;
+  // למנהל — anon key (דורש RLS מתאים על הbucket)
+  getSignedUrl(path) {
+    const { data } = window._sb.storage.from('form-pdfs').getPublicUrl(path);
+    return data?.publicUrl || null;
+  },
+
+  // ללקוחה מחוברת — דרך Edge Function עם service_role
+  async getSignedUrlForCustomer(path) {
+    const supabaseUrl = window._sb.supabaseUrl;
+    const session = (await window._sb.auth.getSession()).data.session;
+    if (!session) throw new Error('לא מחובר');
+    const res = await fetch(`${supabaseUrl}/functions/v1/get-form-pdf-url`, {
+      method : 'POST',
+      headers: {
+        'Content-Type' : 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ pdfPath: path }),
+    });
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+    return json.signedUrl;
   },
 };
 

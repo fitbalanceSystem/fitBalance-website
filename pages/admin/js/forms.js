@@ -152,8 +152,12 @@ window.copyLink = function(token) {
   });
 };
 
-// ── צפייה ב-PDF ───────────────────────────────────────────────────────────────
+// ── צפייה ב-PDF — path הוא Storage path, לא URL ישיר ────────────────────────
 window.viewPdf = async function(path) {
+  if (!path) {
+    alert('קובץ ה-PDF אינו זמין.');
+    return;
+  }
   try {
     const url = await window.pdfService.getSignedUrl(path);
     window.open(url, '_blank');

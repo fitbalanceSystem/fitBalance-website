@@ -9,7 +9,8 @@ window.renderLayout = function(activeId) {
     { id: 'plans',    label: 'תוכניות ונוכחות', icon: 'fa-dumbbell',     href: 'plans.html' },
     { id: 'shop',     label: 'חנות',            icon: 'fa-shopping-bag', href: 'shop.html', badge: true },
     { id: 'blog',     label: 'מאמרים',           icon: 'fa-newspaper',    href: '../../pages/customer/blog.html' },
-    { id: 'events',   label: 'אירועים בקהילה',   icon: 'fa-calendar-star', href: '../../pages/customer/events.html' },
+    { id: 'events',    label: 'אירועים בקהילה',   icon: 'fa-calendar-star', href: '../../pages/customer/events.html' },
+    { id: 'documents', label: 'המסמכים שלי',        icon: 'fa-file-contract', href: 'documents.html' },
   ];
 
   const navHTML = NAV.map(n => {

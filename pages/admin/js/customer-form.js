@@ -1895,7 +1895,7 @@ async function calcAutoStatus(customerId) {
     if (!formId) throw new Error('בחרי טופס');
     const result = await window.formsService.createFormRequest(idCustomer, formId, currentSchoolYearStart);
     _token = result.token;
-    _link  = `${location.origin}/pages/public/sign.html?token=${result.token}`;
+    _link  = `https://fitbalance.co.il/pages/public/sign.html?token=${result.token}`;
     _updatePreview();
     return _token;
   }

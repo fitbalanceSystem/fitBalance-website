@@ -77,11 +77,20 @@ window.pdfService = {
 
     // הכנסת ה-HTML ל-DOM זמני (מחוץ למסך)
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:fixed;top:-9999px;left:-9999px;z-index:-1';
+    wrapper.style.cssText = 'position:fixed;top:-9999px;left:-9999px;z-index:-1;width:794px';
     wrapper.innerHTML = html;
     document.body.appendChild(wrapper);
 
     try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW  = 210;
+      const pageH  = 297;
+      const margin = 10;
+      const imgW   = pageW - margin * 2;
+      const maxImgH = pageH - margin * 2;
+
+      // צלם כל ה-HTML בפעם אחת
       const canvas = await window.html2canvas(wrapper.firstElementChild, {
         scale      : 2,
         useCORS    : true,
@@ -89,25 +98,32 @@ window.pdfService = {
         windowWidth: 874,
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.92);
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const totalH   = canvas.height;
+      const totalW   = canvas.width;
+      const sliceH   = Math.floor((maxImgH / imgW) * totalW); // גובה פיקסלים לעמוד
 
-      const pageW    = 210;
-      const pageH    = 297;
-      const margin   = 10;
-      const imgW     = pageW - margin * 2;
-      const imgH     = (canvas.height / canvas.width) * imgW;
-      const pageImgH = pageH - margin * 2;
-      const totalPages = Math.ceil(imgH / pageImgH);
+      let offsetY = 0;
+      let pageIndex = 0;
 
-      for (let i = 0; i < totalPages; i++) {
-        if (i > 0) doc.addPage();
-        doc.addImage(imgData, 'JPEG', margin, margin - i * pageImgH, imgW, imgH);
-        // חיתוך — מסתיר את מה שמחוץ לעמוד
-        doc.setFillColor(255, 255, 255);
-        doc.rect(0, 0, pageW, margin, 'F');
-        doc.rect(0, pageH - margin, pageW, margin, 'F');
+      while (offsetY < totalH) {
+        const remaining = totalH - offsetY;
+        const currentSliceH = Math.min(sliceH, remaining);
+
+        // צור canvas של הפריסה הנוכחית
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width  = totalW;
+        sliceCanvas.height = currentSliceH;
+        const ctx = sliceCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, offsetY, totalW, currentSliceH, 0, 0, totalW, currentSliceH);
+
+        const sliceImgH = (currentSliceH / totalW) * imgW;
+        const imgData   = sliceCanvas.toDataURL('image/jpeg', 0.92);
+
+        if (pageIndex > 0) doc.addPage();
+        doc.addImage(imgData, 'JPEG', margin, margin, imgW, sliceImgH);
+
+        offsetY += currentSliceH;
+        pageIndex++;
       }
 
       return doc.output('blob');

@@ -40,7 +40,7 @@ window.uploadService = {
     const path = `email-attachments/${templateKey}/${Date.now()}${ext}`;
     const { error } = await window._sb.storage.from('products').upload(path, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
     if (error) throw error;
-    const { data } = window._sb.storage.from('products').getPublicUrl(path);
+    const { data } = window._sb.storage.from('products').getPublicUrl(path, { download: file.name });
     return { url: data.publicUrl, path, name: file.name, type: file.type || 'application/octet-stream' };
   },
 };

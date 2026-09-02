@@ -1876,7 +1876,9 @@ async function calcAutoStatus(customerId) {
     const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
     const linkUrl   = _link || '';
     const decoded = _decodeHtml(_bodyHtml || '<p>{{firstName}}, שיבוצך לשנת {{activityYear}}:<br>{{programs}}<br><a href="{{formLink}}">{{formLink}}</a></p>');
-    return decoded
+    // decode פעמיים למקרה של double-encoding
+    const decoded2 = _decodeHtml(decoded);
+    return decoded2
       .replace(/\{\{firstName\}\}/g,    firstName)
       .replace(/\{\{activityYear\}\}/g, yearLabel)
       .replace(/\{\{programs\}\}/g,     _programsHtml())
@@ -1900,6 +1902,7 @@ async function calcAutoStatus(customerId) {
     const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
 
     _token = null; _link = null; _bodyHtml = '';
+    window._assignmentNewFile = null;
 
     document.getElementById('assignmentModalTitle').textContent = `📨 הודעת שיבוץ — ${firstName} | ${yearLabel}`;
     document.getElementById('assignmentEmail').value   = email;
@@ -1909,11 +1912,27 @@ async function calcAutoStatus(customerId) {
     const toggleBtn = document.getElementById('assignmentEditToggleBtn');
     if (toggleBtn) toggleBtn.textContent = '✏️ ערוך טקסט';
 
+    // טעינת תבנית וקובץ מצורף
     try {
       const tmpl = await window.getEmailTemplate('assignment');
       const _ta = document.createElement('textarea'); _ta.innerHTML = tmpl?.body_html || ''; _bodyHtml = _ta.value;
       document.getElementById('assignmentSubject').value = (tmpl?.subject || 'שיבוצך לשנת {{activityYear}} 🎉')
         .replace('{{activityYear}}', yearLabel).replace('{{firstName}}', firstName);
+
+      // הצג קובץ מצורף קיים
+      const infoEl = document.getElementById('assignmentAttachmentInfo');
+      const nameEl = document.getElementById('assignmentAttachmentName');
+      const newNameEl = document.getElementById('assignmentAttachmentNewName');
+      newNameEl.textContent = '';
+      if (tmpl?.attachment?.url) {
+        nameEl.textContent = tmpl.attachment.name || 'קובץ מצורף';
+        nameEl.href = tmpl.attachment.url;
+        infoEl.style.display = 'flex';
+        window._assignmentTemplateAttachment = tmpl.attachment;
+      } else {
+        infoEl.style.display = 'none';
+        window._assignmentTemplateAttachment = null;
+      }
     } catch(e) {
       document.getElementById('assignmentSubject').value = `שיבוצך לשנת ${yearLabel} 🎉`;
     }
@@ -1970,6 +1989,21 @@ async function calcAutoStatus(customerId) {
     } catch(e) { alert('שגיאה: ' + e.message); }
   };
 
+  window.onAssignmentAttachmentChange = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+    window._assignmentNewFile = file;
+    document.getElementById('assignmentAttachmentNewName').textContent = `📎 ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+  };
+
+  window.removeAssignmentAttachment = function() {
+    window._assignmentTemplateAttachment = null;
+    window._assignmentNewFile = null;
+    document.getElementById('assignmentAttachmentInfo').style.display = 'none';
+    document.getElementById('assignmentAttachmentFile').value = '';
+    document.getElementById('assignmentAttachmentNewName').textContent = '';
+  };
+
   window.sendAssignmentEmail = async function() {
     const email = document.getElementById('assignmentEmail').value.trim();
     if (!email) return alert('אין כתובת מייל');
@@ -1980,19 +2014,26 @@ async function calcAutoStatus(customerId) {
       await emailjs.init(EMAILJS_KEY);
 
       const finalHtml = _buildFinalHtml();
-
-console.log('[EmailJS] HTML size:', {
-  bytes: new Blob([finalHtml]).size,
-  kb: (new Blob([finalHtml]).size / 1024).toFixed(2),
-  chars: finalHtml.length
-});
-      // _buildFinalHtml() מחזיר HTML נקי לאחר decode של entities
-      // ומשתמש ב-_link האמיתי שנוצר עבור הלקוחה
-      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+      const emailParams = {
         to_email: email,
         subject:  document.getElementById('assignmentSubject').value,
-        message:  _buildFinalHtml(),
-      });
+        message:  finalHtml,
+      };
+
+      // צירוף קובץ — קובץ חדש או קובץ מתבנית
+      const attachFile = window._assignmentNewFile || null;
+      const attachMeta = !attachFile ? (window._assignmentTemplateAttachment || null) : null;
+
+      if (attachFile) {
+        // קובץ חדש — עלה ל-Supabase ושלח URL
+        const uploaded = await window.uploadService.uploadEmailAttachment(attachFile, 'assignment-send');
+        emailParams.message += `<br><br>📎 <a href="${uploaded.url}">${uploaded.name}</a>`;
+      } else if (attachMeta?.url) {
+        // קובץ קיים מתבנית
+        emailParams.message += `<br><br>📎 <a href="${attachMeta.url}">${attachMeta.name || 'קובץ מצורף'}</a>`;
+      }
+
+      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, emailParams);
       const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
       await supabase.from('customer_notes').insert({
         customer_code: idCustomer,

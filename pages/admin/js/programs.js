@@ -31,8 +31,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // סינון ועיבוד הטבלה
   function renderPrograms(programs) {
+    console.log("programs");
+    console.log(programs);
     tbody.innerHTML = '';
     const today = new Date();
+    console.log("today");
+    console.log(today);
     today.setHours(0, 0, 0, 0);
     const showActive = document.getElementById('showActiveOnly').checked;
 

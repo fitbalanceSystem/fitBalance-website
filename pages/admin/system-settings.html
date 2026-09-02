@@ -1405,6 +1405,27 @@ function emailRenderParamsBar(key) {
   ).join('');
 }
 
+function emailRenderAttachmentInfo(key) {
+  const existing = document.getElementById('email-attachment-info');
+  if (existing) existing.remove();
+  const attachment = emailTemplatesData[key]?.attachment;
+  if (!attachment) return;
+  const info = document.createElement('div');
+  info.id = 'email-attachment-info';
+  info.style.cssText = 'margin-top:8px;font-size:13px;color:#555;display:flex;align-items:center;gap:8px';
+  info.innerHTML = `📎 <a href="${attachment.url}" target="_blank" style="color:#7c3aed">${attachment.name}</a>
+    <button onclick="emailRemoveAttachment()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer">הסר</button>`;
+  document.getElementById('email-quill-editor').parentElement.appendChild(info);
+}
+
+function emailRemoveAttachment() {
+  emailTemplatesData[emailCurrentKey] = emailTemplatesData[emailCurrentKey] || {};
+  emailTemplatesData[emailCurrentKey]._removeAttachment = true;
+  emailTemplatesData[emailCurrentKey]._attachment = null;
+  const info = document.getElementById('email-attachment-info');
+  if (info) info.remove();
+}
+
 async function emailSwitchTemplate(key, btn) {
   // שמור תוכן נוכחי לפני מעבר
   if (emailQuill && emailCurrentKey) {
@@ -1431,6 +1452,7 @@ async function emailSwitchTemplate(key, btn) {
     emailInitQuill();
     emailQuill.root.innerHTML = html;
     emailRenderParamsBar(key);
+    emailRenderAttachmentInfo(key);
   }, 30);
 }
 
@@ -1449,6 +1471,7 @@ async function loadEmailTemplates() {
     document.getElementById('email-subject').value = t.subject || 'ברוכה הבאה ל-FitBalance! 🎀';
     emailQuill.root.innerHTML = t.body_html || '<h2 style="text-align:right">שלום {{firstName}}! 🎀</h2><p style="text-align:right">שמחים לקבל אותך אלינו!</p>';
     emailRenderParamsBar('welcome');
+    emailRenderAttachmentInfo('welcome');
   }, 80);
 }
 
@@ -1474,47 +1497,9 @@ async function saveEmailTemplate() {
     // --------------------------------------------------
     // אם נבחר קובץ חדש - העלאה ל-Supabase Storage
     // --------------------------------------------------
+    if (templateData._removeAttachment) attachment = null;
     if (file) {
-      const fileExtension =
-        file.name.includes('.')
-          ? file.name.substring(file.name.lastIndexOf('.'))
-          : '';
-
-      const filePath =
-        `${emailCurrentKey}/${Date.now()}-${crypto.randomUUID()}${fileExtension}`;
-
-      console.log('[Email Template] Uploading attachment:', {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        path: filePath
-      });
-
-      const { error: uploadError } = await sb.storage
-        .from('email-attachments')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: file.type || 'application/octet-stream'
-        });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // קבלת URL ציבורי
-      const { data: publicUrlData } = sb.storage
-        .from('email-attachments')
-        .getPublicUrl(filePath);
-
-      attachment = {
-        name: file.name,
-        type: file.type || 'application/octet-stream',
-        path: filePath,
-        url: publicUrlData.publicUrl
-      };
-
-      console.log('[Email Template] Attachment uploaded:', attachment);
+      attachment = await window.uploadService.uploadEmailAttachment(file, emailCurrentKey);
     }
 
     // --------------------------------------------------
@@ -1549,30 +1534,13 @@ async function saveEmailTemplate() {
     delete emailTemplatesData[emailCurrentKey]._unsaved_html;
     delete emailTemplatesData[emailCurrentKey]._unsaved_subject;
     delete emailTemplatesData[emailCurrentKey]._attachment;
+    delete emailTemplatesData[emailCurrentKey]._removeAttachment;
 
-    // --------------------------------------------------
-    // הצגת הקובץ שנשמר
-    // --------------------------------------------------
-    let info = document.getElementById('email-attachment-info');
+    emailRenderAttachmentInfo(emailCurrentKey);
 
-    if (attachment) {
-      if (!info) {
-        info = document.createElement('div');
-        info.id = 'email-attachment-info';
-        info.style.marginTop = '8px';
-        info.style.fontSize = '13px';
-        info.style.color = '#555';
-
-        document
-          .getElementById('email-quill-editor')
-          .parentElement
-          .appendChild(info);
-      }
-
-      info.textContent = `📎 ${attachment.name}`;
-    } else if (info) {
-      info.remove();
-    }
+    // הסרת הצגת info ישנה (מוחלפת ע"י emailRenderAttachmentInfo)
+    const oldInfo = document.getElementById('email-attachment-info');
+    if (oldInfo && !attachment) oldInfo.remove();
 
     console.log(
       '[Email Template] Template saved successfully:',

@@ -641,6 +641,21 @@
 
       </div>
 
+      <!-- קובץ מצורף -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-size:11px;font-weight:700;color:#6b7280">קובץ מצורף</label>
+        <div id="assignmentAttachmentInfo" style="display:none;align-items:center;gap:8px;background:#f8f7ff;border:1px solid #ede9fe;border-radius:8px;padding:8px 12px;font-size:13px">
+          <span>📎</span>
+          <a id="assignmentAttachmentName" href="#" target="_blank" style="color:#7c3aed;flex:1"></a>
+          <button onclick="removeAssignmentAttachment()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer">הסר</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onclick="document.getElementById('assignmentAttachmentFile').click()" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📎 צרף קובץ</button>
+          <span id="assignmentAttachmentNewName" style="font-size:12px;color:#6b7280"></span>
+        </div>
+        <input type="file" id="assignmentAttachmentFile" style="display:none" onchange="onAssignmentAttachmentChange(this)" />
+      </div>
+
       <!-- קישור שנוצר -->
       <div id="assignmentLinkRow" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;align-items:center;gap:8px">
         <span style="font-size:12px;color:#166534;flex:1;word-break:break-all" id="assignmentLinkText"></span>

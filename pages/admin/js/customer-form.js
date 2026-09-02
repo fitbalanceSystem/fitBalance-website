@@ -1875,18 +1875,18 @@ async function calcAutoStatus(customerId) {
     const firstName = document.getElementById('firstName').value.trim();
     const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
     const linkUrl   = _link || '';
-    const decoded = _decodeHtml(_bodyHtml || '<p>{{firstName}}, שיבוצך לשנת {{activityYear}}:<br>{{programs}}<br><a href="{{formLink}}">{{formLink}}</a></p>');
-    // decode פעמיים למקרה של double-encoding
-    const decoded2 = _decodeHtml(decoded);
-    console.log('[assignment] _link:', _link);
-    console.log('[assignment] _bodyHtml snippet:', _bodyHtml?.slice(0,300));
-    console.log('[assignment] decoded2 snippet:', decoded2?.slice(0,300));
-    console.log('[assignment] has formLink in decoded2:', decoded2?.includes('{{formLink}}'), decoded2?.includes('formLink'));
-    return decoded2
+    let decoded = _decodeHtml(_bodyHtml || '<p>{{firstName}}, שיבוצך לשנת {{activityYear}}:<br>{{programs}}<br><a href="{{formLink}}">{{formLink}}</a></p>');
+    decoded = _decodeHtml(decoded); // double-decode
+    // החלפת כל צורות אפשריות של formLink (כולל encoded)
+    decoded = decoded
+      .replace(/href="[^"]*%7B%7BformLink%7D%7D[^"]*"/gi, `href="${linkUrl}"`)
+      .replace(/href="[^"]*\{\{formLink\}\}[^"]*"/gi,     `href="${linkUrl}"`);
+    return decoded
       .replace(/\{\{firstName\}\}/g,    firstName)
       .replace(/\{\{activityYear\}\}/g, yearLabel)
       .replace(/\{\{programs\}\}/g,     _programsHtml())
-      .replace(/\{\{formLink\}\}/g,     linkUrl);
+      .replace(/\{\{formLink\}\}/g,     linkUrl)
+      .replace(/%7B%7BformLink%7D%7D/gi, linkUrl);
   }
 
   async function _createToken() {

@@ -2034,7 +2034,8 @@ async function calcAutoStatus(customerId) {
         emailParams.message += `<br><br>📎 <a href="${uploaded.url}">${uploaded.name}</a>`;
       } else if (attachMeta?.url) {
         // קובץ קיים מתבנית
-        const downloadUrl = attachMeta.url.includes('?') ? attachMeta.url : `${attachMeta.url}?download=${encodeURIComponent(attachMeta.name || 'file')}`;
+        const baseUrl = attachMeta.url.split('?')[0];
+        const downloadUrl = `${baseUrl}?download=${encodeURIComponent(attachMeta.name || 'file')}`;
         emailParams.message += `<br><br>📎 <a href="${downloadUrl}">${attachMeta.name || 'קובץ מצורף'}</a>`;
       }
 

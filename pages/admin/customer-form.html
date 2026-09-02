@@ -9,6 +9,124 @@
   <link rel="stylesheet" href="css/admin-theme.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .section-card {
+      background: white;
+      border-radius: 14px;
+      border: 1.5px solid #ede9fe;
+      box-shadow: 0 2px 12px rgba(139,92,246,.07);
+      padding: 20px 22px;
+      margin-bottom: 18px;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #7c3aed;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border-bottom: 1.5px solid #f3f0ff;
+      padding-bottom: 10px;
+    }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .field-block { display: flex; flex-direction: column; gap: 5px; }
+    .field-block label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+    .field-block input,
+    .field-block select {
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 13px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      background: #fafafa;
+      transition: border-color .2s, box-shadow .2s;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .field-block input:focus,
+    .field-block select:focus {
+      border-color: #8b5cf6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(139,92,246,.1);
+    }
+    .field-block input[readonly] {
+      background: #f3f0ff;
+      color: #7c3aed;
+      font-weight: 700;
+      cursor: default;
+    }
+    .notes-toolbar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+    .btn-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn-note-add  { background: #f3f0ff; color: #7c3aed; }
+    .btn-note-save { background: linear-gradient(135deg,#ec4899,#8b5cf6); color: white; }
+    .btn-note-add:hover, .btn-note-save:hover { opacity: .85; }
+    #notesTable { width: 100%; border-collapse: collapse; font-size: 13px; }
+    #notesTable thead th {
+      background: #f8f7ff;
+      color: #6b7280;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 9px 12px;
+      text-align: right;
+      border-bottom: 2px solid #ede9fe;
+    }
+    #notesTable tbody td { padding: 8px 10px; border-bottom: 1px solid #f3f0ff; vertical-align: top; }
+    #notesTable .note-date {
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      width: 148px;
+    }
+    #notesTable .note-date:focus { border-color: #8b5cf6; }
+    #notesTable .note-text {
+      border: 1.5px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      width: 100%;
+      min-height: 72px;
+      resize: vertical;
+      line-height: 1.65;
+      box-sizing: border-box;
+    }
+    #notesTable .note-text:focus { border-color: #8b5cf6; }
+    .delete-note-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: background .15s;
+    }
+    .delete-note-btn:hover { background: #fee2e2; }
+  </style>
 </head>
 <body>
   <div id="global-spinner" class="spinner-overlay hidden"></div>
@@ -19,85 +137,125 @@
       <header class="page-header">
         <h1 id="formTitle">טופס רישום לקוח</h1>
         <div style="display:flex;gap:10px;align-items:center;">
+          <button id="backBtn" title="חזרה" style="background:#f3f4f6;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&#8592;</button>
           <span id="saveStatus" style="display:none;font-size:13px;color:#8b5cf6;font-weight:600;"></span>
           <button id="welcomeEmailBtn" style="background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:10px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">💌 ברוכה הבאה</button>
-          <button class="save-btn"><i class="fas fa-save"></i> שמור</button>
+          <button class="save-only-btn"><i class="fas fa-save"></i> שמור</button>
+          <button class="save-btn"><i class="fas fa-save"></i> שמור וסגור</button>
           <button class="cancel-btn"><i class="fas fa-times"></i> ביטול</button>
         </div>
       </header>
 
       <ul class="nav-links">
         <li><a href="#tab1" class="active">פרטים אישיים</a></li>
-        <li><a href="#tab2">אינדיקציות וטפסים</a></li>
+        <li><a href="#tab2">אינדיקציות והערות</a></li>
+        <li><a href="#tab3">טפסים</a></li>
         <li><a href="#tab4">חוגים ונוכחות</a></li>
       </ul>
 
       <div class="tab-content" id="tab1">
         <form id="customerForm">
-          <div class="form-grid">
-            <div>
-              <label for="idNumber">ת.ז</label>
-              <input type="text" id="idNumber" />
-            </div>
-            <div>
-              <label for="firstName">שם פרטי</label>
-              <input type="text" id="firstName" />
-            </div>
-            <div>
-              <label for="lastName">שם משפחה</label>
-              <input type="text" id="lastName" />
-            </div>
-            <div>
-              <label for="birthDate">תאריך לידה</label>
-              <input type="date" id="birthDate" />
-            </div>
-            <div>
-              <label for="city">עיר</label>
-              <input type="text" id="city" />
-            </div>
-            <div>
-              <label for="street">רחוב</label>
-              <input type="text" id="street" />
-            </div>
-            <div>
-              <label for="houseNumber">מספר בית</label>
-              <input type="text" id="houseNumber" />
-            </div>
-            <div>
-              <label for="mobile">נייד</label>
-              <input type="tel" id="mobile" />
-            </div>
-            <div>
-              <label for="email">אימייל</label>
-              <input type="email" id="email" />
-            </div>
-            <div>
-              <label for="arnonaId">ת.ז משלם ארנונה</label>
-              <input type="text" id="arnonaId" />
-            </div>
-            <div>
-              <label for="arnonaFirstName">שם משלם ארנונה</label>
-              <input type="text" id="arnonaFirstName" />
-            </div>
-            <div>
-              <label for="arnonaLastName">משפחה משלם ארנונה</label>
-              <input type="text" id="arnonaLastName" />
-            </div>
-            <div>
-              <label for="arnonaMobile">נייד משלם ארנונה</label>
-              <input type="tel" id="arnonaMobile" />
-            </div>
-            <div>
-              <label for="arnonaEmail">אימייל משלם ארנונה</label>
-              <input type="email" id="arnonaEmail" />
-            </div>
-            <div>
-              <label for="status">סטטוס</label>
-              <select id="status"></select>
+
+          <!-- תאריך יצירה + סטטוס -->
+          <div class="section-card">
+            <div class="form-grid-2">
+              <div class="field-block">
+                <label>📅 תאריך יצירה</label>
+                <input type="text" id="createdAtDisplay" readonly placeholder="יוצג אוטומטית..." />
+              </div>
+              <div class="field-block">
+                <label>🏷️ סטטוס</label>
+                <select id="status"></select>
+              </div>
             </div>
           </div>
-        </form>
 
+          <!-- פרטים אישיים -->
+          <div class="section-card">
+            <div class="section-title">👤 פרטים אישיים</div>
+            <div class="form-grid-3">
+              <div class="field-block">
+                <label>ת.ז</label>
+                <input type="text" id="idNumber" placeholder="000000000" />
+              </div>
+              <div class="field-block">
+                <label>שם פרטי</label>
+                <input type="text" id="firstName" placeholder="שם פרטי" />
+              </div>
+              <div class="field-block">
+                <label>שם משפחה</label>
+                <input type="text" id="lastName" placeholder="שם משפחה" />
+              </div>
+              <div class="field-block">
+                <label>תאריך לידה</label>
+                <input type="date" id="birthDate" />
+              </div>
+              <div class="field-block">
+                <label>נייד</label>
+                <input type="tel" id="mobile" placeholder="05X-XXXXXXX" />
+              </div>
+              <div class="field-block">
+                <label>אימייל</label>
+                <input type="email" id="email" placeholder="your@email.com" />
+              </div>
+              <div class="field-block">
+                <label>שם הורה</label>
+                <input type="text" id="parentName" placeholder="שם הורה" />
+              </div>
+              <div class="field-block">
+                <label>כיתה</label>
+                <input type="text" id="grade" placeholder="למשל: ג׳2" />
+              </div>
+            </div>
+          </div>
+
+          <!-- כתובת -->
+          <div class="section-card">
+            <div class="section-title">🏠 כתובת</div>
+            <div class="form-grid-3">
+              <div class="field-block">
+                <label>עיר</label>
+                <input type="text" id="city" placeholder="עיר" />
+              </div>
+              <div class="field-block">
+                <label>רחוב</label>
+                <input type="text" id="street" placeholder="רחוב" />
+              </div>
+              <div class="field-block">
+                <label>מספר בית</label>
+                <input type="text" id="houseNumber" placeholder="מס׳" />
+              </div>
+            </div>
+          </div>
+
+          <!-- פרטי משלם ארנונה -->
+          <div class="section-card">
+            <div class="section-title">🏛️ פרטי משלם ארנונה</div>
+            <div class="form-grid-3">
+              <div class="field-block">
+                <label>ת.ז משלם ארנונה</label>
+                <input type="text" id="arnonaId" placeholder="000000000" />
+              </div>
+              <div class="field-block">
+                <label>שם פרטי</label>
+                <input type="text" id="arnonaFirstName" placeholder="שם פרטי" />
+              </div>
+              <div class="field-block">
+                <label>שם משפחה</label>
+                <input type="text" id="arnonaLastName" placeholder="שם משפחה" />
+              </div>
+              <div class="field-block">
+                <label>נייד</label>
+                <input type="tel" id="arnonaMobile" placeholder="05X-XXXXXXX" />
+              </div>
+              <div class="field-block">
+                <label>אימייל</label>
+                <input type="email" id="arnonaEmail" placeholder="your@email.com" />
+              </div>
+            </div>
+          </div>
+
+        </form>
       </div>
 
       <div class="tab-content" id="tab2" style="display: none;">
@@ -115,64 +273,96 @@
           </div>
         </div>
 
-        <button class="add-note-btn" id="addNoteBtn">+ הוסף הערה</button>
-        <button class="add-note-btn" id="saveNotesBtn">שמור הערות</button>
+        <div class="notes-toolbar">
+          <button class="btn-note btn-note-add" id="addNoteBtn"><i class="fas fa-plus"></i> הוסף הערה</button>
+          <button class="btn-note btn-note-save" id="saveNotesBtn"><i class="fas fa-save"></i> שמור הערות</button>
+        </div>
 
-        <table class="notes-table" id="notesTable">
+        <table id="notesTable">
           <thead>
             <tr>
-              <th>תאריך</th>
+              <th style="width:155px">תאריך</th>
               <th>הערה</th>
-              <th></th>
+              <th style="width:44px"></th>
             </tr>
           </thead>
-          <tbody>
-            <!-- שורות דינמיות יתווספו כאן -->
-          </tbody>
+          <tbody></tbody>
         </table>
       </div>
 
-   
+      <!-- ====== TAB טפסים ====== -->
+      <div class="tab-content" id="tab3" style="display:none">
+
+        <!-- העלאת מסמך ידני -->
+        <div class="section-card">
+          <div class="section-title">📁 העלאת מסמך ידני</div>
+          <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+            <div class="field-block" style="flex:1;min-width:180px">
+              <label>שם המסמך</label>
+              <input type="text" id="uploadDocName" placeholder="למשל: הצהרת בריאות 2025" />
+            </div>
+            <div class="field-block" style="flex:1;min-width:180px">
+              <label>קובץ PDF</label>
+              <input type="file" id="uploadDocFile" accept=".pdf" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:8px 13px;font-size:13px;font-family:inherit;background:#fafafa;width:100%;box-sizing:border-box" />
+            </div>
+            <div style="padding-bottom:2px">
+              <button id="uploadDocBtn" style="background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:10px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+                <i class="fas fa-upload"></i> העלה ושמור
+              </button>
+              <span id="uploadDocStatus" style="display:none;font-size:13px;color:#8b5cf6;font-weight:600;margin-right:10px"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- כל הטפסים יחד -->
+        <div class="section-card">
+          <div class="section-title">📄 כל המסמכים</div>
+          <div id="allDocsSection">
+            <div style="color:#9ca3af;font-size:13px;padding:8px 0">טוען...</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- מודאל צפייה ב-PDF -->
+      <div id="pdfViewModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+        <div style="background:white;border-radius:16px;width:90%;max-width:860px;height:88vh;display:flex;flex-direction:column;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #f3f0ff;flex-shrink:0">
+            <span id="pdfViewTitle" style="font-size:14px;font-weight:700;color:#1f2937"></span>
+            <button id="pdfViewClose" style="background:none;border:none;font-size:22px;color:#9ca3af;cursor:pointer">&times;</button>
+          </div>
+          <iframe id="pdfViewFrame" style="flex:1;border:none;width:100%"></iframe>
+        </div>
+      </div>
 
     <!-- ====== TAB חוגים ונוכחות ====== -->
 <div class="tab-content" id="tab4" style="display: none;">
-  <!-- כפתורי פעולה -->
-  <div class="flex justify-start items-center mb-4 gap-2">
-    <button class="add-program-btn px-3 py-1 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-md shadow"
-            onclick="openClassesModal()">
-      + הוסף תוכנית
-    </button>
 
-    <button class="save-programs-btn px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md shadow"
-            id="saveProgramsBtn">
-      💾 שמור תוכניות
-    </button>
+  <!-- שורה 1: פעולות ברמת שנה -->
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;padding:10px 14px;background:#faf9ff;border:1.5px solid #ede9fe;border-radius:14px;">
 
-    <button id="addTrialBtn" class="px-3 py-1 bg-orange-400 hover:bg-orange-500 text-white font-semibold rounded-md shadow">
-      🔍 שבץ לניסיון
-    </button>
+    <button id="prevYearBtn" style="background:#f3f0ff;border:none;color:#7c3aed;font-weight:700;font-size:16px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&lt;</button>
+    <span id="schoolYearLabel" style="font-size:15px;font-weight:800;color:#1f2937;padding:6px 14px;background:white;border:1.5px solid #ede9fe;border-radius:10px;min-width:100px;text-align:center;">2025-2026</span>
+    <button id="nextYearBtn" style="background:#f3f0ff;border:none;color:#7c3aed;font-weight:700;font-size:16px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&gt;</button>
 
-    <!-- לחצן תיעוד השלמות -->
-    <button id="logCompletionBtn" class="save-programs-btn px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-md shadow" onclick="logCompletion()">
- תיעוד השלמות
-</button>
-  </div>
+    <div style="width:1px;height:24px;background:#ede9fe;margin:0 4px;"></div>
 
-  <!-- דפדוף בין שנים לימודיות -->
-  <div class="school-year-navigation flex items-center justify-center my-4 gap-4">
-    <button id="prevYearBtn"
-            class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg shadow transition">
-      &lt;
-    </button>
-  
-    <span id="schoolYearLabel" class="text-lg font-bold px-4 py-2 bg-gray-100 rounded-lg shadow">
-      2025-2026
-    </span>
-  
-    <button id="nextYearBtn"
-            class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg shadow transition">
-      &gt;
-    </button>
+    <button onclick="window.openYearSummaryModal()" style="background:#eef2ff;border:1.5px solid #c7d2fe;color:#4338ca;font-size:13px;font-weight:700;padding:6px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;font-family:inherit;">סיכום כניסות</button>
+
+    <button id="completionsYearBtn" onclick="window.openYearCompletionsModal()" style="background:#f5f3ff;border:1.5px solid #ddd6fe;color:#7c3aed;font-size:13px;font-weight:700;padding:6px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;font-family:inherit;"><span id="completionsYearCount">...</span> השלמות</button>
+
+    <button id="addTrialBtn" style="background:#fff7ed;border:1.5px solid #fed7aa;color:#c2410c;font-size:13px;font-weight:700;padding:6px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;font-family:inherit;">שבץ לניסיון</button>
+
+    <div style="width:1px;height:24px;background:#ede9fe;margin:0 4px;"></div>
+
+    <button onclick="openClassesModal()" style="background:linear-gradient(135deg,#34d399,#059669);border:none;color:white;font-size:13px;font-weight:700;padding:6px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;font-family:inherit;">+ הוסף תוכנית</button>
+
+    <button id="saveProgramsBtn" style="background:linear-gradient(135deg,#60a5fa,#3b82f6);border:none;color:white;font-size:13px;font-weight:700;padding:6px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;font-family:inherit;">שמור תוכניות</button>
+
+    <div style="width:1px;height:24px;background:#ede9fe;margin:0 4px;"></div>
+
+    <button id="assignmentEmailBtn" style="background:linear-gradient(135deg,#f59e0b,#ec4899);border:none;color:white;font-size:13px;font-weight:700;padding:6px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;font-family:inherit;">📨 הודעת שיבוץ</button>
+
   </div>
 
   <!-- טבלת תוכניות -->
@@ -182,6 +372,7 @@
       <tr>
         <th class="border px-2 py-1">סוג תוכנית</th>
         <th class="border px-2 py-1">שם</th>
+        <th class="border px-2 py-1">סניף</th>
         <th class="border px-2 py-1">יום</th>
         <th class="border px-2 py-1">שעה</th>
         <th class="border px-2 py-1">ת. התחלה</th>
@@ -252,6 +443,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../../services/supabaseClient.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="../../services/formsService.js"></script>
   <script type="module" src="js/customer-form.js"></script>
 
   <!-- מודאל בחירת תוכניות -->
@@ -398,6 +590,86 @@
 <!-- ספינר גלובלי -->
 <div id="globalLoader" class="fixed inset-0 bg-black bg-opacity-40 hidden flex items-center justify-center z-[1000]">
   <div class="w-10 h-10 border-4 border-pink-400 border-t-transparent rounded-full animate-spin"></div>
+</div>
+
+<!-- מודאל הודעת שיבוץ -->
+<div id="assignmentModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center;padding:16px">
+  <div style="background:white;border-radius:16px;width:100%;max-width:660px;max-height:92vh;display:flex;flex-direction:column;direction:rtl;overflow:hidden">
+
+    <div style="padding:18px 22px 0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <h3 id="assignmentModalTitle" style="font-size:15px;font-weight:800;color:#1f2937">📨 הודעת שיבוץ</h3>
+      <button onclick="closeAssignmentModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9ca3af">✕</button>
+    </div>
+
+    <div style="overflow-y:auto;flex:1;padding:18px 22px;display:flex;flex-direction:column;gap:14px">
+
+      <!-- נושא -->
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:11px;font-weight:700;color:#6b7280">נושא המייל</label>
+        <input id="assignmentSubject" type="text" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none" />
+      </div>
+
+      <!-- תצוגה מקדימה של גוף המייל -->
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <label style="font-size:11px;font-weight:700;color:#6b7280">תצוגה מקדימה של המייל</label>
+          <button onclick="assignmentToggleEdit()" id="assignmentEditToggleBtn" style="background:none;border:1px solid #ede9fe;border-radius:6px;padding:3px 10px;font-size:11px;color:#7c3aed;cursor:pointer;font-family:inherit">✏️ ערוך טקסט</button>
+        </div>
+        <!-- תצוגה מקדימה HTML -->
+        <div id="assignmentPreviewBox" style="border:1.5px solid #ede9fe;border-radius:10px;padding:16px 20px;font-size:13px;line-height:1.9;direction:rtl;background:#fafafa;min-height:160px"></div>
+        <!-- עריכת טקסט (מוסתר כברירת מחדל) -->
+        <textarea id="assignmentBodyOverride" rows="8" placeholder="השאר ריק לשימוש בתבנית המוגדרת בהגדרות מערכת" style="display:none;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;resize:vertical;line-height:1.7"></textarea>
+      </div>
+
+      <!-- פרטי שליחה -->
+      <div style="background:#f8f7ff;border:1px solid #ede9fe;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px">
+
+        <div style="display:flex;align-items:center;gap:10px">
+          <label style="font-size:12px;font-weight:700;color:#6b7280;white-space:nowrap;min-width:80px">אימייל לשליחה</label>
+          <input id="assignmentEmail" type="email" style="flex:1;border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none" />
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="assignmentCreateForm" checked style="width:16px;height:16px;accent-color:#8b5cf6;cursor:pointer" />
+          <label for="assignmentCreateForm" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer">צור טופס נהלי רישום ושלח קישור</label>
+        </div>
+
+        <div id="assignmentFormRow" style="display:flex;align-items:center;gap:10px">
+          <label style="font-size:12px;font-weight:700;color:#6b7280;white-space:nowrap;min-width:80px">טופס</label>
+          <select id="assignmentFormSelect" onchange="assignmentUpdatePreview()" style="flex:1;border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none"></select>
+        </div>
+
+      </div>
+
+      <!-- קובץ מצורף -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-size:11px;font-weight:700;color:#6b7280">קובץ מצורף</label>
+        <div id="assignmentAttachmentInfo" style="display:none;align-items:center;gap:8px;background:#f8f7ff;border:1px solid #ede9fe;border-radius:8px;padding:8px 12px;font-size:13px">
+          <span>📎</span>
+          <a id="assignmentAttachmentName" href="#" target="_blank" style="color:#7c3aed;flex:1"></a>
+          <button onclick="removeAssignmentAttachment()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer">הסר</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onclick="document.getElementById('assignmentAttachmentFile').click()" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ede9fe;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📎 צרף קובץ</button>
+          <span id="assignmentAttachmentNewName" style="font-size:12px;color:#6b7280"></span>
+        </div>
+        <input type="file" id="assignmentAttachmentFile" style="display:none" onchange="onAssignmentAttachmentChange(this)" />
+      </div>
+
+      <!-- קישור שנוצר -->
+      <div id="assignmentLinkRow" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;align-items:center;gap:8px">
+        <span style="font-size:12px;color:#166534;flex:1;word-break:break-all" id="assignmentLinkText"></span>
+        <button onclick="copyAssignmentLink()" style="background:#16a34a;color:white;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">📋 העתק</button>
+      </div>
+
+    </div>
+
+    <div style="padding:14px 22px;border-top:1px solid #f3f4f6;display:flex;gap:8px;justify-content:flex-end;flex-shrink:0">
+      <button onclick="closeAssignmentModal()" style="padding:9px 18px;border:1.5px solid #e5e7eb;border-radius:8px;background:white;font-size:13px;cursor:pointer;font-family:inherit">ביטול</button>
+      <button onclick="copyAssignmentLinkOnly()" style="padding:9px 18px;border:1.5px solid #ede9fe;border-radius:8px;background:#f3f0ff;color:#7c3aed;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📋 העתק קישור בלבד</button>
+      <button id="assignmentSendBtn" onclick="sendAssignmentEmail()" style="padding:9px 22px;background:linear-gradient(135deg,#f59e0b,#ec4899);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📨 שלח</button>
+    </div>
+  </div>
 </div>
 
 </body>

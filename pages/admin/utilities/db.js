@@ -1,7 +1,8 @@
 // db.js
 export const supabase = new Proxy({}, {
   get(_, prop) {
-    return window._sb[prop].bind(window._sb);
+    const val = window._sb[prop];
+    return typeof val === 'function' ? val.bind(window._sb) : val;
   }
 });
 

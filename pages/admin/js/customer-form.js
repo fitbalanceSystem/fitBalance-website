@@ -1,7 +1,7 @@
 import { supabase, fetchItems, updateItem, upsert } from '../utilities/db.js';
 import * as methods from '../utilities/methods.js';
 import '../utilities/main.js';
-import { populateSelectFromCodeTable, loadAllCodeTables} from '../utilities/code-tables.js';
+import { populateSelectFromCodeTable, loadAllCodeTables, getNameFromCodeTable} from '../utilities/code-tables.js';
 
 // import { supabase, fetchItems, insertItem, updateItem, deleteItem } from '../utilities/db.js';
 // import '../utilities/main.js';
@@ -23,6 +23,8 @@ window.updateSchoolYearLabel = updateSchoolYearLabel;
 document.addEventListener('DOMContentLoaded', async () => {
   
 console.log("YYY1");
+
+  await loadAllCodeTables();
 
   const params = new URLSearchParams(window.location.search);
   const customerId = parseInt(params.get('id'), 10);
@@ -89,6 +91,11 @@ console.log("YYY");
     document.getElementById('arnonaMobile').value = dataCustomers.payerMobile || '';
     document.getElementById('arnonaEmail').value = dataCustomers.payerEmail || '';
 
+    if (dataCustomers.created_at) {
+      document.getElementById('createdAtDisplay').value =
+        new Date(dataCustomers.created_at).toLocaleDateString('he-IL', { day:'numeric', month:'long', year:'numeric' });
+    }
+
     document.getElementById('checkbox1').checked = !!dataCustomers.isSignedHealthForm;
     document.getElementById('checkbox2').checked = !!dataCustomers.issignedRegisTrationPolicy;
     document.getElementById('checkbox3').checked = !!dataCustomers.inWhatsAppList;
@@ -117,6 +124,7 @@ console.log("YYY");
 
 
     toggleDueDate(); // להריץ שוב בהתאם לערך isPregnant
+    await loadDigitalForms(customerId);
   }
 
   // שמירת הנתונים בטופס
@@ -184,19 +192,32 @@ console.log(customerId);
     // }
   }
 
-  // מחבר את כפתור השמירה לאירוע
+  // שמור וסגור
   document.querySelectorAll('.save-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.preventDefault();
       await saveCustomer();
       sessionStorage.setItem('reloadCustomers', 'true');
-      close();
+      window.history.back();
     });
   });
-  
+
+  // שמור בלבד
+  document.querySelectorAll('.save-only-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await saveCustomer();
+    });
+  });
 
   // ביטול
   document.querySelector('.cancel-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    close();
+  });
+
+  // חזרה
+  document.getElementById('backBtn')?.addEventListener('click', (e) => {
     e.preventDefault();
     close();
   });
@@ -313,7 +334,8 @@ async function loadCustomerProgramsBySchoolYear(customerId, schoolYearStart) {
         time,
         start_date,
         end_date,
-        price
+        price,
+        branch_code
       )
     `)
     .eq('customer_id', customerId)
@@ -336,6 +358,8 @@ async function loadCustomerProgramsBySchoolYear(customerId, schoolYearStart) {
   const noProgramsRow = tbody.querySelector('.no-programs');
   if (noProgramsRow) noProgramsRow.remove();
 
+  const dayNames = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
   data.forEach(enrollment => {
     const tr = document.createElement('tr');
 
@@ -351,14 +375,17 @@ async function loadCustomerProgramsBySchoolYear(customerId, schoolYearStart) {
     tr.dataset.enrollmentId = enrollment.id;
     tr.dataset.code = enrollment.programs?.id;
 
+    const dayNum = parseInt(enrollment.programs?.day);
+    const dayDisplay = (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 7) ? dayNames[dayNum - 1] : (enrollment.programs?.day || '');
+
     tr.innerHTML = `
       <td>
         <input type="hidden" class="program-id" value="${enrollment.programs?.id || ''}">
         ${enrollment.programs?.type_code || ''}
       </td>
       <td>${enrollment.programs?.name || ''}</td>
-      <td>${enrollment.programs?.branch || ''}</td>
-      <td>${enrollment.programs?.day || ''}</td>
+      <td>${getNameFromCodeTable('branch', enrollment.programs?.branch_code) || ''}</td>
+      <td>${dayDisplay}</td>
       <td>${enrollment.programs?.time || ''}</td>
       <td><input type="date" class="start-date" value="${startDate}"></td>
       <td><input type="date" class="end-date" value="${endDate}"></td>
@@ -446,8 +473,7 @@ async function loadDB1(nameTable) {
 
 // ??
 async function close() {
-  sessionStorage.setItem('resetSearch', 'true');
-    window.history.back();
+  window.history.back();
 }
 
 
@@ -675,6 +701,7 @@ async function addSelectedPrograms() {
 
   closeModal1();
   await loadCustomerPrograms(idCustomer);
+  await ensureAttendanceRecords(idCustomer);
   alert("התוכניות נוספו בהצלחה ✅");
 }
 
@@ -884,6 +911,7 @@ if (existingPrograms.length > 0) {
     // עדכון בזיכרון
     allProgram = programsToSave;
 
+    await ensureAttendanceRecords(idCustomer);
     Swal.fire('השינויים נשמרו', 'התוכניות עודכנו בהצלחה ✅', 'success');
     methods.hideLoader();
 
@@ -913,109 +941,117 @@ async function getAllSessionIdsForProgram(programId) {
 // מחיקת תוכנית של לקוחה (כולל טיפול בנוכחויות)
 async function deleteCustomerProgram(programEnrollmentId, customerId, programId) {
   try {
-    // 1️⃣ שליפת כל המפגשים של התוכנית
+    // 1️⃣ שליפת תאריכי השיבוץ הספציפי
+    const { data: enrollment, error: enError } = await supabase
+      .from('program_enrollments')
+      .select('start_date, end_date')
+      .eq('id', programEnrollmentId)
+      .single();
+    if (enError) throw enError;
+
+    // 2️⃣ שליפת מפגשים בתוכנית בתוך טווח תאריכי השיבוץ בלבד
     const { data: sessions, error: sessionsError } = await supabase
       .from('program_sessions')
       .select('id')
-      .eq('program_id', programId);
-
+      .eq('program_id', programId)
+      .gte('date', enrollment.start_date)
+      .lte('date', enrollment.end_date);
     if (sessionsError) throw sessionsError;
 
-    // אין מפגשים כלל → מחיקה ישירה של ההרשמה בלבד
+    // אין מפגשים בתקופה → מחיקה ישירה
     if (!sessions || sessions.length === 0) {
       await supabase.from('program_enrollments').delete().eq('id', programEnrollmentId);
-      Swal.fire('נמחק', 'התוכנית הוסרה (לא נמצאו מפגשים)', 'success');
-      
-    loadCustomerPrograms(idCustomer);
+      Swal.fire('נמחק', 'השיבוץ הוסר (לא נמצאו מפגשים בתקופה זו)', 'success');
+      loadCustomerPrograms(idCustomer);
       return;
     }
 
     const sessionIds = sessions.map(s => s.id);
 
-    // 2️⃣ שליפת נוכחויות של הלקוחה בתוכנית זו
+    // 3️⃣ שליפת נוכחויות של הלקוחה במפגשים אלו בלבד
     const { data: attendanceData, error: attendanceError } = await supabase
       .from('session_attendance')
       .select('id, is_present')
       .in('session_id', sessionIds)
       .eq('customer_id', customerId);
-
     if (attendanceError) throw attendanceError;
 
-    // 3️⃣ אין כלל רשומות נוכחות → מחיקה פשוטה של ההרשמה
+    // אין נוכחויות כלל → מחיקה פשוטה
     if (!attendanceData || attendanceData.length === 0) {
       await supabase.from('program_enrollments').delete().eq('id', programEnrollmentId);
-      Swal.fire('נמחק', 'התוכנית הוסרה (לא נמצאו נוכחויות)', 'success');
+      Swal.fire('נמחק', 'השיבוץ הוסר', 'success');
+      loadCustomerPrograms(idCustomer);
       return;
     }
 
-    // 4️⃣ יש רשומות נוכחות, נבדוק אם קיימת לפחות אחת TRUE
-    const hasTrue = attendanceData.some(a => a.is_present === true);
+    // 4️⃣ בדיקה אם יש שיעורים שדווחה בהם נוכחות (is_present = true) בתקופת השיבוץ
+    const presentIds = attendanceData.filter(a => a.is_present === true || a.is_present === 1).map(a => a.id);
+    const absentIds  = attendanceData.filter(a => !a.is_present).map(a => a.id);
 
-    if (hasTrue) {
-      // יש TRUE — שואלים את המשתמשת מה לעשות
+    if (presentIds.length > 0) {
       const result = await Swal.fire({
-        title: 'נמצאו נוכחויות פעילות',
-        text: 'בחרי מה לעשות עם הנוכחויות של תוכנית זו:',
+        title: 'נמצאו נוכחויות בתקופת השיבוץ',
+        html: `נמצאו <strong>${presentIds.length}</strong> שיעורים שדווח שהגיעה אליהם.<br>מה לעשות עם נוכחויות אלו?`,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'הפוך נוכחויות TRUE להשלמות',
+        confirmButtonText: 'העבר להשלמות',
+        confirmButtonColor: '#8b5cf6',
+        denyButtonText: 'מחק הכול',
+        denyButtonColor: '#dc2626',
         cancelButtonText: 'ביטול',
         showDenyButton: true,
-        denyButtonText: 'מחק הכול לגמרי',
       });
 
       if (result.isConfirmed) {
-        // ✅ הפוך TRUE להשלמות, מחק את כל השאר
-        await supabase
+        // העבר נוכחויות TRUE → status_code=2 (השלמה), is_present=false, מחק את השאר
+        const { error: updateErr } = await supabase
           .from('session_attendance')
-          .update({ status_code: 2 })
+          .update({ status_code: 2, is_present: false })
           .in('session_id', sessionIds)
           .eq('customer_id', customerId)
-          .eq('is_present', true);
+          .or('is_present.eq.true,is_present.eq.1');
+        if (updateErr) throw updateErr;
 
-        await supabase
-          .from('session_attendance')
-          .delete()
-          .in('session_id', sessionIds)
-          .eq('customer_id', customerId)
-          .eq('is_present', false);
-
-        await supabase.from('program_enrollments').delete().eq('id', programEnrollmentId);
-        Swal.fire('עודכן', 'נוכחויות TRUE הוסבו להשלמות, והשאר נמחקו.', 'success');
-      } 
-      else if (result.isDenied) {
-        // ✅ מחיקה מוחלטת של הכול
+        if (absentIds.length > 0) {
+          const { error: delErr } = await supabase
+            .from('session_attendance')
+            .delete()
+            .in('session_id', sessionIds)
+            .eq('customer_id', customerId)
+            .or('is_present.eq.false,is_present.eq.0,is_present.is.null');
+          if (delErr) throw delErr;
+        }
+        const { error: enDelErr } = await supabase
+          .from('program_enrollments').delete().eq('id', programEnrollmentId);
+        if (enDelErr) throw enDelErr;
+        Swal.fire('בוצע', `${presentIds.length} נוכחויות הועברו להשלמות והשיבוץ הוסר.`, 'success');
+        loadCustomerPrograms(idCustomer);
+      } else if (result.isDenied) {
+        // מחק הכול
         await supabase
           .from('session_attendance')
           .delete()
           .in('session_id', sessionIds)
           .eq('customer_id', customerId);
-
         await supabase.from('program_enrollments').delete().eq('id', programEnrollmentId);
-        Swal.fire('נמחק', 'כל הנוכחויות והתוכנית נמחקו.', 'success');
-      } 
-      else {
-        Swal.fire('בוטל', 'לא בוצעה פעולה.', 'info');
+        Swal.fire('נמחק', 'כל הנוכחויות והשיבוץ נמחקו.', 'success');
+        loadCustomerPrograms(idCustomer);
       }
-    } 
-    else {
-      // ✅ אין אף TRUE — כל הרשומות FALSE או NULL ⇒ מוחקים הכול אוטומטית
+      // ביטול — לא עושים כלום
+    } else {
+      // אין נוכחויות TRUE — מוחקים הכול אוטומטית
       await supabase
         .from('session_attendance')
         .delete()
         .in('session_id', sessionIds)
         .eq('customer_id', customerId);
-
-      await supabase
-        .from('program_enrollments')
-        .delete()
-        .eq('id', programEnrollmentId);
-
-      Swal.fire('נמחק בהצלחה', 'כל רשומות הנוכחות של התוכנית נמחקו (לא נמצאו TRUE).', 'success');
+      await supabase.from('program_enrollments').delete().eq('id', programEnrollmentId);
+      Swal.fire('נמחק', 'השיבוץ הוסר (לא היו נוכחויות מדווחות).', 'success');
+      loadCustomerPrograms(idCustomer);
     }
 
   } catch (error) {
-    console.error('❌ שגיאה במחיקת תוכנית:', error);
+    console.error('❌ שגיאה במחיקת שיבוץ:', error);
     Swal.fire('שגיאה', 'אירעה שגיאה בעת המחיקה: ' + error.message, 'error');
   }
 }
@@ -1205,6 +1241,11 @@ links.forEach(link => {
     // אם האלמנט קיים, מציגים אותו
     if (target) target.style.display = "block";
 
+    // אם הקישור שנלחץ הוא לטאב מספר 3 (href="#tab3")
+    if (link.getAttribute("href") === "#tab3") {
+      loadAllDocs(parseInt(idCustomer, 10));
+    }
+
     // אם הקישור שנלחץ הוא לטאב מספר 4 (href="#tab4")
     if (link.getAttribute("href") === "#tab4") {
       // קוראים לפונקציה loadCustomerPrograms עם מזהה הלקוח
@@ -1214,13 +1255,55 @@ links.forEach(link => {
   });
 });
 
-// ======= פונקציה מרכזית לטעינת תוכניות לפי idCustomer =======
+// ======= יצירת רשומות נוכחות חסרות =======
+async function ensureAttendanceRecords(customerId) {
+  // שלוף את כל ההרשמות הפעילות של הלקוחה
+  const { data: enrollments, error: enError } = await supabase
+    .from('program_enrollments')
+    .select('program_id, start_date, end_date')
+    .eq('customer_id', customerId);
+  if (enError || !enrollments?.length) return;
+
+  for (const en of enrollments) {
+    // שלוף את כל המפגשים של התוכנית בטווח ההרשמה
+    const { data: sessions, error: sError } = await supabase
+      .from('program_sessions')
+      .select('id')
+      .eq('program_id', en.program_id)
+      .gte('date', en.start_date)
+      .lte('date', en.end_date);
+    if (sError || !sessions?.length) continue;
+
+    // שלוף רשומות קיימות
+    const { data: existing } = await supabase
+      .from('session_attendance')
+      .select('session_id')
+      .eq('customer_id', customerId)
+      .in('session_id', sessions.map(s => s.id));
+
+    const existingIds = new Set((existing || []).map(a => a.session_id));
+
+    // צור רשומות חסרות
+    const toInsert = sessions
+      .filter(s => !existingIds.has(s.id))
+      .map(s => ({ customer_id: customerId, session_id: s.id, is_present: false, status_code: 1 }));
+
+    if (toInsert.length > 0) {
+      await supabase.from('session_attendance').insert(toInsert);
+    }
+  }
+}
+let schoolYearNavigationInitialized = false;
+
 async function loadCustomerPrograms(customerId) {
   if (!customerId) return;
 
   currentSchoolYearStart = getCurrentSchoolYear();
   updateSchoolYearLabel(currentSchoolYearStart);
-  setupSchoolYearNavigation();
+  if (!schoolYearNavigationInitialized) {
+    setupSchoolYearNavigation();
+    schoolYearNavigationInitialized = true;
+  }
   await loadCustomerProgramsBySchoolYear(customerId, currentSchoolYearStart);
 }
 
@@ -1740,3 +1823,420 @@ async function calcAutoStatus(customerId) {
 
   return 'interested'; // מתעניינת
 }
+
+
+// ======= הודעת שיבוץ =======
+{
+  const _DAY = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  let _token = null, _link = null, _bodyHtml = '';
+
+  function _programsHtml() {
+    return (allProgram || []).filter(e => e.programs?.type_code == 1).map(e => {
+      const n = e.programs?.name || '';
+      const d = parseInt(e.programs?.day);
+      const day = (!isNaN(d) && d >= 1 && d <= 7) ? _DAY[d-1] : '';
+      const t = e.programs?.time ? e.programs.time.slice(0,5) : '';
+      return `• ${n} — יום ${day} ${t}`;
+    }).join('<br>') || 'טרם נוספו תוכניות';
+  }
+
+  function _updatePreview() {
+    const firstName = document.getElementById('firstName').value.trim();
+    const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
+    const override  = document.getElementById('assignmentBodyOverride');
+    let html;
+    if (override && override.style.display !== 'none' && override.value.trim()) {
+      html = '<div style="white-space:pre-wrap">' + override.value + '</div>';
+    } else {
+      const linkHtml = _link
+        ? _link
+        : '<em style="color:#9ca3af">קישור ייווצר בעת השליחה</em>';
+      html = (_bodyHtml || '<p>{{firstName}}, שיבוצך לשנת {{activityYear}}:<br>{{programs}}<br>{{formLink}}</p>')
+        .replace(/\{\{firstName\}\}/g,    firstName)
+        .replace(/\{\{activityYear\}\}/g, yearLabel)
+        .replace(/\{\{programs\}\}/g,     _programsHtml())
+        .replace(/\{\{formLink\}\}/g,     linkHtml);
+    }
+    const box = document.getElementById('assignmentPreviewBox');
+    if (box) box.innerHTML = html;
+  }
+
+  function _decodeHtml(str) {
+    const ta = document.createElement('textarea');
+    ta.innerHTML = str;
+    return ta.value;
+  }
+
+  function _buildFinalHtml() {
+    const override = document.getElementById('assignmentBodyOverride');
+    if (override && override.style.display !== 'none' && override.value.trim()) {
+      return '<div style="direction:rtl;font-family:Arial,sans-serif;white-space:pre-wrap">' + override.value + '</div>';
+    }
+    const firstName = document.getElementById('firstName').value.trim();
+    const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
+    const linkUrl   = _link || '';
+    const decoded = _decodeHtml(_bodyHtml || '<p>{{firstName}}, שיבוצך לשנת {{activityYear}}:<br>{{programs}}<br><a href="{{formLink}}">{{formLink}}</a></p>');
+    // decode פעמיים למקרה של double-encoding
+    const decoded2 = _decodeHtml(decoded);
+    console.log('[assignment] _link:', _link);
+    console.log('[assignment] _bodyHtml snippet:', _bodyHtml?.slice(0,300));
+    console.log('[assignment] decoded2 snippet:', decoded2?.slice(0,300));
+    console.log('[assignment] has formLink in decoded2:', decoded2?.includes('{{formLink}}'), decoded2?.includes('formLink'));
+    return decoded2
+      .replace(/\{\{firstName\}\}/g,    firstName)
+      .replace(/\{\{activityYear\}\}/g, yearLabel)
+      .replace(/\{\{programs\}\}/g,     _programsHtml())
+      .replace(/\{\{formLink\}\}/g,     linkUrl);
+  }
+
+  async function _createToken() {
+    if (_token) return _token;
+    const formId = parseInt(document.getElementById('assignmentFormSelect').value);
+    if (!formId) throw new Error('בחרי טופס');
+    const result = await window.formsService.createFormRequest(idCustomer, formId, currentSchoolYearStart);
+    _token = result.token;
+    _link  = `https://fitbalance.co.il/pages/public/sign.html?token=${result.token}`;
+    _updatePreview();
+    return _token;
+  }
+
+  document.getElementById('assignmentEmailBtn')?.addEventListener('click', async () => {
+    const firstName = document.getElementById('firstName').value.trim();
+    const email     = document.getElementById('email').value.trim();
+    const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
+
+    _token = null; _link = null; _bodyHtml = '';
+    window._assignmentNewFile = null;
+
+    document.getElementById('assignmentModalTitle').textContent = `📨 הודעת שיבוץ — ${firstName} | ${yearLabel}`;
+    document.getElementById('assignmentEmail').value   = email;
+    document.getElementById('assignmentLinkRow').style.display = 'none';
+    const overrideEl = document.getElementById('assignmentBodyOverride');
+    if (overrideEl) overrideEl.style.display = 'none';
+    const toggleBtn = document.getElementById('assignmentEditToggleBtn');
+    if (toggleBtn) toggleBtn.textContent = '✏️ ערוך טקסט';
+
+    // טעינת תבנית וקובץ מצורף
+    try {
+      const tmpl = await window.getEmailTemplate('assignment');
+      const _ta = document.createElement('textarea'); _ta.innerHTML = tmpl?.body_html || ''; _bodyHtml = _ta.value;
+      document.getElementById('assignmentSubject').value = (tmpl?.subject || 'שיבוצך לשנת {{activityYear}} 🎉')
+        .replace('{{activityYear}}', yearLabel).replace('{{firstName}}', firstName);
+
+      // הצג קובץ מצורף קיים
+      const infoEl = document.getElementById('assignmentAttachmentInfo');
+      const nameEl = document.getElementById('assignmentAttachmentName');
+      const newNameEl = document.getElementById('assignmentAttachmentNewName');
+      newNameEl.textContent = '';
+      if (tmpl?.attachment?.url) {
+        nameEl.textContent = tmpl.attachment.name || 'קובץ מצורף';
+        nameEl.href = tmpl.attachment.url;
+        infoEl.style.display = 'flex';
+        window._assignmentTemplateAttachment = tmpl.attachment;
+      } else {
+        infoEl.style.display = 'none';
+        window._assignmentTemplateAttachment = null;
+      }
+    } catch(e) {
+      document.getElementById('assignmentSubject').value = `שיבוצך לשנת ${yearLabel} 🎉`;
+    }
+
+    const sel = document.getElementById('assignmentFormSelect');
+    sel.innerHTML = '<option value="">טוען...</option>';
+    try {
+      const forms = await window.formsService.getActiveForms();
+      sel.innerHTML = forms.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+      const def = forms.find(f => f.form_key === 'registration_and_health') || forms[0];
+      if (def) sel.value = def.id;
+    } catch(e) { sel.innerHTML = '<option value="">שגיאה בטעינה</option>'; }
+
+    _updatePreview();
+    document.getElementById('assignmentModal').style.display = 'flex';
+  });
+
+  window.assignmentUpdatePreview = _updatePreview;
+
+  window.assignmentToggleEdit = function() {
+    const override = document.getElementById('assignmentBodyOverride');
+    const btn      = document.getElementById('assignmentEditToggleBtn');
+    if (!override) return;
+    if (override.style.display === 'none') {
+      override.value = document.getElementById('assignmentPreviewBox').innerText;
+      override.style.display = '';
+      if (btn) btn.textContent = '👁️ תצוגה מקדימה';
+    } else {
+      override.style.display = 'none';
+      if (btn) btn.textContent = '✏️ ערוך טקסט';
+      _updatePreview();
+    }
+  };
+
+  window.closeAssignmentModal = function() {
+    document.getElementById('assignmentModal').style.display = 'none';
+  };
+
+  document.getElementById('assignmentCreateForm')?.addEventListener('change', function() {
+    const row = document.getElementById('assignmentFormRow');
+    if (row) row.style.display = this.checked ? '' : 'none';
+    _updatePreview();
+  });
+
+  document.getElementById('assignmentFormSelect')?.addEventListener('change', _updatePreview);
+
+  window.copyAssignmentLinkOnly = async function() {
+    try {
+      if (document.getElementById('assignmentCreateForm').checked) await _createToken();
+      if (_link) {
+        await navigator.clipboard.writeText(_link);
+        _showLink(_link);
+      } else { alert('אין קישור להעתקה'); }
+    } catch(e) { alert('שגיאה: ' + e.message); }
+  };
+
+  window.onAssignmentAttachmentChange = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+    window._assignmentNewFile = file;
+    document.getElementById('assignmentAttachmentNewName').textContent = `📎 ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+  };
+
+  window.removeAssignmentAttachment = function() {
+    window._assignmentTemplateAttachment = null;
+    window._assignmentNewFile = null;
+    document.getElementById('assignmentAttachmentInfo').style.display = 'none';
+    document.getElementById('assignmentAttachmentFile').value = '';
+    document.getElementById('assignmentAttachmentNewName').textContent = '';
+  };
+
+  window.sendAssignmentEmail = async function() {
+    const email = document.getElementById('assignmentEmail').value.trim();
+    if (!email) return alert('אין כתובת מייל');
+    const btn = document.getElementById('assignmentSendBtn');
+    btn.disabled = true; btn.textContent = '⏳ שולח...';
+    try {
+      if (document.getElementById('assignmentCreateForm').checked) await _createToken();
+      await emailjs.init(EMAILJS_KEY);
+
+      const finalHtml = _buildFinalHtml();
+      const emailParams = {
+        to_email: email,
+        subject:  document.getElementById('assignmentSubject').value,
+        message:  finalHtml,
+      };
+
+      // צירוף קובץ — קובץ חדש או קובץ מתבנית
+      const attachFile = window._assignmentNewFile || null;
+      const attachMeta = !attachFile ? (window._assignmentTemplateAttachment || null) : null;
+
+      if (attachFile) {
+        // קובץ חדש — עלה ל-Supabase ושלח URL
+        const uploaded = await window.uploadService.uploadEmailAttachment(attachFile, 'assignment-send');
+        emailParams.message += `<br><br>📎 <a href="${uploaded.url}">${uploaded.name}</a>`;
+      } else if (attachMeta?.url) {
+        // קובץ קיים מתבנית
+        emailParams.message += `<br><br>📎 <a href="${attachMeta.url}">${attachMeta.name || 'קובץ מצורף'}</a>`;
+      }
+
+      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, emailParams);
+      const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
+      await supabase.from('customer_notes').insert({
+        customer_code: idCustomer,
+        dateNote: new Date().toISOString().split('T')[0],
+        noteText: `נשלחה הודעת שיבוץ לשנת ${yearLabel}${_link ? ' + קישור לטופס נהלי רישום' : ''}`,
+      });
+      if (_link) _showLink(_link);
+      btn.textContent = '✅ נשלח!';
+      setTimeout(() => { btn.disabled = false; btn.textContent = '📨 שלח'; }, 3000);
+    } catch(err) {
+      console.error(err);
+      alert('שגיאה בשליחה: ' + (err?.text || err?.message || JSON.stringify(err)));
+      btn.disabled = false; btn.textContent = '📨 שלח';
+    }
+  };
+
+  function _showLink(link) {
+    document.getElementById('assignmentLinkText').textContent = link;
+    document.getElementById('assignmentLinkRow').style.display = 'flex';
+  }
+
+  window.copyAssignmentLink = function() {
+    navigator.clipboard.writeText(_link || '');
+  };
+}
+
+window.getEmailTemplate = async function(key) {
+  return window.formsService?.getEmailTemplate?.(key);
+};
+// ======= סיום הודעת שיבוץ =======
+
+// ======= טפסים דיגיטליים =======
+async function loadDigitalForms(customerId) {
+  const section = document.getElementById('digitalFormsSection');
+  if (!section || !customerId) return;
+
+  const forms = await window.formsService.getCustomerForms(customerId);
+  const signed = forms.filter(f => f.status === 'signed');
+  const pending = forms.filter(f => f.status === 'pending');
+
+  if (!forms.length) {
+    section.innerHTML = '<div style="color:#9ca3af;font-size:13px;padding:8px 0">אין טפסים</div>';
+    return;
+  }
+
+  section.innerHTML = [...signed, ...pending].map(f => {
+    const name     = f.digital_forms?.name || 'טופס';
+    const isSigned = f.status === 'signed';
+    const date     = isSigned
+      ? (f.signed_at ? new Date(f.signed_at).toLocaleDateString('he-IL') : 'נחתם')
+      : ('נשלח ' + (f.sent_at ? new Date(f.sent_at).toLocaleDateString('he-IL') : ''));
+    const badge = isSigned
+      ? '<span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px">✓ נחתם</span>'
+      : '<span style="background:#fef9c3;color:#92400e;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px">⏳ ממתין</span>';
+    const viewBtn = isSigned && f.pdf_url
+      ? `<button data-path="${f.pdf_url}" data-name="${name}" onclick="window.openPdfView(this.dataset.path, this.dataset.name)" style="background:#f3f0ff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#7c3aed;cursor:pointer">👁️ צפייה</button>`
+      : '';
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:#faf9ff;border:1px solid #f3f0ff;margin-bottom:8px">
+        <span style="font-size:20px">📄</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:#1f2937">${name}</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:2px">${date}</div>
+        </div>
+        ${badge}
+        ${viewBtn}
+      </div>`;
+  }).join('');
+}
+
+window.openPdfView = async function(pdfPath, formName) {
+  const modal = document.getElementById('pdfViewModal');
+  const frame = document.getElementById('pdfViewFrame');
+  document.getElementById('pdfViewTitle').textContent = formName || 'מסמך';
+  frame.src = '';
+  modal.style.display = 'flex';
+  const { data } = window._sb.storage.from('form-pdfs').getPublicUrl(pdfPath);
+  if (data?.publicUrl) {
+    frame.src = data.publicUrl;
+  } else {
+    modal.style.display = 'none';
+    alert('לא ניתן לטעון את ה-PDF');
+  }
+};
+
+document.getElementById('pdfViewClose')?.addEventListener('click', () => {
+  document.getElementById('pdfViewModal').style.display = 'none';
+  document.getElementById('pdfViewFrame').src = '';
+});
+document.getElementById('pdfViewModal')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('pdfViewModal')) {
+    document.getElementById('pdfViewModal').style.display = 'none';
+    document.getElementById('pdfViewFrame').src = '';
+  }
+});
+
+// ======= כל המסמכים — מאוחד =======
+async function loadAllDocs(customerId) {
+  const section = document.getElementById('allDocsSection');
+  if (!section || !customerId) return;
+  section.innerHTML = '<div style="color:#9ca3af;font-size:13px;padding:8px 0">טוען...</div>';
+
+  const [digitalForms, manualDocs] = await Promise.all([
+    window.formsService.getCustomerForms(customerId).catch(() => []),
+    window._sb.from('customer_documents').select('id,name,file_path,created_at')
+      .eq('customer_id', customerId).order('created_at', { ascending: false })
+      .then(r => r.data || []).catch(() => []),
+  ]);
+
+  const rows = [
+    ...digitalForms.map(f => ({
+      type    : 'digital',
+      name    : f.digital_forms?.name || 'טופס',
+      status  : f.status,
+      date    : f.status === 'signed' ? f.signed_at : f.sent_at,
+      pdfPath : f.pdf_url || null,
+      id      : null,
+    })),
+    ...manualDocs.map(d => ({
+      type    : 'manual',
+      name    : d.name,
+      status  : 'manual',
+      date    : d.created_at,
+      pdfPath : d.file_path,
+      id      : d.id,
+    })),
+  ];
+
+  if (!rows.length) {
+    section.innerHTML = '<div style="color:#9ca3af;font-size:13px;padding:8px 0">אין מסמכים</div>';
+    return;
+  }
+
+  const badgeMap = {
+    signed  : '<span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px">✓ דיגיטלי</span>',
+    pending : '<span style="background:#fef9c3;color:#92400e;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px">⏳ ממתין</span>',
+    manual  : '<span style="background:#ede9fe;color:#7c3aed;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px">📁 טופס שנטען</span>',
+  };
+
+  section.innerHTML = rows.map(r => {
+    const dateStr = r.date ? new Date(r.date).toLocaleDateString('he-IL') : '—';
+    const badge   = badgeMap[r.status] || '';
+    const viewBtn = r.pdfPath
+      ? `<button data-path="${r.pdfPath}" data-name="${r.name}" onclick="window.openPdfView(this.dataset.path,this.dataset.name)" style="background:#f3f0ff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#7c3aed;cursor:pointer">👁️ צפייה</button>`
+      : '';
+    const delBtn = r.type === 'manual'
+      ? `<button data-id="${r.id}" data-path="${r.pdfPath}" onclick="window.deleteManualDoc(this)" style="background:#fee2e2;border:none;border-radius:8px;padding:5px 10px;font-size:12px;color:#dc2626;cursor:pointer">🗑️</button>`
+      : '';
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:#faf9ff;border:1px solid #f3f0ff;margin-bottom:8px">
+        <span style="font-size:20px">📄</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:#1f2937">${r.name}</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:2px">${dateStr}</div>
+        </div>
+        ${badge}
+        ${viewBtn}
+        ${delBtn}
+      </div>`;
+  }).join('');
+}
+
+document.getElementById('uploadDocBtn')?.addEventListener('click', async () => {
+  const name   = document.getElementById('uploadDocName').value.trim();
+  const file   = document.getElementById('uploadDocFile').files[0];
+  const status = document.getElementById('uploadDocStatus');
+  if (!name)        return alert('הזן שם למסמך');
+  if (!file)        return alert('בחר קובץ PDF');
+  if (!idCustomer)  return alert('שמור את הלקוחה תחילה');
+
+  const btn = document.getElementById('uploadDocBtn');
+  btn.disabled = true;
+  status.style.display = 'inline';
+  status.textContent = '⏳ מעלה...';
+  try {
+    const safeName = file.name.replace(/\s+/g, '_');
+    const path = `manual/${idCustomer}/${Date.now()}_${safeName}`;
+    const { error: upErr } = await window._sb.storage.from('form-pdfs')
+      .upload(path, file, { contentType: 'application/pdf', upsert: true });
+    if (upErr) throw upErr;
+    const { error: dbErr } = await window._sb.from('customer_documents')
+      .insert({ customer_id: idCustomer, name, file_path: path });
+    if (dbErr) throw dbErr;
+    status.textContent = '✅ נשמר!';
+    document.getElementById('uploadDocName').value = '';
+    document.getElementById('uploadDocFile').value = '';
+    setTimeout(() => { status.style.display = 'none'; }, 2000);
+    await loadAllDocs(idCustomer);
+  } catch(e) {
+    alert('שגיאה: ' + e.message);
+    status.style.display = 'none';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+window.deleteManualDoc = async function(btn) {
+  if (!confirm('למחוק מסמך זה?')) return;
+  await window._sb.storage.from('form-pdfs').remove([btn.dataset.path]);
+  await window._sb.from('customer_documents').delete().eq('id', btn.dataset.id);
+  await loadAllDocs(idCustomer);
+};

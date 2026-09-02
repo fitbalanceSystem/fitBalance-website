@@ -3,8 +3,6 @@
 
 (async function () {
 
-  // ── תוכן הטפסים — נטען מ-window.formTemplates (services/formTemplates.js) ──
-
   // ── משתנים גלובליים לדף ─────────────────────────────────────────────────
   const token      = new URLSearchParams(location.search).get('token');
   let   formRecord = null;
@@ -38,31 +36,35 @@
       return;
     }
 
-    // token לא קיים / פג תוקף / כבר נחתם
+    // token לא קיים / פג תוקף
     if (!formRecord) {
-      // בדוק אם קיים אבל כבר signed (RLS מחזיר null לשניהם — נבדוק ישירות)
-      showScreen('invalid');
+      // בדוק אם הטופס קיים אבל כבר נחתם (token=null → RLS מחזיר null)
+      // ננסה לשלוף לפי token ישירות ללא RLS filter — לא אפשרי מanon
+      // לכן: אם token קיים אבל formRecord=null — ייתכן שנחתם
+      // מציגים הודעה כללית שמכסה גם פג תוקף וגם נחתם
+      showScreen('signed');
       return;
     }
 
-    const formKey = formRecord.digital_forms?.form_key;
+    const fieldsJson = formRecord.digital_forms?.fields_json || [];
 
-    // בנה את מסך הטופס
-    $('formTitle').textContent = formRecord.digital_forms?.name || 'טופס';
-    $('formDesc').textContent  = formRecord.digital_forms?.description || '';
-    $('formContentBox').innerHTML = window.formTemplates.toHTML(formKey);
+    // בנה את מסך הטופס — injected_html כבר מכיל נתונים מוכנים
+    $('formTitle').textContent    = formRecord.digital_forms?.name || 'טופס';
+    $('formDesc').textContent     = formRecord.digital_forms?.description || '';
+    $('formContentBox').innerHTML = formRecord.injected_html || '';
 
-    // בנה שדות
-    const fields = (window.formTemplates[formKey]?.fields) || window.formTemplates.health_declaration.fields;
-    $('fieldsWrap').innerHTML = fields.map(f => `
-      <div class="field-group">
-        <label for="f_${f.id}">${f.label}${f.required ? ' <span style="color:#ef4444">*</span>' : ''}</label>
-        <input type="${f.type}" id="f_${f.id}" placeholder="${f.label}" autocomplete="off" />
-      </div>`).join('');
+    // בנה שדות מ-fields_json
+    $('fieldsWrap').innerHTML = fieldsJson.map(f => {
+      const isTextarea = f.type === 'textarea';
+      const input = isTextarea
+        ? `<textarea id="f_${f.id}" placeholder="${f.label}" rows="3" style="width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 14px;font-size:14px;font-family:inherit;resize:vertical"></textarea>`
+        : `<input type="${f.type || 'text'}" id="f_${f.id}" placeholder="${f.label}" autocomplete="off" />`;
+      return `<div class="field-group"><label for="f_${f.id}">${f.label}${f.required ? ' <span style="color:#ef4444">*</span>' : ''}</label>${input}</div>`;
+    }).join('');
 
-    // האזנה לשינויים בשדות לצורך ולידציה
-    $('fieldsWrap').querySelectorAll('input').forEach(inp =>
-      inp.addEventListener('input', validateForm)
+    // ולידציה בזמן אמת — גם textarea
+    $('fieldsWrap').querySelectorAll('input, textarea').forEach(el =>
+      el.addEventListener('input', validateForm)
     );
 
     showScreen('form');
@@ -75,7 +77,6 @@
     const ctx    = canvas.getContext('2d');
     const wrap   = $('sig-wrap');
 
-    // התאמת רזולוציה
     function resizeCanvas() {
       const rect = wrap.getBoundingClientRect();
       canvas.width  = rect.width  * window.devicePixelRatio;
@@ -94,10 +95,7 @@
     function getPos(e) {
       const rect = canvas.getBoundingClientRect();
       const src  = e.touches ? e.touches[0] : e;
-      return {
-        x: (src.clientX - rect.left),
-        y: (src.clientY - rect.top),
-      };
+      return { x: src.clientX - rect.left, y: src.clientY - rect.top };
     }
 
     function startDraw(e) {
@@ -116,7 +114,6 @@
       ctx.lineTo(p.x, p.y);
       ctx.stroke();
       lastX = p.x; lastY = p.y;
-
       if (!hasSig) {
         hasSig = true;
         wrap.classList.add('has-sig');
@@ -146,9 +143,8 @@
 
   // ── ולידציה ─────────────────────────────────────────────────────────────
   function validateForm() {
-    const formKey = formRecord?.digital_forms?.form_key;
-    const fields  = (window.formTemplates[formKey]?.fields) || window.formTemplates.health_declaration.fields;
-    const allFilled = fields
+    const fieldsJson = formRecord?.digital_forms?.fields_json || [];
+    const allFilled  = fieldsJson
       .filter(f => f.required)
       .every(f => ($(`f_${f.id}`)?.value || '').trim() !== '');
     $('submitBtn').disabled = !(allFilled && hasSig);
@@ -161,61 +157,74 @@
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> שומר...';
 
     try {
-      const formKey = formRecord.digital_forms?.form_key;
-      const fields  = (window.formTemplates[formKey]?.fields) || window.formTemplates.health_declaration.fields;
+      const fieldsJson  = formRecord.digital_forms?.fields_json || [];
 
-      // איסוף ערכי שדות
+      // 1. איסוף ערכי שדות
       const fieldValues = {};
-      fields.forEach(f => {
+      fieldsJson.forEach(f => {
         fieldValues[f.id] = ($(`f_${f.id}`)?.value || '').trim() || null;
       });
 
-      const canvas = $('sigCanvas');
+      const canvas           = $('sigCanvas');
       const signatureDataUrl = canvas.toDataURL('image/png');
-      let signatureUrl = null;
-      let pdfUrl = null;
 
-      // יצירת PDF
+      // 2. timestamp אחד לכל התהליך — עקבי בין PDF ל-DB
+      const signedAt    = new Date();
+      const signedAtISO = signedAt.toISOString();
+
+      // 3. בניית HTML סופי עם health_notes (לפני יצירת PDF)
+      const healthNotes = (fieldValues.health_notes || '').trim();
+      let finalHtml = (formRecord.injected_html || '')
+        .replace('##HEALTH_NOTES##', healthNotes || '')
+        .replace('{{health_notes}}', healthNotes || '');
+
+      // 4. יצירת PDF מהHTML הסופי (כולל health_notes)
+      let pdfUrl       = null;
+      let signatureUrl = null;
+
       try {
         pdfBlob = await window.pdfService.generate({
           formName         : formRecord.digital_forms?.name,
-          formKey          : formKey,
-          formContent      : window.formTemplates.toHTML(formKey),
+          formContent      : finalHtml,
           fieldValues,
           signatureDataUrl,
           activityYear     : formRecord.activity_year,
-          signedAt         : new Date(),
+          signedAt,
         });
       } catch (e) {
         console.warn('PDF generation failed:', e.message);
       }
 
-      // העלאה דרך Edge Function
-      if (pdfBlob) {
-        try {
-          const supabaseUrl = window._sb.supabaseUrl;
-          const supabaseKey = window._sb.supabaseKey;
-          const pdfBase64 = await _blobToBase64(pdfBlob);
-          const res = await fetch(
-            `${supabaseUrl}/functions/v1/save-form-pdf`,
-            {
-              method  : 'POST',
-              headers : {
-                'Content-Type'  : 'application/json',
-                'Authorization' : `Bearer ${supabaseKey}`,
-              },
-              body: JSON.stringify({ token, pdfBase64, signatureBase64: signatureDataUrl }),
-            }
-          );
-          const json = await res.json();
-          if (json.pdfPath)  pdfUrl       = json.pdfPath;
-          if (json.sigPath)  signatureUrl = json.sigPath;
-        } catch (e) {
-          console.warn('Edge Function upload failed:', e.message);
+      // 5. העלאת PDF + חתימה + health_notes דרך Edge Function
+      //    health_notes נשמר בצד השרת בלבד — לא דרך anon INSERT ישיר
+      //    customer_id נשלף מה-DB על ידי ה-Edge Function לפי ה-token
+      if (!pdfBlob) throw new Error('היצירת ה-PDF נכשלה')
+      const supabaseUrl = window._sb.supabaseUrl;
+      const supabaseKey = window._sb.supabaseKey;
+      const pdfBase64   = await _blobToBase64(pdfBlob);
+      const efRes = await fetch(
+        `${supabaseUrl}/functions/v1/save-form-pdf`,
+        {
+          method  : 'POST',
+          headers : {
+            'Content-Type'  : 'application/json',
+            'Authorization' : `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            token,
+            pdfBase64,
+            signatureBase64 : signatureDataUrl,
+            healthNotes     : healthNotes || null,
+            signedAt        : signedAtISO,
+          }),
         }
-      }
+      );
+      const efJson = await efRes.json();
+      if (efJson.error) throw new Error('Edge Function: ' + efJson.error);
+      if (efJson.pdfPath) pdfUrl       = efJson.pdfPath;
+      if (efJson.sigPath) signatureUrl = efJson.sigPath;
 
-      // IP (best-effort)
+      // 6. IP (best-effort — לא חוסם את התהליך)
       let ipAddress = null;
       try {
         const r = await fetch('https://api.ipify.org?format=json');
@@ -223,7 +232,16 @@
         ipAddress = j.ip || null;
       } catch (_) {}
 
-      // חתימה ב-DB
+      // 7. עדכון injected_html עם health_notes (snapshot סופי)
+      if (healthNotes) {
+        const { error: htmlErr } = await window._sb
+          .from('customer_forms')
+          .update({ injected_html: finalHtml })
+          .eq('id', formRecord.id);
+        if (htmlErr) console.warn('injected_html update error:', htmlErr.message);
+      }
+
+      // 8. חתימה ב-DB — signed_at זהה לזה שנשלח ל-PDF ול-Edge Function
       await window.formsService.signForm(token, {
         fullName     : fieldValues.fullName   || null,
         idNumber     : fieldValues.idNumber   || null,
@@ -231,15 +249,19 @@
         signatureUrl,
         pdfUrl,
         ipAddress,
+        signedAt     : signedAtISO,
       });
 
-      // הצגת מסך הצלחה
+      // 9. הצגת מסך הצלחה
+      //    health_notes כבר נשמר ב-Edge Function — אין צורך בפעולה נוספת כאן
       $('successMsg').textContent = `תודה ${fieldValues.fullName || ''}! הטופס נחתם ונשמר בהצלחה.`;
 
       if (pdfBlob) {
         const dlBtn = $('downloadPdfBtn');
         dlBtn.style.display = 'inline-flex';
-        dlBtn.addEventListener('click', () => window.pdfService.download(pdfBlob, formRecord.digital_forms?.name));
+        dlBtn.addEventListener('click', () =>
+          window.pdfService.download(pdfBlob, formRecord.digital_forms?.name)
+        );
         $('printBtn').style.display = 'inline-flex';
         $('printBtn').addEventListener('click', () => window.pdfService.print(pdfBlob));
       }

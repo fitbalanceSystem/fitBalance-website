@@ -34,4 +34,13 @@ window.uploadService = {
     const { data } = window._sb.storage.from('products').getPublicUrl(path);
     return data.publicUrl;
   },
+
+  async uploadEmailAttachment(file, templateKey) {
+    const ext  = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')) : '';
+    const path = `email-attachments/${templateKey}/${Date.now()}${ext}`;
+    const { error } = await window._sb.storage.from('products').upload(path, file, { upsert: true, contentType: file.type || 'application/octet-stream' });
+    if (error) throw error;
+    const { data } = window._sb.storage.from('products').getPublicUrl(path);
+    return { url: data.publicUrl, path, name: file.name, type: file.type || 'application/octet-stream' };
+  },
 };

@@ -67,6 +67,7 @@
     .article-content .ql-size-small  { font-size:12px; }
     .article-content .ql-size-large  { font-size:20px; }
     .article-content .ql-size-huge   { font-size:26px; }
+    .article-content iframe, .article-content .ql-video { width:100%; aspect-ratio:16/9; border-radius:12px; display:block; margin:14px 0; border:none; }
     .back-btn {
       display: inline-flex; align-items: center; gap: 8px;
       margin-top: 48px; padding: 11px 22px;
@@ -104,16 +105,14 @@
 <div id="article-screen" class="page-content" style="display:none">
   <div class="article-wrap">
 
+    <div id="hero-wrap"></div>
+    <div class="article-meta" id="article-meta"></div>
+    <h1 class="article-title" id="article-title"></h1>
     <div class="breadcrumb">
       <a href="blog.html">מאמרים</a>
       <span>/</span>
       <span id="bc-title" style="color:#374151"></span>
     </div>
-
-    <div id="hero-wrap"></div>
-
-    <div class="article-meta" id="article-meta"></div>
-    <h1 class="article-title" id="article-title"></h1>
     <div class="divider"></div>
     <div class="article-summary" id="article-summary" style="display:none"></div>
     <div class="article-content" id="article-content"></div>

@@ -370,6 +370,42 @@ async function loadShopAnalytics() {
     </div>`).join('');
 }
 
+async function loadPostpartumReminders() {
+  const el = document.getElementById('postpartumList');
+  const now = new Date();
+  // כל מי שה-expectedDueDate שלה עבר לפני 6 שבועות (42 יום) או פחות
+  const sixWeeksAgo = new Date(now); sixWeeksAgo.setDate(sixWeeksAgo.getDate() - 42);
+  const fromStr = sixWeeksAgo.toISOString().split('T')[0];
+  const toStr   = now.toISOString().split('T')[0];
+
+  const { data } = await sb.from('customers')
+    .select('id, firstName, lastName, mobile, expectedDueDate, status_code')
+    .not('expectedDueDate', 'is', null)
+    .order('expectedDueDate', { ascending: true });
+
+  const filtered = (data || []).filter(c => c.expectedDueDate >= fromStr && c.expectedDueDate <= toStr);
+
+  if (!filtered.length) { el.innerHTML = '<div class="empty-msg">אין תזכורות לאחר לידה כרגע 👶</div>'; return; }
+
+  el.innerHTML = filtered.map(c => {
+    const isFrozen = c.status_code === 'frozen';
+    const dueDate = fmt(c.expectedDueDate);
+    const daysSince = Math.round((now - new Date(c.expectedDueDate)) / 86400000);
+    const frozenBadge = isFrozen ? '<span class="badge-overdue" style="margin-left:4px;">מוקפאת ❄️</span>' : '';
+    return `<div class="widget-row" style="${isFrozen ? 'background:#fff7f7;' : ''}">
+      <span class="row-icon">🍼</span>
+      <div class="row-info">
+        <div class="row-name">${c.firstName} ${c.lastName} ${frozenBadge}</div>
+        <div class="row-sub">תאריך לידה משוער: ${dueDate} · לפני ${daysSince} ימים</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${c.mobile ? `<a href="tel:${c.mobile}" title="התקשר" style="font-size:16px;text-decoration:none;">📞</a>` : ''}
+        <a href="customer-form.html?id=${c.id}" class="badge-days" style="text-decoration:none;">פרופיל</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 loadKPIs();
 loadUpdates();
 loadBirthdays();
@@ -377,3 +413,4 @@ loadInquiries();
 loadDebts();
 loadOrders();
 loadShopAnalytics();
+loadPostpartumReminders();

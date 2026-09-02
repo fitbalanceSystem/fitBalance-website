@@ -135,6 +135,7 @@
     .ql-toolbar.ql-snow { border:none; border-bottom:1.5px solid #e5e7eb; background:#faf5ff; padding:8px; flex-wrap:wrap; direction:ltr; }
     .ql-container.ql-snow { border:none; font-family:inherit; font-size:14px; }
     .ql-editor { min-height:180px; direction:rtl; text-align:right; padding:12px; line-height:1.8; background:white; color:#1f2937; }
+    .ql-editor .ql-video { width:100%; aspect-ratio:16/9; border-radius:10px; display:block; }
     .ql-editor.ql-blank::before { right:12px; left:auto; font-style:normal; color:#9ca3af; }
     .ql-snow .ql-picker { color:#374151; }
     .ql-snow .ql-stroke { stroke:#374151; }
@@ -143,6 +144,8 @@
     .ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke:#8b5cf6; }
     .ql-snow.ql-toolbar button:hover .ql-fill,
     .ql-snow.ql-toolbar button.ql-active .ql-fill { fill:#8b5cf6; }
+    .ql-video-embed { width:28px !important; }
+    .ql-video-embed i { pointer-events:none; }
 
     /* cover image */
     .cover-preview {
@@ -327,6 +330,9 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Quill video upload input -->
+<input type="file" id="quill-video-input" accept="video/*" style="display:none" />
+
 <!-- Views Modal -->
 <div class="modal-overlay" id="views-modal-overlay">
   <div class="modal" style="max-width:480px">
@@ -372,18 +378,50 @@
     theme: 'snow',
     placeholder: 'כתבי את תוכן הכתבה כאן... (ניתן להדביק מ-ChatGPT, Word, Google Docs)',
     modules: {
-      toolbar: [
-        [{ header: [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline'],
-        [{ color: [] }],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        [{ size: ['small', false, 'large', 'huge'] }],
-        ['link', 'image'],
-        ['clean'],
-        ['undo', 'redo'],
-      ],
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline'],
+          [{ color: [] }],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          [{ size: ['small', false, 'large', 'huge'] }],
+          ['link', 'image', 'video-embed'],
+          ['clean'],
+        ],
+        handlers: {
+          'video-embed': function() {
+            document.getElementById('quill-video-input').click();
+          }
+        }
+      },
       history: { delay: 1000, maxStack: 100, userOnly: true },
     },
+  });
+
+  // סימון איקון לכפתור הסרטון
+  document.querySelector('.ql-video-embed')?.setAttribute('title', 'הוסף סרטון');
+  const videoBtn = document.querySelector('.ql-video-embed');
+  if (videoBtn) videoBtn.innerHTML = '<i class="fas fa-film" style="font-size:13px"></i>';
+
+  // העלאת סרטון ל-Quill
+  document.getElementById('quill-video-input').addEventListener('change', async function() {
+    const file = this.files[0];
+    if (!file) return;
+    const btn = document.querySelector('.ql-video-embed');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:11px"></i>'; }
+    try {
+      const url = await uploadArticleFile(file, 'articles/videos');
+      const range = quill.getSelection(true);
+      quill.insertEmbed(range.index, 'video', url);
+      quill.insertText(range.index + 1, '\n');
+      quill.setSelection(range.index + 2);
+      showToast('הסרטון הועלה בהצלחה ✓');
+    } catch(e) {
+      showToast('שגיאה בהעלאת הסרטון', 'error');
+    } finally {
+      this.value = '';
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-film" style="font-size:13px"></i>'; }
+    }
   });
 
   // תמיכה ב-paste מ-Word/ChatGPT — שמור HTML

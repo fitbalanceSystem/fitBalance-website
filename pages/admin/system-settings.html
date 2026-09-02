@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
+  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="../../services/supabaseClient.js"></script>
   <script src="../../services/uploadService.js"></script>
@@ -41,6 +43,13 @@
     .tab-pane.active { display:block; }
     .color-row { display:flex; align-items:center; gap:10px; }
     .color-row input[type=color] { width:40px; height:36px; border-radius:8px; border:1.5px solid #e5e7eb; cursor:pointer; padding:2px; }
+    .etab-btn {
+      padding:12px 20px; border:none; background:white; color:#6b7280;
+      font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;
+      border-bottom:3px solid transparent; transition:all .2s; white-space:nowrap;
+    }
+    .etab-btn:hover { color:#7c3aed; background:#faf5ff; }
+    .etab-active { color:#7c3aed !important; border-bottom-color:#8b5cf6 !important; background:#faf5ff !important; }
   </style>
 </head>
 <body>
@@ -55,7 +64,7 @@
 
     <div class="tab-nav">
       <button class="active" onclick="switchTab('business',this)">🏢 פרטי עסק</button>
-      <button onclick="switchTab('emails',this)">✉️ תבניות מיילים</button>
+      <button onclick="switchTab('emails',this)">✉️ עורך מיילים</button>
       <button onclick="switchTab('dashboard',this)">🏠 דשבורד</button>
       <button onclick="switchTab('programs',this)">💃 תוכניות</button>
       <button onclick="switchTab('payments',this)">💳 תשלומים</button>
@@ -63,6 +72,7 @@
       <button onclick="switchTab('shopcats',this)">🛍️ קטגוריות חנות</button>
       <button onclick="switchTab('users',this)">👥 משתמשים והרשאות</button>
       <button onclick="switchTab('gifts',this)">🎁 מתנות יום הולדת</button>
+      <button onclick="switchTab('digitalforms',this)">📋 טפסים דיגיטליים</button>
     </div>
 
     <!-- פרטי עסק -->
@@ -86,55 +96,48 @@
       </div>
     </div>
 
-    <!-- תבניות מיילים -->
+    <!-- עורך מיילים -->
     <div id="tab-emails" class="tab-pane">
+      <div class="section-card" style="padding:0;overflow:hidden">
 
-      <div class="section-card">
-        <div class="section-title">🎂 מייל יום הולדת</div>
-        <div class="field-grid single">
-          <div class="field">
-            <label>נושא <span class="hint">({שם} = שם הלקוחה)</span></label>
-            <input id="tmpl-birthday-subject" type="text" />
+        <!-- בחירת תבנית -->
+        <div style="display:flex;gap:0;border-bottom:2px solid #f3f4f6;overflow-x:auto">
+          <button id="etab-welcome"  onclick="emailSwitchTemplate('welcome',this)"  class="etab-btn etab-active">🎀 ברוכה הבאה</button>
+          <button id="etab-birthday" onclick="emailSwitchTemplate('birthday',this)" class="etab-btn">🎂 יום הולדת</button>
+          <button id="etab-debt"     onclick="emailSwitchTemplate('debt',this)"     class="etab-btn">💳 תזכורת חוב</button>
+          <button id="etab-assignment" onclick="emailSwitchTemplate('assignment',this)" class="etab-btn">📨 הודעת שיבוץ</button>
+        </div>
+
+        <div style="padding:24px">
+
+          <!-- נושא -->
+          <div class="field" style="margin-bottom:14px">
+            <label>נושא המייל</label>
+            <input id="email-subject" type="text" placeholder="נושא..." />
           </div>
-          <div class="field">
-            <label>גוף המייל <span class="hint">({שם} = שם הלקוחה)</span></label>
-            <textarea id="tmpl-birthday-body" rows="6"></textarea>
+
+          <!-- פרמטרים -->
+          <div style="background:#f8f7ff;border:1px solid #ede9fe;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#6b7280">
+            <strong style="color:#7c3aed">פרמטרים זמינים</strong> — לחצי להוספה לתוך הטקסט:<br>
+            <span id="email-params-bar" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></span>
+          </div>
+
+          <!-- עורך Quill -->
+          <div id="email-quill-editor" style="min-height:340px;font-size:14px;direction:rtl;border:1.5px solid #e5e7eb;border-radius:0 0 10px 10px"></div>
+          <input type="hidden" id="email-body-html" />
+
+          <!-- תצוגה מקדימה -->
+          <div style="margin-top:16px">
+            <button onclick="emailTogglePreview()" style="background:none;border:1.5px solid #ede9fe;border-radius:8px;padding:6px 14px;font-size:12px;color:#7c3aed;cursor:pointer;font-family:inherit">👁️ תצוגה מקדימה</button>
+          </div>
+          <div id="email-preview-box" style="display:none;margin-top:12px;border:1.5px solid #ede9fe;border-radius:12px;padding:20px 24px;background:#fafafa;font-size:14px;line-height:1.9;direction:rtl"></div>
+
+          <!-- כפתורי שמירה -->
+          <div style="display:flex;align-items:center;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid #f3f4f6">
+            <button class="save-section-btn" style="margin-top:0" onclick="saveEmailTemplate()">💾 שמור תבנית</button>
+            <span id="email-saved-msg" style="font-size:12px;color:#16a34a;display:none">✓ נשמר!</span>
           </div>
         </div>
-        <button class="save-section-btn" onclick="saveSection('emails-birthday')">💾 שמור תבנית יום הולדת</button>
-        <span class="saved-msg" id="saved-emails-birthday">✓ נשמר!</span>
-      </div>
-
-      <div class="section-card">
-        <div class="section-title">💳 מייל תזכורת חוב</div>
-        <div class="field-grid single">
-          <div class="field">
-            <label>נושא <span class="hint">({שם}, {סכום})</span></label>
-            <input id="tmpl-debt-subject" type="text" />
-          </div>
-          <div class="field">
-            <label>גוף המייל <span class="hint">({שם}, {סכום})</span></label>
-            <textarea id="tmpl-debt-body" rows="6"></textarea>
-          </div>
-        </div>
-        <button class="save-section-btn" onclick="saveSection('emails-debt')">💾 שמור תבנית חוב</button>
-        <span class="saved-msg" id="saved-emails-debt">✓ נשמר!</span>
-      </div>
-
-      <div class="section-card">
-        <div class="section-title">🎀 מייל ברוכה הבאה (לקוחה חדשה)</div>
-        <div class="field-grid single">
-          <div class="field">
-            <label>נושא <span class="hint">({שם})</span></label>
-            <input id="tmpl-welcome-subject" type="text" />
-          </div>
-          <div class="field">
-            <label>גוף המייל <span class="hint">({שם})</span></label>
-            <textarea id="tmpl-welcome-body" rows="6"></textarea>
-          </div>
-        </div>
-        <button class="save-section-btn" onclick="saveSection('emails-welcome')">💾 שמור תבנית ברוכה הבאה</button>
-        <span class="saved-msg" id="saved-emails-welcome">✓ נשמר!</span>
       </div>
     </div>
 
@@ -249,6 +252,18 @@
             <tbody id="users-body"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- טפסים דיגיטליים -->
+    <div id="tab-digitalforms" class="tab-pane">
+      <div class="section-card">
+        <div class="section-title" style="justify-content:space-between">
+          <span>📋 טפסים דיגיטליים</span>
+          <button class="save-section-btn" style="margin-top:0" onclick="openDfModal(null)">+ טופס חדש</button>
+        </div>
+        <div id="df-loading" style="color:#9ca3af;font-size:13px">טוען...</div>
+        <div id="df-list" style="display:flex;flex-direction:column;gap:10px;margin-top:4px"></div>
       </div>
     </div>
 
@@ -946,6 +961,665 @@ async function deleteGift(id) {
 window.switchTab = function(name, btn) {
   _origSwitchTab2(name, btn);
   if (name === 'gifts' && !giftsData.length) loadGifts();
+};
+</script>
+
+<!-- מודאל טפס דיגיטלי -->
+<div id="df-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:16px">
+  <div style="background:white;border-radius:16px;width:100%;max-width:780px;max-height:90vh;display:flex;flex-direction:column;direction:rtl;overflow:hidden">
+
+    <div style="padding:20px 24px 0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+      <h3 id="df-modal-title" style="font-size:16px;font-weight:800;color:#1f2937"></h3>
+      <button onclick="closeDfModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9ca3af">✕</button>
+    </div>
+
+    <div style="display:flex;gap:6px;padding:14px 24px;border-bottom:1px solid #f3f4f6;flex-shrink:0">
+      <button id="df-tab-btn-details" onclick="dfSwitchTab('details')" style="padding:7px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">פרטים</button>
+      <button id="df-tab-btn-content" onclick="dfSwitchTab('content')" style="padding:7px 16px;border-radius:8px;border:1.5px solid #e5e7eb;background:white;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">✏️ עורך תוכן</button>
+      <button id="df-tab-btn-fields" onclick="dfSwitchTab('fields')" style="padding:7px 16px;border-radius:8px;border:1.5px solid #e5e7eb;background:white;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">📋 שדות חתימה</button>
+      <button id="df-tab-btn-preview" onclick="dfSwitchTab('preview')" style="padding:7px 16px;border-radius:8px;border:1.5px solid #e5e7eb;background:white;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">👁️ תצוגה מקדימה</button>
+    </div>
+
+    <div style="overflow-y:auto;flex:1;padding:20px 24px">
+
+      <div id="df-pane-details">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="field"><label>שם הטופס</label><input id="df-name" type="text" placeholder="לדוגמא: הצהרת בריאות" /></div>
+          <div class="field"><label>מפתח (form_key) <span class="hint">אנגלית, ללא רווחים</span></label><input id="df-key" type="text" placeholder="health_declaration" /></div>
+          <div class="field"><label>תיאור</label><textarea id="df-desc" rows="2" placeholder="תיאור קצר"></textarea></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="df-active" checked style="width:16px;height:16px;accent-color:#8b5cf6;cursor:pointer" />
+            <label for="df-active" style="font-size:13px;font-weight:600;color:#374151;cursor:pointer">פעיל</label>
+          </div>
+        </div>
+      </div>
+
+      <div id="df-pane-content" style="display:none">
+        <div style="background:#f8f7ff;border:1px solid #ede9fe;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#6b7280;line-height:2">
+          <strong style="color:#7c3aed">פרמטרים זמינים</strong> — לחצי על כפתור להוספה לתוך הטקסט:<br>
+          <span id="df-params-bar" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px"></span>
+        </div>
+        <div id="df-quill-editor" style="min-height:320px;font-size:14px;direction:rtl;border:1.5px solid #e5e7eb;border-radius:0 0 10px 10px"></div>
+        <input type="hidden" id="df-content" />
+      </div>
+
+      <div id="df-pane-fields" style="display:none">
+        <p style="font-size:12px;color:#6b7280;margin-bottom:14px">שדות שהלקוחה תמלא בעת החתימה (שם, ת.ז וכו')</p>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:#f9fafb">
+              <th style="padding:8px 10px;text-align:right;font-weight:700;color:#6b7280;font-size:12px">מזהה</th>
+              <th style="padding:8px 10px;text-align:right;font-weight:700;color:#6b7280;font-size:12px">תווית</th>
+              <th style="padding:8px 10px;text-align:right;font-weight:700;color:#6b7280;font-size:12px">סוג</th>
+              <th style="padding:8px 10px;text-align:right;font-weight:700;color:#6b7280;font-size:12px">חובה</th>
+              <th style="padding:8px 10px;width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="df-fields-body"></tbody>
+        </table>
+        <button onclick="dfAddField()" style="margin-top:10px;width:100%;padding:8px;border:1.5px dashed #d1d5db;border-radius:8px;background:none;font-size:12px;color:#6b7280;cursor:pointer;font-family:inherit">+ הוסף שדה</button>
+      </div>
+
+      <div id="df-pane-preview" style="display:none">
+        <div style="background:#f8f7ff;border:1px solid #ede9fe;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#7c3aed">תצוגה עם נתוני דמה במקום הפרמטרים</div>
+        <div id="df-preview-content" style="border:1.5px solid #ede9fe;border-radius:12px;padding:20px 24px;font-size:14px;line-height:1.9;color:#1f2937;direction:rtl"></div>
+        <div style="margin-top:16px;border-top:1px solid #ede9fe;padding-top:14px">
+          <div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:10px">שדות חתימה:</div>
+          <div id="df-preview-fields" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="padding:16px 24px;border-top:1px solid #f3f4f6;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0">
+      <button onclick="closeDfModal()" style="padding:9px 20px;border:1.5px solid #e5e7eb;border-radius:8px;background:white;font-size:13px;cursor:pointer;font-family:inherit">ביטול</button>
+      <button onclick="saveDf()" style="padding:9px 22px;background:linear-gradient(135deg,#ec4899,#8b5cf6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">💾 שמור</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== טפסים דיגיטליים =====================
+let dfData = [], dfEditId = null, dfQuill = null;
+
+const DF_PARAMS = [
+  // פרטי לקוחה
+  'customer_name','customer_id','customer_phone','customer_email','customer_address',
+  'firstName','lastName','birthDate','city','street','mobile',
+  // שיבוץ
+  'activityYear','registration_date',
+  'classes_count','monthly_total','insured_classes',
+  'classes_list','classes_table',
+  'class_1_name','class_1_day','class_1_time','class_1_branch','class_1_price',
+  'class_2_name','class_2_day','class_2_time','class_2_branch','class_2_price',
+  'class_3_name','class_3_day','class_3_time','class_3_branch','class_3_price',
+  'class_4_name','class_4_day','class_4_time','class_4_branch','class_4_price',
+];
+
+function dfInitQuill() {
+  if (dfQuill) return;
+
+  // כפתורי פרמטרים
+  document.getElementById('df-params-bar').innerHTML = DF_PARAMS.map(p =>
+    `<button type="button" onclick="dfInsertParam('${p}')" style="background:white;border:1px solid #ede9fe;border-radius:4px;padding:2px 8px;font-size:11px;color:#7c3aed;cursor:pointer;font-family:monospace">{{${p}}}</button>`
+  ).join('');
+
+  dfQuill = new Quill('#df-quill-editor', {
+    theme: 'snow',
+    direction: 'rtl',
+    modules: {
+      toolbar: [
+        [{ header: [1,2,3,false] }],
+        ['bold','italic','underline'],
+        [{ color: [] }, { background: [] }],
+        [{ align: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ indent: '-1' }, { indent: '+1' }],
+        ['link', 'image'],
+        ['clean']
+      ]
+    }
+  });
+
+  // העלאת תמונה מקומית
+  dfQuill.getModule('toolbar').addHandler('image', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = () => {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const range = dfQuill.getSelection(true);
+        dfQuill.insertEmbed(range.index, 'image', e.target.result);
+        dfQuill.setSelection(range.index + 1);
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  });
+
+  // RTL על העורך
+  dfQuill.root.setAttribute('dir', 'rtl');
+  dfQuill.root.style.direction = 'rtl';
+  dfQuill.root.style.textAlign = 'right';
+  dfQuill.root.style.fontFamily = 'Heebo, Arial, sans-serif';
+  dfQuill.root.style.fontSize = '14px';
+  dfQuill.root.style.lineHeight = '1.9';
+  dfQuill.root.style.minHeight = '320px';
+}
+
+function dfInsertParam(param) {
+  if (!dfQuill) return;
+  const range = dfQuill.getSelection(true);
+  dfQuill.insertText(range.index, '{{' + param + '}}');
+  dfQuill.setSelection(range.index + param.length + 4);
+}
+
+async function loadDigitalForms() {
+  const { data, error } = await sb.from('digital_forms').select('*').order('id');
+  document.getElementById('df-loading').style.display = 'none';
+  if (error) { document.getElementById('df-loading').textContent = 'שגיאה בטעינה'; return; }
+  dfData = data || [];
+  renderDigitalForms();
+}
+
+function renderDigitalForms() {
+  const list = document.getElementById('df-list');
+  if (!dfData.length) { list.innerHTML = '<p style="color:#9ca3af;font-size:13px">אין טפסים.</p>'; return; }
+  list.innerHTML = dfData.map(f => `
+    <div style="border:1.5px solid ${f.is_active?'#ede9fe':'#e5e7eb'};border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;opacity:${f.is_active?1:.6}">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px;color:#1f2937">${f.name}</div>
+        <div style="font-size:11px;font-family:monospace;color:#7c3aed;margin-top:2px">${f.form_key}</div>
+        ${f.description?`<div style="font-size:12px;color:#6b7280;margin-top:3px">${f.description}</div>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span style="background:${f.is_active?'#d1fae5':'#fee2e2'};color:${f.is_active?'#065f46':'#dc2626'};padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700">${f.is_active?'פעיל':'לא פעיל'}</span>
+        <button onclick="openDfModal(${f.id})" style="background:#f3f0ff;color:#7c3aed;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer">✏️ ערוך</button>
+        <button onclick="deleteDf(${f.id})" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">מחק</button>
+      </div>
+    </div>`).join('');
+}
+
+function openDfModal(id) {
+  dfEditId = id;
+  const f = id ? dfData.find(x => x.id === id) : null;
+  document.getElementById('df-modal-title').textContent = f ? 'עריכת טופס' : 'טופס חדש';
+  document.getElementById('df-name').value     = f?.name        || '';
+  document.getElementById('df-key').value      = f?.form_key    || '';
+  document.getElementById('df-key').readOnly   = !!f;
+  document.getElementById('df-desc').value     = f?.description || '';
+  document.getElementById('df-active').checked = f ? (f.is_active ?? true) : true;
+  document.getElementById('df-fields-body').innerHTML = '';
+  (f?.fields_json || []).forEach(fld => dfAddField(fld.id, fld.label, fld.type||'text', fld.required));
+  dfSwitchTab('details');
+  document.getElementById('df-modal').style.display = 'flex';
+  // אתחול Quill אחרי שהמודאל נפתח
+  setTimeout(() => {
+    dfInitQuill();
+    dfQuill.root.innerHTML = f?.content_html || '';
+  }, 50);
+}
+
+function closeDfModal() {
+  document.getElementById('df-modal').style.display = 'none';
+  dfEditId = null;
+}
+
+function dfSwitchTab(tab) {
+  ['details','content','fields','preview'].forEach(t => {
+    document.getElementById('df-pane-' + t).style.display = t === tab ? '' : 'none';
+    const btn = document.getElementById('df-tab-btn-' + t);
+    if (btn) {
+      btn.style.background = t === tab ? 'linear-gradient(135deg,#ec4899,#8b5cf6)' : 'white';
+      btn.style.color      = t === tab ? 'white' : '#6b7280';
+      btn.style.border     = t === tab ? 'none' : '1.5px solid #e5e7eb';
+    }
+  });
+  if (tab === 'content') setTimeout(() => { dfInitQuill(); }, 50);
+  if (tab === 'preview') renderDfPreview();
+}
+
+function dfAddField(id='', label='', type='text', required=false) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="padding:6px 8px"><input value="${id}" placeholder="fullName" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 8px;font-size:12px;width:100%;font-family:monospace" /></td>
+    <td style="padding:6px 8px"><input value="${label}" placeholder="שם מלא" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 8px;font-size:13px;width:100%;font-family:inherit" /></td>
+    <td style="padding:6px 8px">
+      <select style="border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 8px;font-size:13px;font-family:inherit">
+        <option value="text" ${type==='text'?'selected':''}>text</option>
+        <option value="date" ${type==='date'?'selected':''}>date</option>
+      </select>
+    </td>
+    <td style="padding:6px 8px;text-align:center">
+      <input type="checkbox" ${required?'checked':''} style="width:16px;height:16px;accent-color:#8b5cf6;cursor:pointer" />
+    </td>
+    <td style="padding:6px 8px;text-align:center">
+      <button onclick="this.closest('tr').remove()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px">✕</button>
+    </td>`;
+  document.getElementById('df-fields-body').appendChild(tr);
+}
+
+function dfGetFields() {
+  return [...document.querySelectorAll('#df-fields-body tr')].map(tr => {
+    const inputs = tr.querySelectorAll('input, select');
+    return { id: inputs[0].value.trim(), label: inputs[1].value.trim(), type: inputs[2].value, required: inputs[3].checked };
+  }).filter(f => f.id);
+}
+
+const DEMO_PARAMS = {
+  firstName:'שרה', lastName:'כהן', birthDate:'01/01/1990',
+  city:'ירושלים', street:'הרצל 5', grade:'ד', parentName:'רחל כהן',
+  mobile:'050-1234567', activityYear:'2025-2026',
+};
+
+function dfRenderPreview() {
+  dfInitQuill();
+  let html = dfQuill ? dfQuill.root.innerHTML : '';
+  Object.entries(DEMO_PARAMS).forEach(([k,v]) => {
+    html = html.replaceAll('{{' + k + '}}', `<mark style="background:#fef9c3;border-radius:3px;padding:0 2px">${v}</mark>`);
+  });
+  const preview = document.getElementById('df-preview-content');
+  preview.innerHTML = html;
+  // העתקת סגנון Quill לתצוגה מקדימה
+  preview.style.fontFamily = 'Heebo, Arial, sans-serif';
+  preview.style.lineHeight = '1.9';
+  const fields = dfGetFields();
+  document.getElementById('df-preview-fields').innerHTML = fields.length
+    ? fields.map(f => `
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;font-weight:700;color:#6b7280">${f.label}${f.required?' <span style="color:#ef4444">*</span>':''}</label>
+          <input type="${f.type}" disabled placeholder="${f.label}" style="border:1.5px solid #e5e7eb;border-radius:8px;padding:7px 10px;font-size:13px;background:#f9fafb;max-width:280px" />
+        </div>`).join('')
+    : '<span style="color:#9ca3af;font-size:12px">אין שדות</span>';
+}
+
+function renderDfPreview() { dfRenderPreview(); }
+
+async function saveDf() {
+  const name     = document.getElementById('df-name').value.trim();
+  const form_key = document.getElementById('df-key').value.trim();
+  if (!name)     return alert('יש להזין שם');
+  if (!form_key) return alert('יש להזין מפתח');
+  const content_html = dfQuill ? dfQuill.root.innerHTML : '';
+  const payload = {
+    name, form_key,
+    description:  document.getElementById('df-desc').value.trim() || null,
+    is_active:    document.getElementById('df-active').checked,
+    content_html: content_html || null,
+    fields_json:  dfGetFields(),
+  };
+  const { error } = dfEditId
+    ? await sb.from('digital_forms').update(payload).eq('id', dfEditId)
+    : await sb.from('digital_forms').insert(payload);
+  if (error) return alert('שגיאה: ' + error.message);
+  closeDfModal();
+  await loadDigitalForms();
+}
+
+async function deleteDf(id) {
+  const f = dfData.find(x => x.id === id);
+  if (!confirm(`למחוק את הטופס "${f?.name}"?`)) return;
+  const { error } = await sb.from('digital_forms').delete().eq('id', id);
+  if (error) return alert('שגיאה: ' + error.message);
+  await loadDigitalForms();
+}
+
+const _origSwitchTab3 = window.switchTab;
+window.switchTab = function(name, btn) {
+  _origSwitchTab3(name, btn);
+  if (name === 'digitalforms' && !dfData.length) loadDigitalForms();
+};
+</script>
+
+<script>
+// ===================== עורך מיילים מתקדם =====================
+const EMAIL_PARAMS = {
+  welcome:    ['firstName'],
+  birthday:   ['firstName'],
+  debt:       ['firstName','amount'],
+  assignment: ['firstName','activityYear','programs','formLink'],
+};
+
+const EMAIL_DEMO = {
+  firstName: 'שרה', lastName: 'כהן', amount: '250',
+  activityYear: '2025-2026',
+  programs: '• פילאטיס — יום שני 09:00<br>• יוגה — יום רביעי 18:00',
+  formLink: 'https://fitbalance.co.il/pages/public/sign.html?token=demo',
+};
+
+let emailQuill = null;
+let emailCurrentKey = 'welcome';
+let emailTemplatesData = {};
+
+function emailInitQuill() {
+  if (emailQuill) return;
+
+  emailQuill = new Quill('#email-quill-editor', {
+    theme: 'snow',
+    direction: 'rtl',
+
+    modules: {
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline'],
+          [{ color: [] }, { background: [] }],
+          [{ align: [] }],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['link', 'image', 'attachment'],
+          ['clean']
+        ],
+
+        handlers: {
+          attachment: function () {
+            let input = document.getElementById('email-attachment-input');
+
+            if (!input) {
+              input = document.createElement('input');
+              input.type = 'file';
+              input.id = 'email-attachment-input';
+              input.style.display = 'none';
+
+              document.body.appendChild(input);
+
+              input.addEventListener('change', function () {
+                const file = this.files[0];
+
+                if (!file) return;
+
+                console.log('[EmailJS] attachment selected:', {
+                  name: file.name,
+                  type: file.type,
+                  size: file.size,
+                  sizeKB: (file.size / 1024).toFixed(2)
+                });
+
+                emailTemplatesData[emailCurrentKey] =
+                  emailTemplatesData[emailCurrentKey] || {};
+
+                emailTemplatesData[emailCurrentKey]._attachment = file;
+
+                let info = document.getElementById('email-attachment-info');
+
+                if (!info) {
+                  info = document.createElement('div');
+                  info.id = 'email-attachment-info';
+                  info.style.marginTop = '8px';
+                  info.style.fontSize = '13px';
+                  info.style.color = '#555';
+
+                  document
+                    .getElementById('email-quill-editor')
+                    .parentElement
+                    .appendChild(info);
+                }
+
+                info.textContent =
+                  `📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+              });
+            }
+
+            input.value = '';
+            input.click();
+          }
+        }
+      }
+    }
+  });
+
+  // העלאת תמונה מקומית
+  emailQuill.getModule('toolbar').addHandler('image', () => {
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*';
+    input.onchange = () => {
+      const file = input.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const range = emailQuill.getSelection(true);
+        emailQuill.insertEmbed(range.index, 'image', e.target.result);
+        emailQuill.setSelection(range.index + 1);
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  });
+
+  emailQuill.root.setAttribute('dir', 'rtl');
+  emailQuill.root.style.cssText = 'direction:rtl;text-align:right;font-family:Heebo,Arial,sans-serif;font-size:14px;line-height:1.9;min-height:340px';
+}
+
+function emailInsertParam(param) {
+  if (!emailQuill) return;
+  const range = emailQuill.getSelection(true);
+  emailQuill.insertText(range.index, '{{' + param + '}}');
+  emailQuill.setSelection(range.index + param.length + 4);
+}
+
+function emailRenderParamsBar(key) {
+  const params = EMAIL_PARAMS[key] || [];
+  document.getElementById('email-params-bar').innerHTML = params.map(p =>
+    `<button type="button" onclick="emailInsertParam('${p}')" style="background:white;border:1px solid #ede9fe;border-radius:4px;padding:2px 8px;font-size:11px;color:#7c3aed;cursor:pointer;font-family:monospace">{{${p}}}</button>`
+  ).join('');
+}
+
+function emailRenderAttachmentInfo(key) {
+  const existing = document.getElementById('email-attachment-info');
+  if (existing) existing.remove();
+  const attachment = emailTemplatesData[key]?.attachment;
+  if (!attachment) return;
+  const info = document.createElement('div');
+  info.id = 'email-attachment-info';
+  info.style.cssText = 'margin-top:8px;font-size:13px;color:#555;display:flex;align-items:center;gap:8px';
+  info.innerHTML = `📎 <a href="${attachment.url}" target="_blank" style="color:#7c3aed">${attachment.name}</a>
+    <button onclick="emailRemoveAttachment()" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer">הסר</button>`;
+  document.getElementById('email-quill-editor').parentElement.appendChild(info);
+}
+
+function emailRemoveAttachment() {
+  emailTemplatesData[emailCurrentKey] = emailTemplatesData[emailCurrentKey] || {};
+  emailTemplatesData[emailCurrentKey]._removeAttachment = true;
+  emailTemplatesData[emailCurrentKey]._attachment = null;
+  const info = document.getElementById('email-attachment-info');
+  if (info) info.remove();
+}
+
+async function emailSwitchTemplate(key, btn) {
+  // שמור תוכן נוכחי לפני מעבר
+  if (emailQuill && emailCurrentKey) {
+    emailTemplatesData[emailCurrentKey] = emailTemplatesData[emailCurrentKey] || {};
+    emailTemplatesData[emailCurrentKey]._unsaved_html    = emailQuill.root.innerHTML;
+    emailTemplatesData[emailCurrentKey]._unsaved_subject = document.getElementById('email-subject').value;
+  }
+
+  emailCurrentKey = key;
+
+  // עדכון כפתורי טאב
+  document.querySelectorAll('.etab-btn').forEach(b => b.classList.remove('etab-active'));
+  btn.classList.add('etab-active');
+
+  // טעינת תוכן
+  const t = emailTemplatesData[key] || {};
+  const subject = t._unsaved_subject ?? t.subject ?? '';
+  const html    = t._unsaved_html    ?? t.body_html ?? '';
+
+  document.getElementById('email-subject').value = subject;
+  document.getElementById('email-preview-box').style.display = 'none';
+
+  setTimeout(() => {
+    emailInitQuill();
+    emailQuill.root.innerHTML = html;
+    emailRenderParamsBar(key);
+    emailRenderAttachmentInfo(key);
+  }, 30);
+}
+
+async function loadEmailTemplates() {
+  try {
+    const { data, error } = await sb.from('email_templates').select('*');
+    if (error) throw error;
+    (data || []).forEach(t => { emailTemplatesData[t.template_key] = t; });
+  } catch(e) {
+    console.warn('email_templates לא נמצאה, משתמש בברירות מחדל');
+  }
+  // טעינת תבנית ראשונה
+  setTimeout(() => {
+    emailInitQuill();
+    const t = emailTemplatesData['welcome'] || {};
+    document.getElementById('email-subject').value = t.subject || 'ברוכה הבאה ל-FitBalance! 🎀';
+    emailQuill.root.innerHTML = t.body_html || '<h2 style="text-align:right">שלום {{firstName}}! 🎀</h2><p style="text-align:right">שמחים לקבל אותך אלינו!</p>';
+    emailRenderParamsBar('welcome');
+    emailRenderAttachmentInfo('welcome');
+  }, 80);
+}
+
+async function saveEmailTemplate() {
+  if (!emailQuill) return;
+
+  const subject = document.getElementById('email-subject').value.trim();
+  const body_html = emailQuill.root.innerHTML;
+
+  const NAME_MAP = {
+    welcome: 'ברוכה הבאה',
+    birthday: 'יום הולדת',
+    debt: 'תזכורת חוב',
+    assignment: 'הודעת שיבוץ'
+  };
+
+  const templateData = emailTemplatesData[emailCurrentKey] || {};
+  const file = templateData._attachment || null;
+
+  let attachment = templateData.attachment || null;
+
+  try {
+    // --------------------------------------------------
+    // אם נבחר קובץ חדש - העלאה ל-Supabase Storage
+    // --------------------------------------------------
+    if (templateData._removeAttachment) attachment = null;
+    if (file) {
+      attachment = await window.uploadService.uploadEmailAttachment(file, emailCurrentKey);
+    }
+
+    // --------------------------------------------------
+    // שמירת התבנית
+    // --------------------------------------------------
+    const payload = {
+      template_key: emailCurrentKey,
+      name: NAME_MAP[emailCurrentKey] || emailCurrentKey,
+      subject,
+      body_html,
+      attachment
+    };
+
+    const { error } = await sb
+      .from('email_templates')
+      .upsert(payload, {
+        onConflict: 'template_key'
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    // --------------------------------------------------
+    // עדכון cache מקומי
+    // --------------------------------------------------
+    emailTemplatesData[emailCurrentKey] = {
+      ...emailTemplatesData[emailCurrentKey],
+      ...payload
+    };
+
+    delete emailTemplatesData[emailCurrentKey]._unsaved_html;
+    delete emailTemplatesData[emailCurrentKey]._unsaved_subject;
+    delete emailTemplatesData[emailCurrentKey]._attachment;
+    delete emailTemplatesData[emailCurrentKey]._removeAttachment;
+
+    emailRenderAttachmentInfo(emailCurrentKey);
+
+    // הסרת הצגת info ישנה (מוחלפת ע"י emailRenderAttachmentInfo)
+    const oldInfo = document.getElementById('email-attachment-info');
+    if (oldInfo && !attachment) oldInfo.remove();
+
+    console.log(
+      '[Email Template] Template saved successfully:',
+      emailCurrentKey
+    );
+
+  } catch (e) {
+    console.error('[Email Template] Save failed:', e);
+
+    console.warn(
+      'שמירה ב-Supabase נכשלה, שומר ב-localStorage:',
+      e?.message || e
+    );
+
+    // במקרה של כשל - שומרים לפחות את התבנית המקומית
+    const localPayload = {
+      template_key: emailCurrentKey,
+      name: NAME_MAP[emailCurrentKey] || emailCurrentKey,
+      subject,
+      body_html,
+      attachment
+    };
+
+    localStorage.setItem(
+      'email_tmpl_' + emailCurrentKey,
+      JSON.stringify(localPayload)
+    );
+
+    alert('שמירת התבנית נכשלה: ' + (e?.message || 'שגיאה לא ידועה'));
+    return;
+  }
+
+  const msg = document.getElementById('email-saved-msg');
+
+  if (msg) {
+    msg.style.display = 'inline';
+
+    setTimeout(() => {
+      msg.style.display = 'none';
+    }, 2000);
+  }
+}
+function emailTogglePreview() {
+  const box = document.getElementById('email-preview-box');
+  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+  if (!emailQuill) return;
+  let html = emailQuill.root.innerHTML;
+  const demo = EMAIL_DEMO;
+  Object.entries(demo).forEach(([k,v]) => {
+    html = html.replaceAll('{{' + k + '}}', `<mark style="background:#fef9c3;border-radius:3px;padding:0 2px">${v}</mark>`);
+  });
+  box.innerHTML = html;
+  box.style.display = 'block';
+}
+
+// חשיפה גלובלית לשימוש מחוץ לקובץ (customer-form.js וכו')
+window.getEmailTemplate = async function(key) {
+  if (emailTemplatesData[key]) return emailTemplatesData[key];
+  try {
+    const { data } = await sb.from('email_templates').select('subject,body_html').eq('template_key', key).maybeSingle();
+    if (data) { emailTemplatesData[key] = data; return data; }
+  } catch(e) {}
+  const local = localStorage.getItem('email_tmpl_' + key);
+  return local ? JSON.parse(local) : null;
+};
+
+// פונקציה להשתלת פרמטרים בתוכן תבנית
+window.injectEmailParams = function(html, params = {}) {
+  if (!html) return '';
+  return Object.entries(params).reduce(
+    (acc, [k, v]) => acc.replaceAll('{{' + k + '}}', v ?? ''), html
+  );
+};
+
+// טעינה כשנפתח הטאב
+const _origSwitchTab4 = window.switchTab;
+window.switchTab = function(name, btn) {
+  _origSwitchTab4(name, btn);
+  if (name === 'emails') loadEmailTemplates();
 };
 </script>
 

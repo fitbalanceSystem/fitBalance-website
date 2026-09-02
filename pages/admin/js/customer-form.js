@@ -1878,6 +1878,9 @@ async function calcAutoStatus(customerId) {
     const decoded = _decodeHtml(_bodyHtml || '<p>{{firstName}}, שיבוצך לשנת {{activityYear}}:<br>{{programs}}<br><a href="{{formLink}}">{{formLink}}</a></p>');
     // decode פעמיים למקרה של double-encoding
     const decoded2 = _decodeHtml(decoded);
+    console.log('[assignment] _link:', _link);
+    console.log('[assignment] _bodyHtml snippet:', _bodyHtml?.slice(0,200));
+    console.log('[assignment] decoded2 snippet:', decoded2?.slice(0,200));
     return decoded2
       .replace(/\{\{firstName\}\}/g,    firstName)
       .replace(/\{\{activityYear\}\}/g, yearLabel)

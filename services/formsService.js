@@ -236,7 +236,7 @@ window.formsService = {
   async getEmailTemplate(key) {
     const { data, error } = await window._sb
       .from('email_templates')
-      .select('subject, body_html')
+      .select('subject, body_html, attachment')
       .eq('template_key', key)
       .maybeSingle();
     if (error) throw error;

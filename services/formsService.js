@@ -182,7 +182,7 @@ window.formsService = {
   // signData.signedAt — timestamp שנוצר ב-sign.js לפני יצירת ה-PDF
   // כך ש-PDF ו-DB משתמשים באותו timestamp
   async signForm(token, signData) {
-    const { error } = await window._sb
+    const { data, error } = await window._sb
       .from('customer_forms')
       .update({
         status        : 'signed',
@@ -197,8 +197,11 @@ window.formsService = {
         token_expires : null,
       })
       .eq('token', token)
-      .eq('status', 'pending');
+      .eq('status', 'pending')
+      .select();
+    console.log('[signForm] error:', error, 'data:', data);
     if (error) throw error;
+    if (!data || data.length === 0) console.warn('[signForm] no rows updated — token mismatch or RLS blocked');
   },
 
   // שליפת כל הטפסים של לקוח (מנהל — authenticated)

@@ -2095,7 +2095,8 @@ async function loadDigitalForms(customerId) {
       ? '<span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px">✓ נחתם</span>'
       : '<span style="background:#fef9c3;color:#92400e;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px">⏳ ממתין</span>';
     const viewBtn = isSigned && f.pdf_url
-      ? `<button data-path="${f.pdf_url}" data-name="${name}" onclick="window.openPdfView(this.dataset.path, this.dataset.name)" style="background:#f3f0ff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#7c3aed;cursor:pointer">👁️ צפייה</button>`
+      ? `<button data-path="${f.pdf_url}" data-name="${name}" onclick="window.openPdfView(this.dataset.path, this.dataset.name)" style="background:#f3f0ff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#7c3aed;cursor:pointer">👁️ צפייה</button>
+         <button data-path="${f.pdf_url}" data-name="${name}" onclick="window.downloadPdf(this.dataset.path, this.dataset.name)" style="background:#f0fdf4;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#16a34a;cursor:pointer">⬇️ הורדה</button>`
       : '';
     return `
       <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:#faf9ff;border:1px solid #f3f0ff;margin-bottom:8px">
@@ -2109,6 +2110,15 @@ async function loadDigitalForms(customerId) {
       </div>`;
   }).join('');
 }
+
+window.downloadPdf = async function(pdfPath, formName) {
+  const { data } = window._sb.storage.from('form-pdfs').getPublicUrl(pdfPath);
+  if (!data?.publicUrl) return alert('לא ניתן להוריד את ה-PDF');
+  const a = document.createElement('a');
+  a.href = data.publicUrl + '?download=' + encodeURIComponent((formName || 'document') + '.pdf');
+  a.target = '_blank';
+  a.click();
+};
 
 window.openPdfView = async function(pdfPath, formName) {
   const modal = document.getElementById('pdfViewModal');
@@ -2183,7 +2193,8 @@ async function loadAllDocs(customerId) {
     const dateStr = r.date ? new Date(r.date).toLocaleDateString('he-IL') : '—';
     const badge   = badgeMap[r.status] || '';
     const viewBtn = r.pdfPath
-      ? `<button data-path="${r.pdfPath}" data-name="${r.name}" onclick="window.openPdfView(this.dataset.path,this.dataset.name)" style="background:#f3f0ff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#7c3aed;cursor:pointer">👁️ צפייה</button>`
+      ? `<button data-path="${r.pdfPath}" data-name="${r.name}" onclick="window.openPdfView(this.dataset.path,this.dataset.name)" style="background:#f3f0ff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#7c3aed;cursor:pointer">👁️ צפייה</button>
+         <button data-path="${r.pdfPath}" data-name="${r.name}" onclick="window.downloadPdf(this.dataset.path,this.dataset.name)" style="background:#f0fdf4;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#16a34a;cursor:pointer">⬇️ הורדה</button>`
       : '';
     const delBtn = r.type === 'manual'
       ? `<button data-id="${r.id}" data-path="${r.pdfPath}" onclick="window.deleteManualDoc(this)" style="background:#fee2e2;border:none;border-radius:8px;padding:5px 10px;font-size:12px;color:#dc2626;cursor:pointer">🗑️</button>`

@@ -206,6 +206,13 @@
                 <label>כיתה</label>
                 <input type="text" id="grade" placeholder="למשל: ג׳2" />
               </div>
+              <div class="field-block">
+                <label>🏷️ קטגוריה</label>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span id="categoryColorDot" style="width:14px;height:14px;border-radius:50%;background:#e5e7eb;flex-shrink:0;display:inline-block"></span>
+                  <select id="categoryCode" style="flex:1"></select>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -391,29 +398,24 @@
   </div>
 </div>
 <!-- מודאל נוכחות -->
-<!-- Modal backdrop -->
 <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
-  <!-- Modal container -->
   <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-xl p-4">
-    <!-- Modal header -->
     <div class="flex justify-between items-center mb-3">
       <h2 class="text-lg font-bold" id="modal-title">כותרת המודאל</h2>
-      <button id="close-modal" class="text-gray-600 hover:text-gray-900 text-xl font-bold">&times;</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="modal-print-btn" onclick="window.printModalTable()" style="background:#f3f0ff;border:1px solid #ede9fe;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;color:#7c3aed;cursor:pointer;font-family:inherit">הדפס / PDF</button>
+        <button id="close-modal" class="text-gray-600 hover:text-gray-900 text-xl font-bold">&times;</button>
+      </div>
     </div>
-
-    <!-- Modal content: טבלה עם כותרות -->
-    <table class="w-full text-sm border-collapse">
+    <table class="w-full text-sm border-collapse" id="modal-attendance-table">
       <thead>
         <tr class="border-b bg-gray-100">
           <th class="p-2 text-right">תאריך</th>
           <th class="p-2 text-right">יום</th>
           <th class="p-2 text-right">שעה</th>
-          <th class="p-2 text-right">שיעור</th>
         </tr>
       </thead>
-      <tbody id="attendance-table-body">
-        <!-- כאן יוכנסו השורות דינמית באמצעות JS -->
-      </tbody>
+      <tbody id="attendance-table-body"></tbody>
     </table>
   </div>
 </div>

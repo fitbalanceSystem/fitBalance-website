@@ -25,9 +25,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 console.log("YYY1");
 
   await loadAllCodeTables();
+  await loadCategoryOptions();
 
   const params = new URLSearchParams(window.location.search);
-  const customerId = parseInt(params.get('id'), 10);
+  const customerId = parseInt(params.get('id'), 10) || null;
   idCustomer = customerId;
 
   // מילוי מראש מנתוני מתעניינת
@@ -105,6 +106,11 @@ console.log("YYY");
     document.getElementById('isPregnant').checked = !!dataCustomers.isPregnant;
     document.getElementById('dueDate').value = dataCustomers.expectedDueDate || '';
 
+    document.getElementById('categoryCode').value = dataCustomers.category_code || '';
+    document.getElementById('parentName').value = dataCustomers.parentName || '';
+    document.getElementById('grade').value = dataCustomers.grade || '';
+    updateCategoryDot();
+
     await loadStatusOptions(dataCustomers.status_code);
 
     if (customerId) {
@@ -140,7 +146,7 @@ console.log("YYY");
 console.log(customerId);
   
     const data = {
-      ...(customerId && { id: customerId }),
+      ...(customerId ? { id: customerId } : {}),
       expectedDueDate: document.getElementById('dueDate').value || null,
       idValue: document.getElementById('idNumber').value.trim() || null,
       firstName: document.getElementById('firstName').value.trim() || null,
@@ -164,16 +170,27 @@ console.log(customerId);
       whatsapp_members_group: document.getElementById('checkbox6').checked || null,
       isPregnant: document.getElementById('isPregnant').checked || null,
       status_code: document.getElementById("status").value || null,
+      category_code: document.getElementById('categoryCode').value || null,
+      parentName: document.getElementById('parentName').value.trim() || null,
+      grade: document.getElementById('grade').value.trim() || null,
     };
     console.log(data);
-    const result = await upsert('customers', data);
-    console.log('upsert result:', result);
-    if (result && !result.error)
-      {saveStatus.textContent = '✅ נשמר בהצלחה';
-      setTimeout(() => (saveStatus.style.display = 'none'), 2000);}
-    else
-      {alert('אירעה שגיאה בשמירת הנתונים. נסה שנית.');
-      saveStatus.style.display = 'none';}
+    const result = customerId
+      ? await upsert('customers', data, ['id'])
+      : await supabase.from('customers').insert([data]).select().single().then(r => r.error ? { error: r.error } : { data: r.data });
+    if (result && !result.error) {
+      if (!customerId && result.data?.id) {
+        idCustomer = result.data.id;
+        window.history.replaceState(null, '', `?id=${result.data.id}`);
+      }
+      saveStatus.textContent = '✅ נשמר בהצלחה';
+      setTimeout(() => (saveStatus.style.display = 'none'), 2000);
+    } else {
+      const errMsg = result?.error?.message || result?.error || 'שגיאה לא ידועה';
+      console.error('save error:', errMsg);
+      alert('אירעה שגיאה בשמירת הנתונים: ' + errMsg);
+      saveStatus.style.display = 'none';
+    }
 
     // try {
     //   // שימוש ב-upsert לשמירה מהירה (הוספה או עדכון)
@@ -260,6 +277,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 // מריץ כשנטען הדף
 document.addEventListener("DOMContentLoaded", () => loadStatusOptions());
 
+// ======= קטגוריות מתאמנות =======
+let _categoriesCache = [];
+
+async function loadCategoryOptions() {
+  const sel = document.getElementById('categoryCode');
+  if (!sel) return;
+  const { data } = await supabase.from('codetables').select('code,descriptionCode').eq('name', 'groups').order('code');
+  _categoriesCache = (data || []).map(r => ({ code: r.code, label: r.descriptionCode }));
+  sel.innerHTML = '<option value="">ללא קטגוריה</option>' +
+    _categoriesCache.map(c => `<option value="${c.code}">${c.label}</option>`).join('');
+  sel.addEventListener('change', updateCategoryDot);
+}
+
+function updateCategoryDot() {
+  const sel = document.getElementById('categoryCode');
+  const dot = document.getElementById('categoryColorDot');
+  if (!sel || !dot) return;
+  const opt = sel.options[sel.selectedIndex];
+  dot.style.background = opt?.dataset?.color || '#e5e7eb';
+}
+
 // טעינת סטטוסים ידניים לבחירה בטופס
 function loadStatusOptions(selectedCode = null) {
   const statusSelect = document.getElementById("status");
@@ -315,6 +353,8 @@ async function loadCustomerProgramsBySchoolYear(customerId, schoolYearStart) {
   if (!tbody) return;
 
   tbody.innerHTML = '';
+  const countEl = document.getElementById('completionsYearCount');
+  if (countEl) countEl.textContent = '0';
 
   const startDateLimit = `${schoolYearStart}-09-01`;
   const endDateLimit = `${schoolYearStart + 1}-08-31`;
@@ -394,7 +434,7 @@ async function loadCustomerProgramsBySchoolYear(customerId, schoolYearStart) {
       <td class="paid-cell">...</td>
       <td class="debt-cell">...</td>
       <td class="flex gap-2 justify-center">
-        <button class="action-btn attendance bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded-md shadow"
+        <button class="action-btn btn-attendance bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded-md shadow"
                 title="סמן נוכחות"
                 onclick="window.markAttendance(${enrollment.id})">
           🟢 נוכחות
@@ -422,6 +462,8 @@ async function loadCustomerProgramsBySchoolYear(customerId, schoolYearStart) {
 
     // שליפת סכום שולם וחישוב חוב באסינכ
     loadEnrollmentDebt(tr, enrollment.id, totalDue);
+    // עדכון לחצן נוכחות עם ספירה
+    loadAttendanceBadge(tr, enrollment.id, enrollment.start_date, enrollment.end_date, enrollment.programs?.id, schoolYearStart);
   });
 
   window.deleteCustomerProgram = deleteCustomerProgram;
@@ -1061,72 +1103,136 @@ async function deleteCustomerProgram(programEnrollmentId, customerId, programId)
 
 
 
-// ======= פתיחת מודאל נוכחות / השלמות =======
-function markAttendance(enrollmentId) {
-  // כאן נוכל לפתוח את מודאל הנוכחות עם enrollmentId מתאים
-  console.log('סימון נוכחות עבור enrollment:', enrollmentId);
+// ======= ספירת נוכחות על לחצן =======
+async function loadAttendanceBadge(tr, enrollmentId, startDate, endDate, programId, schoolYearStart) {
+  if (!programId || !startDate || !endDate) return;
+  const yearStart = schoolYearStart ?? currentSchoolYearStart;
+  const yearStartDate = yearStart ? `${yearStart}-09-01` : startDate.split('T')[0];
+  const yearEndDate   = yearStart ? `${yearStart + 1}-08-31` : endDate.split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+  const effectiveEnd = yearEndDate < today ? yearEndDate : today;
 
-  // לדוגמה, נשמור את ה-enrollmentId כדי לטעון מפגשים ספציפיים
-  currentEnrollmentId = enrollmentId;
+  // מפגשים שהתקיימו מתחילת השנה הלימודית ועד היום (כל התוכניות של הלקוחה)
+  const { data: sessions } = await supabase
+    .from('program_sessions').select('id')
+    .eq('program_id', programId)
+    .gte('date', yearStartDate)
+    .lte('date', effectiveEnd);
 
-  // פותחים את מודאל הנוכחות
-  openAttendanceModal('attendance');
+  const sessionIds = (sessions || []).map(s => s.id);
+
+  // השלמות: status_code=2 מתחילת השנה — ללא תלות ב-program_id
+  const { data: comp } = await supabase
+    .from('session_attendance')
+    .select('id, session_id, program_sessions!inner(date)')
+    .eq('customer_id', idCustomer)
+    .eq('status_code', 2)
+    .gte('program_sessions.date', yearStartDate)
+    .lte('program_sessions.date', effectiveEnd);
+
+  if (!sessionIds.length && !comp?.length) {
+    const attBtn  = tr.querySelector('.btn-attendance');
+    const compBtn = tr.querySelector('.btn-completions');
+    if (attBtn)  attBtn.textContent  = '🟢 נוכחות 0/0';
+    if (compBtn) compBtn.textContent = '📋 השלמות 0';
+    return;
+  }
+
+  const { data: att } = await supabase.from('session_attendance').select('id')
+    .eq('customer_id', idCustomer).eq('is_present', true).neq('status_code', 2)
+    .in('session_id', sessionIds);
+
+  const total      = sessionIds.length;
+  const present    = att?.length  || 0;
+  const completion = comp?.length || 0;
+
+  const attBtn  = tr.querySelector('.btn-attendance');
+  if (attBtn)  attBtn.textContent  = `🟢 נוכחות ${present}/${total}`;
+
+  // עדכון ספירת השלמות בכפתור השנה
+  const countEl = document.getElementById('completionsYearCount');
+  if (countEl) {
+    const prev = parseInt(countEl.textContent) || 0;
+    countEl.textContent = prev + completion;
+  }
 }
 
-function openAttendanceModal(type) {
+// ======= פתיחת מודאל נוכחות =======
+function markAttendance(enrollmentId) {
+  currentEnrollmentId = enrollmentId;
+  openAttendanceModal(enrollmentId);
+}
+
+async function openAttendanceModal(enrollmentId) {
   const modal = document.getElementById('modal');
   const title = document.getElementById('modal-title');
   const tbody = document.getElementById('attendance-table-body');
-
   if (!modal || !title || !tbody) return;
 
-  // ניקוי תוכן קודם
+  tbody.innerHTML = '<tr><td colspan="4" class="p-2 text-center">טוען...</td></tr>';
+  modal.classList.remove('hidden');
+
+  // שלוף פרטי ההרשמה
+  const { data: enrollment } = await supabase.from('program_enrollments')
+    .select('start_date, end_date, program_id, programs!fk_enrollments_program(name)')
+    .eq('id', enrollmentId).single();
+  if (!enrollment) { tbody.innerHTML = '<tr><td colspan="4">שגיאה בטעינה</td></tr>'; return; }
+
+  title.textContent = `נוכחות — ${enrollment.programs?.name || ''}`;
+
+  const today = new Date().toISOString().split('T')[0];
+  const effEnd = enrollment.end_date < today ? enrollment.end_date : today;
+
+  // שלוף מפגשים בטווח ההרשמה עד היום
+  const { data: sessions } = await supabase.from('program_sessions')
+    .select('id, date, time')
+    .eq('program_id', enrollment.program_id)
+    .gte('date', enrollment.start_date.split('T')[0])
+    .lte('date', effEnd)
+    .order('date', { ascending: true });
+
+  if (!sessions?.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="p-2 text-center">אין מפגשים</td></tr>';
+    return;
+  }
+
+  // שלוף נוכחויות
+  const sessionIds = sessions.map(s => s.id);
+  const { data: attendance } = await supabase.from('session_attendance')
+    .select('session_id, is_present, status_code')
+    .eq('customer_id', idCustomer)
+    .in('session_id', sessionIds);
+
+  const attMap = Object.fromEntries((attendance || []).map(a => [a.session_id, a]));
+  const dayNames = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
   tbody.innerHTML = '';
-
-  // סוג המודאל: 'attendance' או 'completion'
-  const yearLabel = document.getElementById('schoolYearLabel')?.textContent || '';
-  title.textContent = type === 'attendance' 
-    ? `נוכחות לשנת ${yearLabel}` 
-    : `השלמות לשנת ${yearLabel}`;
-
-  // כאן אפשר לטעון את המפגשים או השיעורים המתאימים
-  // לדוגמא, נניח שיש לך את כלProgram מהטבלה
-  if (type === 'attendance') {
-    allProgram.forEach(enrollment => {
-      const startDate = enrollment.start_date ? enrollment.start_date.split('T')[0] : '';
-      const endDate = enrollment.end_date ? enrollment.end_date.split('T')[0] : '';
-      const day = enrollment.programs?.day || '';
-      const time = enrollment.programs?.time || '';
-      const name = enrollment.programs?.name || '';
-
-      // לדוגמא נכניס שורה לכל מפגש
+  const presentSessions = sessions.filter(s => attMap[s.id]?.is_present === true && attMap[s.id]?.status_code !== 2);
+  if (!presentSessions.length) {
+    tbody.innerHTML = '<tr><td colspan="3" class="p-2 text-center">אין נוכחויות מדווחות</td></tr>';
+  } else {
+    presentSessions.forEach(s => {
+      const d = new Date(s.date);
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td class="p-2 text-right">${startDate} - ${endDate}</td>
-        <td class="p-2 text-right">${day}</td>
-        <td class="p-2 text-right">${time}</td>
-        <td class="p-2 text-right">${name}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  } else if (type === 'completion') {
-    // אם רוצים תיעוד השלמות, ניתן למלא אחרת לפי הצורך
-    allProgram.forEach(enrollment => {
-      const name = enrollment.programs?.name || '';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="p-2 text-right">-</td>
-        <td class="p-2 text-right">-</td>
-        <td class="p-2 text-right">-</td>
-        <td class="p-2 text-right">${name}</td>
+        <td class="p-2 text-right">${s.date}</td>
+        <td class="p-2 text-right">${dayNames[d.getDay()]}</td>
+        <td class="p-2 text-right">${s.time?.slice(0,5)||''}</td>
       `;
       tbody.appendChild(tr);
     });
   }
-
-  // הצגת המודאל
-  modal.classList.remove('hidden');
 }
+
+// ======= הדפסת מודאל נוכחות =======
+window.printModalTable = function() {
+  const title = document.getElementById('modal-title')?.textContent || '';
+  const table = document.getElementById('modal-attendance-table')?.outerHTML || '';
+  const win = window.open('', '_blank');
+  win.document.write(`<html dir="rtl"><head><title>${title}</title><style>body{font-family:Arial,sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:right}th{background:#f3f0ff}</style></head><body><h2>${title}</h2>${table}</body></html>`);
+  win.document.close();
+  win.print();
+};
 
 // ======= סגירת מודאל =======
 function closeModal() {
@@ -2039,6 +2145,7 @@ async function calcAutoStatus(customerId) {
         emailParams.message += `<br><br>📎 <a href="${downloadUrl}">${attachMeta.name || 'קובץ מצורף'}</a>`;
       }
 
+      console.log('[emailjs] params:', JSON.stringify({ ...emailParams, message: emailParams.message?.slice(0,200) }));
       await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, emailParams);
       const yearLabel = document.getElementById('schoolYearLabel')?.textContent?.trim() || '';
       await supabase.from('customer_notes').insert({
@@ -2068,6 +2175,204 @@ async function calcAutoStatus(customerId) {
 
 window.getEmailTemplate = async function(key) {
   return window.formsService?.getEmailTemplate?.(key);
+};
+
+// ======= מודאל השלמות =======
+window.openCompletionsModal = async function(enrollmentId, programName) {
+  const { data: enrollment } = await supabase.from('program_enrollments')
+    .select('start_date, end_date, program_id').eq('id', enrollmentId).single();
+  if (!enrollment) return;
+
+  const { data: sessions } = await supabase.from('program_sessions').select('id, date, time')
+    .eq('program_id', enrollment.program_id)
+    .gte('date', enrollment.start_date.split('T')[0])
+    .lte('date', enrollment.end_date.split('T')[0])
+    .order('date', { ascending: true });
+
+  const sessionIds = (sessions || []).map(s => s.id);
+  const { data: comps } = sessionIds.length
+    ? await supabase.from('session_attendance').select('session_id, notes')
+        .eq('customer_id', idCustomer).eq('status_code', 2).in('session_id', sessionIds)
+    : { data: [] };
+
+  const compMap = Object.fromEntries((comps || []).map(c => [c.session_id, c]));
+  const dayNames = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+  const rows = (sessions || []).filter(s => compMap[s.id]).map(s => {
+    const d = new Date(s.date);
+    return `<tr><td style="padding:6px 10px">${s.date}</td><td style="padding:6px 10px">${dayNames[d.getDay()]}</td><td style="padding:6px 10px">${s.time?.slice(0,5)||''}</td><td style="padding:6px 10px">${compMap[s.id]?.notes||''}</td></tr>`;
+  }).join('');
+
+  const tableHtml = `<div style="max-height:340px;overflow-y:auto;direction:rtl">
+      <table id="swal-completions-table" style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="background:#f3f0ff"><th style="padding:6px 10px">תאריך</th><th style="padding:6px 10px">יום</th><th style="padding:6px 10px">שעה</th><th style="padding:6px 10px">הערה</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="4" style="text-align:center;padding:12px">אין השלמות</td></tr>'}</tbody>
+      </table></div>`;
+
+  Swal.fire({
+    title: `📋 השלמות — ${programName}`,
+    html: tableHtml,
+    confirmButtonText: 'סגור',
+    showDenyButton: !!rows,
+    denyButtonText: 'הדפס / PDF',
+    denyButtonColor: '#7c3aed',
+    width: 500,
+    didOpen: () => {},
+    preDeny: () => {
+      const t = document.getElementById('swal-completions-table')?.outerHTML || '';
+      const win = window.open('', '_blank');
+      win.document.write(`<html dir="rtl"><head><title>השלמות — ${programName}</title><style>body{font-family:Arial,sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:right}th{background:#f3f0ff}</style></head><body><h2>השלמות — ${programName}</h2>${t}</body></html>`);
+      win.document.close(); win.print();
+      return false;
+    },
+  });
+};
+
+window.openYearCompletionsModal = async function() {
+  if (!idCustomer || !currentSchoolYearStart) return;
+  const yearStart    = `${currentSchoolYearStart}-09-01`;
+  const yearEnd      = `${currentSchoolYearStart + 1}-08-31`;
+  const today        = new Date().toISOString().split('T')[0];
+  const effectiveEnd = yearEnd < today ? yearEnd : today;
+
+  // שלב 1: שלוף session_ids בטווח השנה
+  const { data: sessions } = await supabase
+    .from('program_sessions')
+    .select('id, date, time, programs(name)')
+    .gte('date', yearStart)
+    .lte('date', effectiveEnd);
+
+  const sessionIds = (sessions || []).map(s => s.id);
+  if (!sessionIds.length) {
+    Swal.fire({ title: `📋 השלמות ${currentSchoolYearStart}-${currentSchoolYearStart+1}`, html: '<p>אין השלמות לשנה זו</p>', confirmButtonText: 'סגור' });
+    return;
+  }
+
+  // שלב 2: שלוף השלמות לפי session_ids
+  const { data: comps } = await supabase
+    .from('session_attendance')
+    .select('session_id, notes')
+    .eq('customer_id', idCustomer)
+    .eq('status_code', 2)
+    .in('session_id', sessionIds);
+
+  const sessionMap = Object.fromEntries((sessions || []).map(s => [s.id, s]));
+  const dayNames = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+  const allRows = (comps || [])
+    .map(c => ({ ...c, ps: sessionMap[c.session_id] }))
+    .filter(c => c.ps)
+    .sort((a, b) => a.ps.date.localeCompare(b.ps.date))
+    .map(c => {
+      const d = new Date(c.ps.date);
+      return `<tr>
+        <td style="padding:6px 10px;font-weight:600">${c.ps.programs?.name || ''}</td>
+        <td style="padding:6px 10px">${c.ps.date}</td>
+        <td style="padding:6px 10px">${dayNames[d.getDay()]}</td>
+        <td style="padding:6px 10px">${c.ps.time?.slice(0,5)||''}</td>
+        <td style="padding:6px 10px">${c.notes||''}</td>
+      </tr>`;
+    });
+
+  const yearTitle = `השלמות ${currentSchoolYearStart}-${currentSchoolYearStart+1}`;
+  const tableHtmlYear = `<div style="max-height:400px;overflow-y:auto;direction:rtl">
+      <table id="swal-year-completions-table" style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="background:#f3f0ff"><th style="padding:6px 10px">תוכנית</th><th style="padding:6px 10px">תאריך</th><th style="padding:6px 10px">יום</th><th style="padding:6px 10px">שעה</th><th style="padding:6px 10px">הערה</th></tr></thead>
+        <tbody>${allRows.join('') || '<tr><td colspan="5" style="text-align:center;padding:12px">אין השלמות לשנה זו</td></tr>'}</tbody>
+      </table></div>`;
+
+  Swal.fire({
+    title: `📋 ${yearTitle}`,
+    html: tableHtmlYear,
+    confirmButtonText: 'סגור',
+    showDenyButton: allRows.length > 0,
+    denyButtonText: 'הדפס / PDF',
+    denyButtonColor: '#7c3aed',
+    width: 580,
+    preDeny: () => {
+      const t = document.getElementById('swal-year-completions-table')?.outerHTML || '';
+      const win = window.open('', '_blank');
+      win.document.write(`<html dir="rtl"><head><title>${yearTitle}</title><style>body{font-family:Arial,sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:right}th{background:#f3f0ff}</style></head><body><h2>${yearTitle}</h2>${t}</body></html>`);
+      win.document.close(); win.print();
+      return false;
+    },
+  });
+};
+
+// ======= מודאל סיכום כניסות =======
+window.openYearSummaryModal = async function() {
+  if (!idCustomer || !currentSchoolYearStart) return;
+  const yearStart = `${currentSchoolYearStart}-09-01`;
+  const yearEnd   = `${currentSchoolYearStart + 1}-08-31`;
+  const today     = new Date().toISOString().split('T')[0];
+  const dayNames  = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+  const { data: enrollments } = await supabase.from('program_enrollments')
+    .select('id, start_date, end_date, programs!fk_enrollments_program(id, name, day, time)')
+    .eq('customer_id', idCustomer).gte('start_date', yearStart).lte('start_date', yearEnd);
+
+  if (!enrollments?.length) { Swal.fire('אין נתונים', 'אין תוכניות לשנה זו', 'info'); return; }
+
+  let totalPresent = 0, totalSessions = 0, totalComp = 0;
+
+  // שלב 1: שלוף השלמות לכל השנה לפי session_ids
+  const effectiveEnd = yearEnd < today ? yearEnd : today;
+  const { data: allYearSessions } = await supabase.from('program_sessions').select('id')
+    .gte('date', yearStart).lte('date', effectiveEnd);
+  const allYearSessionIds = (allYearSessions || []).map(s => s.id);
+  const { data: allComps } = allYearSessionIds.length
+    ? await supabase.from('session_attendance').select('id').eq('customer_id', idCustomer).eq('status_code', 2).in('session_id', allYearSessionIds)
+    : { data: [] };
+  totalComp = allComps?.length || 0;
+
+  const lines = await Promise.all(enrollments.map(async en => {
+    const effEnd = en.end_date < today ? en.end_date : today;
+    const { data: sessions } = await supabase.from('program_sessions').select('id')
+      .eq('program_id', en.programs.id).gte('date', yearStart).lte('date', effEnd);
+    const sessionIds = (sessions || []).map(s => s.id);
+    if (!sessionIds.length) return null;
+    const { data: att } = await supabase.from('session_attendance').select('id')
+      .eq('customer_id', idCustomer).eq('is_present', true).neq('status_code', 2).in('session_id', sessionIds);
+    const p = att?.length || 0, t = sessionIds.length;
+    totalPresent += p; totalSessions += t;
+    const dayNum = parseInt(en.programs.day);
+    const dayStr = (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 7) ? dayNames[dayNum - 1] : '';
+    const timeStr = en.programs.time ? en.programs.time.slice(0, 5) : '';
+    return `<div style="padding:5px 0;border-bottom:1px solid #f3f0ff;font-size:14px">
+      <strong>${en.programs.name}</strong> (יום ${dayStr} ${timeStr}): <span style="font-weight:700">${p}/${t}</span>
+    </div>`;
+  }));
+
+  const remaining = Math.max(0, totalSessions - totalPresent - totalComp);
+
+  const summaryTitle = `סיכום כניסות ${currentSchoolYearStart}-${currentSchoolYearStart+1}`;
+  const summaryHtml = `<div style="direction:rtl;text-align:right">
+      ${lines.filter(Boolean).join('')}
+      <div style="margin-top:14px;padding-top:10px;border-top:2px solid #e9d5ff;font-size:14px;line-height:2">
+        <div>סה"כ: <strong>${totalPresent} כניסות מתוך ${totalSessions}</strong></div>
+        <div>השלמות: <strong>${totalComp}</strong></div>
+        <div>נותרו להשלמה: <strong>${remaining}</strong></div>
+      </div>
+    </div>`;
+
+  Swal.fire({
+    title: `📊 ${summaryTitle}`,
+    html: `<div id="swal-year-summary-content">${summaryHtml}</div>`,
+    confirmButtonText: 'סגור',
+    showDenyButton: true,
+    denyButtonText: 'הדפס / PDF',
+    denyButtonColor: '#7c3aed',
+    width: 480,
+    preDeny: () => {
+      const firstName = document.getElementById('firstName')?.value?.trim() || '';
+      const content = document.getElementById('swal-year-summary-content')?.innerHTML || summaryHtml;
+      const win = window.open('', '_blank');
+      win.document.write(`<html dir="rtl"><head><title>${summaryTitle} — ${firstName}</title><style>body{font-family:Arial,sans-serif;padding:20px;direction:rtl}h2{color:#1f2937}div{font-size:14px;line-height:2}</style></head><body><h2>${summaryTitle}${firstName ? ' — ' + firstName : ''}</h2>${content}</body></html>`);
+      win.document.close();
+      win.print();
+      return false;
+    },
+  });
 };
 // ======= סיום הודעת שיבוץ =======
 

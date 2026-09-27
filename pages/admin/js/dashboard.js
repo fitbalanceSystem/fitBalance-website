@@ -22,14 +22,18 @@ function daysUntilBirthday(dobStr) {
   if (!useHebrew) {
     const next = new Date(today.getFullYear(), +m - 1, +d);
     if (next < today) next.setFullYear(today.getFullYear() + 1);
-    return Math.round((next - today) / 86400000);
+    const diff = Math.round((next - today) / 86400000);
+    // אם היום הולדת עבר בשנה הנוכחית, החזר שנה אחורה לחישוב ימים שעברו
+    const past = new Date(today.getFullYear(), +m - 1, +d);
+    const pastDiff = Math.round((today - past) / 86400000);
+    if (pastDiff >= 0 && pastDiff <= 7) return -pastDiff;
+    return diff;
   }
 
   // לוח עברי — מחשב את התאריך העברי של יום ההולדת ומוצא את הפעם הבאה שלו
   const year = dobStr.includes('-') ? +dobStr.split('-')[0] : +dobStr.split('/')[2];
   const birthHeb = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { day: 'numeric', month: 'long' }).format(new Date(year, +m - 1, +d));
-  // מחפש את התאריך הלועזי הקרוב שמתאים לאותו תאריך עברי
-  for (let i = 0; i <= 400; i++) {
+  for (let i = -7; i <= 400; i++) {
     const candidate = new Date(today.getTime() + i * 86400000);
     const candHeb = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { day: 'numeric', month: 'long' }).format(candidate);
     if (candHeb === birthHeb) return i;
@@ -123,28 +127,30 @@ async function loadBirthdays() {
 
   const sorted = data
     .map(c => ({ ...c, days: daysUntilBirthday(c.birthDate) }))
-    .filter(c => c.days <= 30)
-    .sort((a, b) => a.days - b.days)
-    .slice(0, 8);
+    .filter(c => c.days >= -7 && c.days <= 30)
+    .sort((a, b) => a.days - b.days);
 
   if (!sorted.length) { el.innerHTML = '<div class="empty-msg">אין ימי הולדת ב-30 הימים הקרובים</div>'; return; }
+
+  // מצא את היום הראשון שהיום הוא 0 (היום) או הראשון שיום הולדת עתידי
+  const scrollToIdx = sorted.findIndex(c => c.days >= 0);
 
   el.innerHTML = sorted.map((c, idx) => {
     const birthYear = getBirthYear(c.birthDate);
     const age = birthYear ? today.getFullYear() - birthYear + (c.days === 0 ? 1 : 0) : '';
-    const badge = c.days === 0
-      ? '<span class="badge-today">היום! 🎉</span>'
-      : `<span class="badge-days">בעוד ${c.days} ימים</span>`;
+    let badge;
+    if (c.days === 0) badge = '<span class="badge-today">היום! 🎉</span>';
+    else if (c.days < 0) badge = `<span class="badge-days" style="background:#fee2e2;color:#dc2626">לפני ${-c.days} ימים</span>`;
+    else badge = `<span class="badge-days">בעוד ${c.days} ימים</span>`;
     if (c.email) birthdayMailLinks[c.id] = { to: c.email, firstName: c.firstName, id: c.id };
     const sentAt = c.birthday_email_sent_at ? new Date(c.birthday_email_sent_at).toLocaleDateString('he-IL') : null;
     const mailLink = c.email
       ? `<button onclick="openMailModal('${c.id}')" title="${sentAt ? 'נשלח ב-' + sentAt + ' — לחץ לשליחה חוזרת' : 'שלח מייל מזל טוב'}" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0;">${sentAt ? '✅' : '✉️'}</button>`
       : '<span style="font-size:11px;color:#ccc;">אין מייל</span>';
     const useHebrew = (localStorage.getItem('sys_dash-birthday-calendar') ?? 'gregorian') === 'hebrew';
-    const dateDisplay = useHebrew
-      ? toHebrewDate(c.birthDate)
-      : c.birthDate;
-    return `<div class="widget-row">
+    const dateDisplay = useHebrew ? toHebrewDate(c.birthDate) : c.birthDate;
+    const isPast = c.days < 0;
+    return `<div class="widget-row" data-idx="${idx}" style="${isPast ? 'opacity:0.6;' : ''}">
       <span class="row-icon">🎂</span>
       <div class="row-info">
         <div class="row-name">${c.firstName} ${c.lastName}</div>
@@ -153,6 +159,12 @@ async function loadBirthdays() {
       <div style="display:flex;align-items:center;gap:8px;">${mailLink}${badge}</div>
     </div>`;
   }).join('');
+
+  // גלול ליום הראשון שהוא היום או עתידי
+  if (scrollToIdx > 0) {
+    const row = el.querySelector(`[data-idx="${scrollToIdx}"]`);
+    if (row) setTimeout(() => row.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 100);
+  }
 }
 
 async function loadInquiries() {

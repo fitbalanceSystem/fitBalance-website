@@ -51,6 +51,10 @@
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="חיפוש לפי שם, טלפון..." />
         <select id="statusFilter"></select>
+        <select id="categoryFilter" onchange="filterCustomers()" style="border:1px solid #d1d5db;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit">
+          <option value="">כל הקטגוריות</option>
+          <option value="__none__">ללא קטגוריה</option>
+        </select>
         <i class="fas fa-search"></i>
       </div>
       <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
@@ -76,6 +80,7 @@
               <th class="sort-btn" onclick="sortBy('firstName')">שם פרטי <span class="sort-icon" id="sort-firstName"></span></th>
               <th class="sort-btn" onclick="sortBy('lastName')">שם משפחה <span class="sort-icon" id="sort-lastName"></span></th>
               <th class="sort-btn" onclick="sortBy('birthDate')">ת.לידה <span class="sort-icon" id="sort-birthDate"></span></th>
+              <th>גיל</th>
               <th>אימייל</th>
               <th class="sort-btn" onclick="sortBy('mobile')">נייד <span class="sort-icon" id="sort-mobile"></span></th>
               <th>סטטוס</th>

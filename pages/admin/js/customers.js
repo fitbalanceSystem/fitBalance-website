@@ -94,6 +94,15 @@ async function buildDebtMap() {
   });
 }
 
+function calcAge(birthDate) {
+  const bd = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - bd.getFullYear();
+  const m = today.getMonth() - bd.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) age--;
+  return age;
+}
+
 function getStatusHtml(status) {
   const map = {
     active: ['✓ פעילה','green'], future: ['📅 שיבוץ עתידי','#0077cc'],
@@ -116,6 +125,8 @@ async function renderTable() {
   pageData.forEach(customer => {
     const tr = document.createElement('tr');
     tr.style.cursor = 'pointer';
+    const catColor = CATEGORY_COLORS[customer.category_code] || '';
+    if (catColor) tr.style.background = catColor;
     const activeDebt = activeDebtMap[customer.id] || 0;
     const futureDebt = futureDebtMap[customer.id] || 0;
     const hasFuture = futureStatusSet.has(customer.id);
@@ -136,6 +147,7 @@ async function renderTable() {
       <td>${customer.firstName||''}</td>
       <td>${customer.lastName||''}</td>
       <td>${customer.birthDate||''}</td>
+      <td>${customer.birthDate ? calcAge(customer.birthDate) : ''}</td>
       <td>${customer.email||''}</td>
       <td>${customer.mobile||''}</td>
       <td>${getStatusHtml(displayStatus)}${debtBadge}</td>
@@ -253,6 +265,7 @@ function saveTableState() {
   sessionStorage.setItem('customersState', JSON.stringify({
     search: document.getElementById('searchInput').value,
     status: document.getElementById('statusFilter').value,
+    category: document.getElementById('categoryFilter').value,
     page: currentPage
   }));
 }
@@ -282,10 +295,25 @@ function filterCustomers() {
       (cust.email||'').toLowerCase().includes(searchTerm) ||
       (cust.idValue||'').includes(searchTerm);
     const matchStatus = !selectedStatus || selectedStatus === 'all' || statusMap[cust.id] === selectedStatus;
-    return matchText && matchStatus;
+    const selectedCategory = document.getElementById('categoryFilter').value;
+    const matchCategory = !selectedCategory || 
+      (selectedCategory === '__none__' ? !cust.category_code : (cust.category_code||'') === selectedCategory);
+    return matchText && matchStatus && matchCategory;
   });
   currentPage = 1;
   renderTable();
+}
+
+const CATEGORY_COLORS = { '1': '#fce7f3', '2': '#ede9fe', '3': '#e0f2fe' };
+const CATEGORY_LABELS = {};
+
+async function loadCategoryFilter() {
+  const { data } = await supabaseClient.from('codetables').select('code,descriptionCode').eq('name', 'groups').order('code');
+  const sel = document.getElementById('categoryFilter');
+  (data || []).forEach(r => {
+    CATEGORY_LABELS[r.code] = r.descriptionCode;
+    sel.innerHTML += `<option value="${r.code}">${r.descriptionCode}</option>`;
+  });
 }
 
 function loadStatusOptions() {
@@ -313,6 +341,7 @@ function exportToCSV(data) {
 
 document.addEventListener('DOMContentLoaded', () => {
   loadStatusOptions();
+  loadCategoryFilter();
   loadCustomers();
   document.getElementById('newCustomerBtn')?.addEventListener('click', () => { saveTableState(); window.location.href = 'customer-form.html'; });
   document.getElementById('exportCustomersBtn')?.addEventListener('click', () => exportToCSV(currentFilteredData || customerData));
@@ -341,7 +370,8 @@ window.addEventListener('pageshow', async () => {
       const { search, status, page } = JSON.parse(savedState);
       document.getElementById('searchInput').value = search || '';
       document.getElementById('statusFilter').value = status || 'all';
-      if (search || (status && status !== 'all')) filterCustomers();
+      document.getElementById('categoryFilter').value = category || '';
+      if (search || (status && status !== 'all') || category) filterCustomers();
       currentPage = page || 1;
       renderTable();
     }

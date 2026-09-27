@@ -72,6 +72,23 @@
   }
   .logout-btn:hover { background: rgba(239,68,68,.15); color: #fca5a5; }
 
+  .bell-btn {
+    position: relative; background: none; border: none; cursor: pointer;
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #6b7280; font-size: 18px; transition: background .2s;
+  }
+  .bell-btn:hover { background: #f3f0ff; color: #8b5cf6; }
+  .bell-badge {
+    position: absolute;
+    color: white;
+    font-size: 10px; font-weight: 700;
+    border-radius: 999px; min-width: 16px; height: 16px;
+    display: none; align-items: center; justify-content: center;
+    padding: 0 4px; line-height: 1;
+  }
+  .bell-badge.near   { display: flex; background: #f59e0b; top: 0px; left: 0px; }
+  .bell-badge.overdue { display: flex; background: #ef4444; top: 0px; left: 18px; }
   /* Topbar */
   #_admin_topbar {
     position: fixed; top: 0; right: 260px; left: 0; height: 64px;
@@ -143,6 +160,11 @@
 
   <nav>
     <div class="nav-section-label">ניהול</div>
+    <a href="tasks.html" class="nav-link">
+      <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+      <span>לוח משימות</span>
+      <span class="nav-dot"></span>
+    </a>
     <a href="inquiries.html" class="nav-link">
       <span class="nav-icon"><i class="fas fa-star"></i></span>
       <span>מתעניינות</span>
@@ -259,6 +281,11 @@
 <header id="_admin_topbar">
   <button id="_sidebar_toggle"><i class="fas fa-bars"></i></button>
   <div class="topbar-right">
+    <a href="tasks.html" id="_bell_btn" class="bell-btn" title="תזכורות">
+      <i class="fas fa-bell"></i>
+      <span class="bell-badge" id="_bell_near"></span>
+      <span class="bell-badge" id="_bell_overdue"></span>
+    </a>
     <span class="topbar-greeting">שלום, <strong id="_topbar_name">מנהל</strong></span>
     <div class="topbar-avatar" id="_topbar_avatar">A</div>
   </div>
@@ -297,4 +324,61 @@
     sidebar.classList.remove('open');
     overlay.style.display = 'none';
   });
+
+  // פעמון תזכורות
+  async function checkReminders() {
+    try {
+      if (!window._sb) { console.log('[bell] _sb not ready'); return; }
+      const { data, error } = await window._sb.from('tasks')
+        .select('due_date,due_time,reminder,reminder_minutes,status')
+        .neq('status', 'done');
+      console.log('[bell] data:', data, 'error:', error);
+      if (!data) return;
+
+      const now = new Date();
+      let nearCount = 0;
+      let overdueCount = 0;
+
+      data.forEach(task => {
+        if (!task.due_date) return;
+        const [y, mo, d] = task.due_date.split('-').map(Number);
+        const dt = new Date(y, mo - 1, d);
+        if (task.due_time) {
+          const [h, m] = task.due_time.split(':').map(Number);
+          dt.setHours(h, m, 0, 0);
+        } else {
+          dt.setHours(23, 59, 0, 0);
+        }
+        const diffMin = (dt - now) / 60000;
+        console.log('[bell] task due:', task.due_date, task.due_time, 'diffMin:', diffMin.toFixed(1), 'reminder:', task.reminder, 'reminderMin:', task.reminder_minutes);
+
+        if (diffMin < 0) {
+          overdueCount++;
+        } else if (task.reminder && diffMin <= (task.reminder_minutes ?? 30)) {
+          nearCount++;
+        }
+      });
+
+      console.log('[bell] near:', nearCount, 'overdue:', overdueCount);
+      const badge = document.getElementById('_bell_badge');
+      if (!badge) { console.log('[bell] badge element not found'); return; }
+
+      if (overdueCount > 0) {
+        badge.textContent = overdueCount;
+        badge.className = 'bell-badge show overdue';
+      } else if (nearCount > 0) {
+        badge.textContent = nearCount;
+        badge.className = 'bell-badge show';
+      } else {
+        badge.textContent = '';
+        badge.className = 'bell-badge';
+      }
+    } catch(e) { console.warn('bell error', e); }
+  }
+
+  function waitAndCheck() {
+    if (window._sb) { checkReminders(); setInterval(checkReminders, 60000); }
+    else setTimeout(waitAndCheck, 300);
+  }
+  waitAndCheck();
 </script>

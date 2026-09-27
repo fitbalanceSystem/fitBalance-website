@@ -63,6 +63,47 @@ window.authService = {
     };
   },
 
+  async register({ firstName, lastName, idNumber, email, phone, password }) {
+    // בדיקה אם קיימת לפי מייל + ת.ז
+    const { data: existing } = await window._sb
+      .from('customers')
+      .select('id')
+      .eq('email', email.trim().toLowerCase())
+      .eq('idValue', idNumber.trim())
+      .maybeSingle();
+
+    // יצירת auth user
+    const { data: authData, error: signUpError } = await window._sb.auth.signUp({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    if (signUpError) {
+      if (signUpError.message?.includes('already registered'))
+        throw new Error('כתובת אימייל זו כבר רשומה, נסי להתחבר');
+      throw new Error('שגיאה ביצירת משתמש, נסי שוב');
+    }
+
+    const authId = authData.user.id;
+    let linkedId = existing?.id;
+
+    if (!existing) {
+      // לקוחה חדשה
+      const { data: newCustomer, error: insertErr } = await window._sb
+        .from('customers')
+        .insert({ firstName, lastName, idValue: idNumber, email: email.trim().toLowerCase(), mobile: phone, status_code: 'מתעניינת' })
+        .select('id')
+        .single();
+      if (insertErr) throw new Error('שגיאה בשמירת פרטים, נסי שוב');
+      linkedId = newCustomer.id;
+    }
+
+    const { error: profileErr } = await window._sb
+      .from('user_profiles')
+      .update({ linked_id: linkedId })
+      .eq('auth_id', authId);
+    if (profileErr) throw new Error('שגיאה ביצירת פרופיל, נסי שוב');
+  },
+
   signOut() {
     window.storageUtil.clear();
     window.location.href = window.ROUTES.LOGIN;

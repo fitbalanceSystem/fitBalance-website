@@ -311,6 +311,12 @@ async function loadSalaryReport() {
   const today    = new Date().toISOString().split('T')[0];
   const effectiveTo = toDate < today ? toDate : today;
 
+  if (effectiveTo < fromDate) {
+    tbody.innerHTML = `<tr><td colspan="${COLS}" class="text-center p-4 text-gray-400">החודש עדיין לא התחיל</td></tr>`;
+    document.getElementById('salaryKpi').innerHTML = '';
+    return;
+  }
+
   // שולפים רק מפגשים פעילים (status != 2) בטווח התאריכים
   const [{ data: sessions, error }, { data: instructors }] = await Promise.all([
     supabaseClient.from('program_sessions')
@@ -397,6 +403,12 @@ async function loadAttendanceReport() {
   const today = new Date().toISOString().split('T')[0];
   const effectiveTo = toDate < today ? toDate : today;
 
+  if (effectiveTo < fromDate) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4 text-gray-400">החודש עדיין לא התחיל</td></tr>';
+    document.getElementById('attendanceKpi').innerHTML = '';
+    return;
+  }
+
   const [{ data: sessions, error }, { data: instructors }] = await Promise.all([
     supabaseClient.from('program_sessions')
       .select('id, date, time, program_id, programs!inner(name, instructor_code)')
@@ -411,7 +423,8 @@ async function loadAttendanceReport() {
   if (sessionIds.length) {
     const { data } = await supabaseClient.from('session_attendance')
       .select('session_id, is_present')
-      .in('session_id', sessionIds);
+      .in('session_id', sessionIds)
+      .eq('status_code', 1);
     attendance = data || [];
   }
 
@@ -918,7 +931,7 @@ async function generateAttendancePdf() {
   const allCustIds = [...new Set([
     ...(enrollments || []).map(e => e.customer_id),
     ...(attendance || []).map(a => a.customer_id)
-  ])];
+  ])].filter(Boolean);
   let customers = [];
   if (allCustIds.length) {
     const { data } = await supabaseClient.from('customers').select('id, firstName, lastName, mobile').in('id', allCustIds);

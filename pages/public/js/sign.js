@@ -224,36 +224,7 @@
       if (efJson.pdfPath) pdfUrl       = efJson.pdfPath;
       if (efJson.sigPath) signatureUrl = efJson.sigPath;
 
-      // 6. IP (best-effort — לא חוסם את התהליך)
-      let ipAddress = null;
-      try {
-        const r = await fetch('https://api.ipify.org?format=json');
-        const j = await r.json();
-        ipAddress = j.ip || null;
-      } catch (_) {}
-
-      // 7. עדכון injected_html עם health_notes (snapshot סופי)
-      if (healthNotes) {
-        const { error: htmlErr } = await window._sb
-          .from('customer_forms')
-          .update({ injected_html: finalHtml })
-          .eq('id', formRecord.id);
-        if (htmlErr) console.warn('injected_html update error:', htmlErr.message);
-      }
-
-      // 8. חתימה ב-DB — signed_at זהה לזה שנשלח ל-PDF ול-Edge Function
-      await window.formsService.signForm(token, {
-        fullName     : fieldValues.fullName   || null,
-        idNumber     : fieldValues.idNumber   || null,
-        signerName   : fieldValues.signerName || null,
-        signatureUrl,
-        pdfUrl,
-        ipAddress,
-        signedAt     : signedAtISO,
-      });
-
-      // 9. הצגת מסך הצלחה
-      //    health_notes כבר נשמר ב-Edge Function — אין צורך בפעולה נוספת כאן
+      // 6. הצגת מסך הצלחה
       $('successMsg').textContent = `תודה ${fieldValues.fullName || ''}! הטופס נחתם ונשמר בהצלחה.`;
 
       if (pdfBlob) {

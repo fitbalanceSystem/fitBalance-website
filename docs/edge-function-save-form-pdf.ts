@@ -56,10 +56,17 @@ Deno.serve(async (req) => {
       if (sigErr) console.warn('sig upload warn:', sigErr.message)
     }
 
-    // 5. עדכון pdf_url + signature_url בטבלה
+    // 5. עדכון pdf_url + signature_url + סטטוס חתום + signed_at בטבלה
     const { error: updateErr } = await supabase
       .from('customer_forms')
-      .update({ pdf_url: pdfPath, signature_url: sigPath })
+      .update({
+        pdf_url       : pdfPath,
+        signature_url : sigPath,
+        status        : 'signed',
+        signed_at     : signedAt || new Date().toISOString(),
+        token         : null,
+        token_expires : null,
+      })
       .eq('token', token)
     if (updateErr) throw updateErr
 
@@ -77,8 +84,7 @@ Deno.serve(async (req) => {
           dateNote      : noteDate,
           noteText      : 'הצהרת בריאות: ' + notes,
         })
-      // זורק שגיאה כדי שה-client יידע שה-health_notes לא נשמר
-      if (noteErr) throw new Error('health note insert failed: ' + noteErr.message)
+      if (noteErr) console.warn('health note insert failed:', noteErr.message)
     }
 
     return new Response(JSON.stringify({ pdfPath, sigPath }), {
